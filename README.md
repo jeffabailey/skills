@@ -93,49 +93,82 @@ Domain skills write reports to `docs/<domain>-review.md`. The full review writes
 - Accessibility: 10% (skipped for backend-only projects)
 - Process: 10%
 
-## Testing
+## Testing the Skills
 
-The `tests/` directory contains test plans for verifying skill behavior. Run them with the `claude` CLI.
+The `tests/` directory contains test plans for validating that the skills themselves work correctly. This is not about reviewing your project -- it is about verifying the skills behave as designed. Run all tests with the `claude` CLI against a target project.
 
-### Smoke Test
+### 1. Trigger Tests
 
-Run a single domain review against any project to verify installation:
+**Goal:** Verify each skill loads when it should and stays silent when it should not.
 
-```bash
-cd /path/to/your/project
-claude -p "/review:review-architecture"
-```
-
-The report should appear at `docs/architecture-review.md` with scores for all 7 dimensions.
-
-### Trigger Tests
-
-`tests/trigger-tests.md` lists phrases that should and should not activate each skill. Test them with `claude -p`:
+Test cases are in `tests/trigger-tests.md`. For each skill, run the "should trigger" phrases and confirm the skill activates, then run the "should NOT trigger" phrases and confirm it does not.
 
 ```bash
-# Should trigger review-architecture
+cd /path/to/a/test/project
+
+# Should trigger review-architecture (expect skill to activate)
 claude -p "Review the architecture of this project"
 
-# Should NOT trigger review-architecture
+# Should NOT trigger review-architecture (expect no skill activation)
 claude -p "Fix this bug"
+
+# Should trigger review-data (expect skill to activate)
+claude -p "Review database schema"
+
+# Should NOT trigger review-data (expect no skill activation)
+claude -p "Check database performance"
 ```
 
-### Functional Tests
+A skill passes its trigger tests when it activates for all "should trigger" phrases and does not activate for any "should NOT trigger" phrases.
 
-`tests/functional-tests.md` defines Given/When/Then scenarios for each skill. Run them against a target project:
+### 2. Functional Tests
+
+**Goal:** Verify each skill produces correct, structured output with real evidence.
+
+Test scenarios are in `tests/functional-tests.md` using Given/When/Then format. Each scenario defines the preconditions, the command to run, and what to check in the output.
 
 ```bash
-# Run a specific domain review
+cd /path/to/a/test/project
+
+# Test: review-architecture produces scores for all dimensions
+claude -p "/review:review-architecture"
+# Then check docs/architecture-review.md for:
+#   - Scores (1-10) for all 7 dimensions
+#   - Each score backed by file:line evidence
+#   - Scores below 6 generate action items
+
+# Test: review-security only reports high-confidence findings
 claude -p "/review:review-security"
+# Then check docs/security-review.md for:
+#   - All findings have confidence >= 7/10
+#   - Each finding has severity, file:line, and remediation
+#   - No false positives for safe patterns
 
-# Run the full orchestrator
+# Test: review-full produces unified report
 claude -p "/review:review-full"
-
-# Generate tests for pending changes
-claude -p "/review:review-jit-test-gen"
+# Then check docs/fitness-report.md for:
+#   - Overall weighted score
+#   - All domain scores in table format
+#   - Top 10 prioritized action items
 ```
 
-Then verify the output report matches the expected structure, scores include file:line evidence, and findings are accurate.
+A skill passes its functional tests when the output report matches the expected structure, scores include file:line evidence, and findings are accurate (no false positives).
+
+### 3. Performance Comparison
+
+**Goal:** Confirm the skills improve review quality versus unassisted review.
+
+Compare results with and without the skill on the same codebase:
+
+```bash
+# Without skill: generic prompt, no structured checklist
+claude -p "Review this project for security issues"
+
+# With skill: structured workflow, scoring rubric, evidence requirements
+claude -p "/review:review-security"
+```
+
+The skill should produce more findings, fewer false positives, consistent scoring, and file:line evidence that the unassisted review lacks.
 
 ## Structure
 

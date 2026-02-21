@@ -2,6 +2,10 @@
 
 Reusable Claude Code skills that review software project fitness across architecture, security, reliability, testing, performance, accessibility, and process. Based on guidance from the [Fundamentals series](https://jeffbailey.us/categories/fundamentals/).
 
+**Repository:** [github.com/jeffabailey/skills](https://github.com/jeffabailey/skills)
+
+This repository and the article [Fundamental Skills](https://jeffbailey.us/blog/2026/02/21/fundamental-skills) on [jeffbailey.us](https://jeffbailey.us) are cross-linked: the article explains the design, trade-offs, and how the skills fit together; this repository contains the installable skill definitions and checklists.
+
 ## Skills
 
 | Skill | Scores | Triggers |

@@ -93,6 +93,36 @@ Domain skills write reports to `docs/<domain>-review.md`. The full review writes
 - Accessibility: 10% (skipped for backend-only projects)
 - Process: 10%
 
+## Testing
+
+The `tests/` directory contains manual test plans for verifying skill behavior.
+
+### Trigger Tests (`tests/trigger-tests.md`)
+
+Verify each skill activates for the right phrases and stays silent for unrelated ones. For each skill:
+
+1. Open Claude Code in any project
+2. Type each "Should trigger" phrase and confirm the skill loads
+3. Type each "Should NOT trigger" phrase and confirm the skill does not load
+
+### Functional Tests (`tests/functional-tests.md`)
+
+Verify each skill produces correct output. For each test scenario:
+
+1. Set up the **Given** condition (clone a test repo or use one with the described characteristics)
+2. Run the skill via the **When** command
+3. Check the **Then** criteria: correct report structure, accurate scores, valid file:line references, no false positives
+
+### Running a Quick Smoke Test
+
+Run a single domain review against this repo to verify installation:
+
+```
+/review:review-architecture
+```
+
+The report should appear at `docs/architecture-review.md` with scores for all 7 dimensions.
+
 ## Structure
 
 ```

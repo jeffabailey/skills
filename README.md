@@ -1,6 +1,6 @@
 # Project Fitness Review Skills
 
-Reusable Claude Code skills that review software project fitness across architecture, security, reliability, testing, performance, accessibility, and process. Based on guidance from the [Fundamentals series](https://jeffbailey.us/categories/fundamentals/).
+Reusable Claude Code skills that review software project fitness across architecture, security, reliability, testing, performance, algorithms, data, accessibility, and process. Based on guidance from the [Fundamentals series](https://jeffbailey.us/categories/fundamentals/).
 
 **Repository:** [github.com/jeffabailey/skills](https://github.com/jeffabailey/skills)
 
@@ -15,6 +15,8 @@ This repository and the article [Fundamental Skills](https://jeffbailey.us/blog/
 | `review-reliability` | Observability, Availability, Timeouts, CI/CD, Incident Readiness, Capacity, Deploy | "reliability review", "production ready", "check observability" |
 | `review-testing` | Pyramid Balance, Test Quality, Coverage, Perf Testing, Debugging, CI Integration | "review test quality", "testing strategy", "test pyramid" |
 | `review-performance` | Algorithmic Efficiency, Database Design, Caching, Scalability, Resources, Pipelines | "performance review", "N+1 queries", "scalability analysis" |
+| `review-algorithms` | Algorithm Choice, Data Structure Selection, Complexity, Concurrency Safety, Edge Cases, Correctness | "algorithm review", "concurrency safety", "correctness check" |
+| `review-data` | Schema Design, Migration Safety, Data Integrity, Query Correctness, Data Modeling, Pipeline Quality | "data review", "schema design", "migration safety" |
 | `review-accessibility` | Semantic HTML, Keyboard Nav, Screen Reader, Color/Contrast, Progressive Enhancement, Responsive, Usability | "accessibility review", "a11y check", "WCAG compliance" |
 | `review-process` | Documentation, Workflow, Code Review, Dependencies, Organization, Portability, Leadership | "process review", "repo health", "development practices" |
 | `review-full` | All of the above (weighted average) | "full review", "comprehensive review", "project fitness" |
@@ -32,7 +34,7 @@ Skills are installed automatically via [mcp-configure](https://github.com/jeffab
 git clone https://github.com/jeffabailey/skills.git ~/Projects/skills
 
 # Symlink all review skills
-for skill in review-architecture review-security review-reliability review-testing review-performance review-accessibility review-process review-full review-jit-test-gen; do
+for skill in review-architecture review-security review-reliability review-testing review-performance review-algorithms review-data review-accessibility review-process review-full review-jit-test-gen; do
   ln -sf ~/Projects/skills/$skill ~/.claude/skills/$skill
 done
 ```
@@ -40,7 +42,7 @@ done
 ### Cursor
 
 ```bash
-for skill in review-architecture review-security review-reliability review-testing review-performance review-accessibility review-process review-full review-jit-test-gen; do
+for skill in review-architecture review-security review-reliability review-testing review-performance review-algorithms review-data review-accessibility review-process review-full review-jit-test-gen; do
   ln -sf ~/Projects/skills/$skill ~/.cursor/skills/$skill
 done
 ```
@@ -55,6 +57,8 @@ done
 /review:review-reliability     # Production readiness check
 /review:review-testing         # Test quality assessment
 /review:review-performance     # Performance bottleneck analysis
+/review:review-algorithms      # Algorithm and data structure correctness
+/review:review-data            # Schema, migration, and data integrity
 /review:review-accessibility   # A11y compliance check
 /review:review-process         # Development process audit
 /review:review-full            # Run all reviews, unified report
@@ -70,6 +74,8 @@ Skills trigger on natural language too:
 - "Is this production ready?"
 - "Check test quality"
 - "Find performance bottlenecks"
+- "Check algorithm correctness"
+- "Review database schema"
 - "Full review before shipping"
 - "Generate tests for my changes"
 
@@ -77,13 +83,15 @@ Skills trigger on natural language too:
 
 Domain skills write reports to `docs/<domain>-review.md`. The full review writes a unified report to `docs/fitness-report.md` with weighted scoring:
 
-- Architecture: 20%
-- Security: 20%
-- Reliability: 15%
-- Testing: 15%
-- Performance: 15%
+- Architecture: 15%
+- Security: 15%
+- Reliability: 10%
+- Testing: 10%
+- Performance: 10%
+- Algorithms: 10%
+- Data: 10% (skipped if no database code)
 - Accessibility: 10% (skipped for backend-only projects)
-- Process: 5%
+- Process: 10%
 
 ## Structure
 
@@ -105,6 +113,14 @@ review-testing/
   references/
     checklist.md
 review-performance/
+  SKILL.md
+  references/
+    checklist.md
+review-algorithms/
+  SKILL.md
+  references/
+    checklist.md
+review-data/
   SKILL.md
   references/
     checklist.md

@@ -108,6 +108,57 @@ For each test scenario:
 **When:** Run `/review:review-performance`
 **Then:** Algorithmic Efficiency score flags O(n^2) with evidence
 
+## review-algorithms
+
+### Test: Detects wrong data structure choice
+
+**Given:** Code using a list for frequent lookups by key (linear scan instead of hash map)
+**When:** Run `/review:review-algorithms`
+**Then:**
+- Data Structure Selection score reflects the mismatch
+- Specific file:line reference to the list-based lookup
+- Recommends hash map or set
+
+### Test: Detects race conditions
+
+**Given:** Shared mutable state accessed from multiple threads without synchronization
+**When:** Run `/review:review-algorithms`
+**Then:**
+- Concurrency Safety score is low
+- Specific file:line reference to the unprotected shared state
+- Recommends synchronization or concurrent data structures
+
+### Test: Detects edge case gaps
+
+**Given:** Function that divides by a parameter without checking for zero
+**When:** Run `/review:review-algorithms`
+**Then:** Edge Case Handling score reflects the missing guard
+
+## review-data
+
+### Test: Detects missing foreign keys
+
+**Given:** Database schema with related tables but no foreign key constraints
+**When:** Run `/review:review-data`
+**Then:**
+- Data Integrity score reflects the gap
+- Specific file:line reference to the table definitions
+- Recommends adding foreign key constraints
+
+### Test: Detects unsafe migrations
+
+**Given:** Migration that adds a NOT NULL column without a default value
+**When:** Run `/review:review-data`
+**Then:**
+- Migration Safety score reflects the risk
+- Recommends add column, backfill, then add constraint pattern
+
+### Test: Detects schema issues
+
+**Given:** Table with all VARCHAR(255) columns including dates and numbers
+**When:** Run `/review:review-data`
+**Then:** Schema Design score is low with specific type recommendations
+
 ## review-accessibility
 
 ### Test: Detects missing alt text

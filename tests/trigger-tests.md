@@ -80,6 +80,38 @@ Should NOT trigger:
 - "Review security"
 - "Check accessibility"
 
+## review-algorithms
+
+Should trigger:
+- "Review algorithm correctness"
+- "Check concurrency safety"
+- "Are the right data structures being used?"
+- "Check for race conditions"
+- "Review edge case handling"
+- "Algorithm review"
+- `/review:review-algorithms`
+
+Should NOT trigger:
+- "Check performance" (that's review-performance)
+- "Review security"
+- "Generate tests"
+
+## review-data
+
+Should trigger:
+- "Review database schema"
+- "Check migration safety"
+- "Data integrity review"
+- "Review data modeling"
+- "Check query correctness"
+- "Schema design review"
+- `/review:review-data`
+
+Should NOT trigger:
+- "Check database performance" (that's review-performance)
+- "Review security"
+- "Check test quality"
+
 ## review-accessibility
 
 Should trigger:

@@ -95,33 +95,47 @@ Domain skills write reports to `docs/<domain>-review.md`. The full review writes
 
 ## Testing
 
-The `tests/` directory contains manual test plans for verifying skill behavior.
+The `tests/` directory contains test plans for verifying skill behavior. Run them with the `claude` CLI.
 
-### Trigger Tests (`tests/trigger-tests.md`)
+### Smoke Test
 
-Verify each skill activates for the right phrases and stays silent for unrelated ones. For each skill:
+Run a single domain review against any project to verify installation:
 
-1. Open Claude Code in any project
-2. Type each "Should trigger" phrase and confirm the skill loads
-3. Type each "Should NOT trigger" phrase and confirm the skill does not load
-
-### Functional Tests (`tests/functional-tests.md`)
-
-Verify each skill produces correct output. For each test scenario:
-
-1. Set up the **Given** condition (clone a test repo or use one with the described characteristics)
-2. Run the skill via the **When** command
-3. Check the **Then** criteria: correct report structure, accurate scores, valid file:line references, no false positives
-
-### Running a Quick Smoke Test
-
-Run a single domain review against this repo to verify installation:
-
-```
-/review:review-architecture
+```bash
+cd /path/to/your/project
+claude -p "/review:review-architecture"
 ```
 
 The report should appear at `docs/architecture-review.md` with scores for all 7 dimensions.
+
+### Trigger Tests
+
+`tests/trigger-tests.md` lists phrases that should and should not activate each skill. Test them with `claude -p`:
+
+```bash
+# Should trigger review-architecture
+claude -p "Review the architecture of this project"
+
+# Should NOT trigger review-architecture
+claude -p "Fix this bug"
+```
+
+### Functional Tests
+
+`tests/functional-tests.md` defines Given/When/Then scenarios for each skill. Run them against a target project:
+
+```bash
+# Run a specific domain review
+claude -p "/review:review-security"
+
+# Run the full orchestrator
+claude -p "/review:review-full"
+
+# Generate tests for pending changes
+claude -p "/review:review-jit-test-gen"
+```
+
+Then verify the output report matches the expected structure, scores include file:line evidence, and findings are accurate.
 
 ## Structure
 

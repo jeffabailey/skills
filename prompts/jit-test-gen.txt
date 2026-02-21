@@ -1,0 +1,8 @@
+Analyze the changed files in this PR. For each changed function/method:
+1. Does adequate test coverage exist?
+2. What edge cases are untested?
+3. Suggest specific test cases that would catch regressions
+   at the point of this change (JIT catching approach).
+Reference: https://jeffbailey.us/blog/2026/02/14/what-is-just-in-time-catching-test-generation/
+
+Be specific — include actual test code snippets in your suggestions.

@@ -1,0 +1,7 @@
+Analyze the PR diff for architectural fitness. Score these dimensions (1-10):
+coupling, cohesion, testability, layering violations, API surface area,
+error handling consistency, configuration hygiene.
+
+Provide specific file:line evidence for each score.
+Flag any scores below 6 as action items.
+Be critical — this is a quality gate, not a cheerleader.

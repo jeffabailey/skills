@@ -1,8 +1,10 @@
 # Project Fitness Review Skills
 
-Reusable Claude Code skills that review software project fitness across architecture, security, reliability, testing, performance, algorithms, data, accessibility, and process. Based on guidance from the [Fundamentals series](https://jeffbailey.us/categories/fundamentals/).
+Reusable skills for **Cursor**, **Claude Code**, **VS Code (Copilot)**, and **pipelines** (GitHub Agentic Workflows, Claude Code Action) that review software project fitness across architecture, security, reliability, testing, performance, algorithms, data, accessibility, and process. Based on guidance from the [Fundamentals series](https://jeffbailey.us/categories/fundamentals/).
 
 **Repository:** [github.com/jeffabailey/skills](https://github.com/jeffabailey/skills)
+
+**→ [SETUP.md](SETUP.md)** — Full setup guide for pipelines and IDEs (Cursor, Claude Code, VS Code, Neovim/Avante).
 
 This repository and the article [Fundamental Skills](https://jeffbailey.us/blog/2026/02/21/fundamental-skills) on [jeffbailey.us](https://jeffbailey.us) are cross-linked: the article explains the design, trade-offs, and how the skills fit together; this repository contains the installable skill definitions and checklists.
 
@@ -26,6 +28,8 @@ Each domain skill produces scores (1-10) with file:line evidence and prioritized
 
 ## Installation
 
+See **[SETUP.md](SETUP.md)** for pipelines and IDE setup (Cursor, Claude Code, VS Code, Neovim/Avante).
+
 ### Claude Code
 
 Skills are installed automatically via [mcp-configure](https://github.com/jeffabailey/ide). To install manually:
@@ -42,6 +46,7 @@ done
 ### Cursor
 
 ```bash
+git clone https://github.com/jeffbailey/skills.git ~/Projects/skills
 for skill in review-architecture review-security review-reliability review-testing review-performance review-algorithms review-data review-accessibility review-process review-full review-jit-test-gen; do
   ln -sf ~/Projects/skills/$skill ~/.cursor/skills/$skill
 done
@@ -93,7 +98,22 @@ Domain skills write reports to `docs/<domain>-review.md`. The full review writes
 - Accessibility: 10% (skipped for backend-only projects)
 - Process: 10%
 
-## Using the skills in a GitHub Action
+## Using the skills in CI / pipelines
+
+### GitHub Agentic Workflows (recommended)
+
+Use [gh-aw](https://github.github.io/gh-aw/) with Copilot, Claude, or Codex. Add the workflow and configure one secret:
+
+```bash
+gh extension install github/gh-aw
+gh aw add jeffabailey/skills/fitness-review
+gh aw secrets set COPILOT_GITHUB_TOKEN --value "YOUR_PAT"  # or ANTHROPIC_API_KEY / OPENAI_API_KEY
+gh aw compile && git add .github/workflows/ && git commit -m "Add fitness review" && git push
+```
+
+Reports are created as GitHub issues. See **[SETUP.md](SETUP.md)** for full pipeline and IDE setup.
+
+### Claude Code GitHub Action (alternative)
 
 You can run the project fitness review (or any domain skill) in CI using [Claude Code GitHub Actions](https://github.com/anthropics/claude-code-action). The runner must have the skills available so Claude Code can load them.
 

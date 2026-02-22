@@ -1,0 +1,34 @@
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: project-fitness-review-skills
+  title: Project Fitness Review Skills
+  description: >
+    Reusable Claude Code skills that review software project fitness across
+    architecture, security, reliability, testing, performance, algorithms,
+    data, accessibility, and process.
+  annotations:
+    backstage.io/techdocs-ref: dir:.
+    github.com/project-slug: jeffabailey/skills
+  tags:
+    - claude-code
+    - ai-skills
+    - code-review
+    - fitness-review
+  links:
+    - url: https://jeffbailey.us/categories/fundamentals/
+      title: Fundamentals Series
+      icon: article
+    - url: https://jeffbailey.us/blog/2026/02/21/fundamental-skills
+      title: Design Article
+      icon: article
+    - url: https://github.com/jeffabailey/skills
+      title: GitHub Repository
+      icon: github
+spec:
+  type: library
+  lifecycle: production
+  owner: jeffabailey
+  system: developer-tools
+  providesApis: []
+  dependsOn: []

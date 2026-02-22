@@ -47,7 +47,7 @@ done
 ### Cursor
 
 ```bash
-git clone https://github.com/jeffbailey/skills.git ~/Projects/skills
+git clone https://github.com/jeffabailey/skills.git ~/Projects/skills
 for skill in review-architecture review-security review-reliability review-testing review-performance review-algorithms review-data review-accessibility review-process review-maintainability review-full review-jit-test-gen; do
   ln -sf ~/Projects/skills/$skill ~/.cursor/skills/$skill
 done
@@ -90,15 +90,16 @@ Skills trigger on natural language too:
 
 Domain skills write reports to `docs/<domain>-review.md`. The full review writes a unified report to `docs/fitness-report.md` with weighted scoring:
 
-- Architecture: 15%
-- Security: 15%
+- Architecture: 14%
+- Security: 14%
 - Reliability: 10%
 - Testing: 10%
 - Performance: 10%
 - Algorithms: 10%
 - Data: 10% (skipped if no database code)
-- Accessibility: 10% (skipped for backend-only projects)
-- Process: 10%
+- Accessibility: 8% (skipped for backend-only projects)
+- Process: 8%
+- Maintainability: 6%
 
 ## Using the skills in CI / pipelines
 

@@ -1,6 +1,6 @@
 # Running the Fitness Review
 
-The fitness review can run with **GitHub agents**, **Cursor agents**, or **Claude agents**. Use the `agent_type` input (GitHub) or choose your runner (Cursor/Claude) when running locally.
+The fitness review can run with **GitHub agents** (Copilot, Claude, or Codex), or **Cursor** locally. Use the `agent_type` input (GitHub) or choose your runner when running locally.
 
 ## File layout
 
@@ -16,22 +16,25 @@ Runs in GitHub Actions via [gh-aw](https://github.github.io/gh-aw/) with Copilot
 
 **Prerequisites:**
 - `gh` CLI v2.0+ and `gh extension install github/gh-aw`
-- Secret: `ANTHROPIC_API_KEY` (for claude engine) or `COPILOT_GITHUB_TOKEN` (for copilot engine)
+- One secret (per engine):
+  - **Claude**: `ANTHROPIC_API_KEY`
+  - **Copilot**: `COPILOT_GITHUB_TOKEN` (PAT with `copilot-requests` scope)
+  - **Codex (OpenAI)**: `OPENAI_API_KEY`
 
 **Run:**
 ```bash
 gh aw run fitness-review
 # Or: Actions → Project Fitness Review → Run workflow
-# Select agent_type: github | claude | cursor
+# Select agent_type: github | claude | codex | cursor
 ```
 
-**Note:** `agent_type` is passed for documentation/tracking. The engine (claude/copilot) is set in the `.md` frontmatter; change `engine: claude` to `engine: copilot` and recompile if you prefer Copilot. `agent_type=cursor` means run locally — see below.
+**Note:** `agent_type` is passed for documentation/tracking. The engine is set in the `.md` frontmatter (`engine: claude` | `engine: copilot` | `engine: codex`). Change it and run `gh aw compile` to use a different engine. `agent_type=cursor` means run locally — see below.
 
 ## agent_type: claude
 
 Runs via Claude (API, Claude Code, or gh-aw with engine: claude).
 
-**Via gh-aw (GitHub Actions):** Same as above; set `engine: claude` in the .md frontmatter (default).
+**Via gh-aw (GitHub Actions):** Set `engine: claude` in the .md frontmatter (default), add `ANTHROPIC_API_KEY` secret, then `gh aw compile`.
 
 **Via Claude Code (local or CI):**
 ```bash
@@ -39,6 +42,12 @@ Runs via Claude (API, Claude Code, or gh-aw with engine: claude).
 claude --prompt "$(cat .github/fitness-review-prompt.md)"
 # Or use anthropics/claude-code-action with that prompt
 ```
+
+## agent_type: codex
+
+Runs in GitHub Actions via gh-aw with [OpenAI Codex](https://github.github.com/gh-aw/reference/engines/).
+
+**Via gh-aw (GitHub Actions):** Set `engine: codex` in the .md frontmatter, add `OPENAI_API_KEY` secret, then `gh aw compile`.
 
 ## agent_type: cursor
 

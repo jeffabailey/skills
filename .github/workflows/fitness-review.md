@@ -2,20 +2,21 @@
 description: |
   Run a full project fitness review across architecture, security, reliability,
   testing, performance, algorithms, data, accessibility, process, and maintainability.
-  Use agent_type to choose runner: github (Copilot), claude, or cursor (local).
+  Use agent_type to choose runner: github (Copilot), claude, codex (OpenAI), or cursor (local).
 
 on:
   schedule: weekly on sunday
   workflow_dispatch:
     inputs:
       agent_type:
-        description: "Agent runner: github (Copilot), claude, or cursor"
+        description: "Agent runner: github (Copilot), claude, codex (OpenAI), or cursor (local)"
         required: true
         default: github
         type: choice
         options:
           - github
           - claude
+          - codex
           - cursor
 
 engine: claude
@@ -40,7 +41,7 @@ safe-outputs:
 
 # Project Fitness Review
 
-Analyze this repository and produce a comprehensive fitness report. Create a GitHub issue with your findings (github runner) or write to `docs/fitness-report.md` (claude/cursor).
+Analyze this repository and produce a comprehensive fitness report. Create a GitHub issue with your findings (github runner) or write to `docs/fitness-report.md` (claude/codex/cursor).
 
 **Canonical prompt:** Same content in `.github/fitness-review-prompt.md` for Cursor/Claude.
 
@@ -206,4 +207,4 @@ If a domain is skipped, redistribute its weight proportionally.
 2. Analyze each domain systematically
 3. Assign scores with evidence
 4. Rank action items by severity
-5. Compose the unified report and create the issue (or write to docs/fitness-report.md for claude/cursor)
+5. Compose the unified report and create the issue (or write to docs/fitness-report.md for claude/codex/cursor)

@@ -38,10 +38,10 @@ gh extension install github/gh-aw
 ```bash
 cd your-repo
 gh aw add jeffabailey/skills/fitness-review
-# REQUIRED: Configure one secret (this workflow uses Claude):
-gh aw secrets set ANTHROPIC_API_KEY --value "YOUR_ANTHROPIC_KEY"
-# Or for Copilot: change engine to copilot in the .md and use:
-# gh aw secrets set COPILOT_GITHUB_TOKEN --value "YOUR_PAT"
+# REQUIRED: Configure one secret (set engine in .md frontmatter first):
+gh aw secrets set ANTHROPIC_API_KEY --value "YOUR_ANTHROPIC_KEY"   # engine: claude (default)
+# Or for Copilot: engine: copilot → gh aw secrets set COPILOT_GITHUB_TOKEN --value "YOUR_PAT"
+# Or for Codex:   engine: codex   → gh aw secrets set OPENAI_API_KEY --value "YOUR_OPENAI_KEY"
 ```
 
 **Compile and commit:**
@@ -67,7 +67,7 @@ Or via **Actions** → **Project Fitness Review** → **Run workflow**.
 gh aw secrets set ANTHROPIC_API_KEY --value "YOUR_ANTHROPIC_KEY"
 ```
 
-Then trigger via `gh aw run fitness-review` or the Actions tab. Get an API key at [console.anthropic.com](https://console.anthropic.com/). See `.github/RUN.md` for agent_type (github/claude/cursor) and running with Cursor or Claude locally.
+Then trigger via `gh aw run fitness-review` or the Actions tab. Get an API key at [console.anthropic.com](https://console.anthropic.com/). See `.github/RUN.md` for agent_type (github/claude/codex/cursor) and running with Cursor or Claude locally.
 
 ---
 

@@ -23,9 +23,9 @@
 #
 # Run a full project fitness review across architecture, security, reliability,
 # testing, performance, algorithms, data, accessibility, process, and maintainability.
-# Use agent_type to choose runner: github (Copilot), claude, or cursor (local).
+# Use agent_type to choose runner: github (Copilot), claude, codex (OpenAI), or cursor (local).
 #
-# gh-aw-metadata: {"schema_version":"v1","frontmatter_hash":"b307ecc12118aeba1e4d984eac182c015c099c766d719496e58880258162bfc8","compiler_version":"v0.49.0"}
+# gh-aw-metadata: {"schema_version":"v1","frontmatter_hash":"c409fa961c594883d8859d27d38dcc73b36f1a8bbd6c0ae822c043f5f1a1e889","compiler_version":"v0.49.0"}
 
 name: "Project Fitness Review"
 "on":
@@ -36,10 +36,11 @@ name: "Project Fitness Review"
     inputs:
       agent_type:
         default: github
-        description: "Agent runner: github (Copilot), claude, or cursor"
+        description: "Agent runner: github (Copilot), claude, codex (OpenAI), or cursor (local)"
         options:
         - github
         - claude
+        - codex
         - cursor
         required: true
         type: choice
@@ -1028,7 +1029,7 @@ jobs:
         uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8
         env:
           WORKFLOW_NAME: "Project Fitness Review"
-          WORKFLOW_DESCRIPTION: "Run a full project fitness review across architecture, security, reliability,\ntesting, performance, algorithms, data, accessibility, process, and maintainability.\nUse agent_type to choose runner: github (Copilot), claude, or cursor (local)."
+          WORKFLOW_DESCRIPTION: "Run a full project fitness review across architecture, security, reliability,\ntesting, performance, algorithms, data, accessibility, process, and maintainability.\nUse agent_type to choose runner: github (Copilot), claude, codex (OpenAI), or cursor (local)."
           HAS_PATCH: ${{ needs.agent.outputs.has_patch }}
         with:
           script: |

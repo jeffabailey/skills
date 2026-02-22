@@ -6,7 +6,7 @@ Analyze this repository and produce a comprehensive fitness report.
 
 **Output (depends on runner):**
 - **github**: Create a GitHub issue with your findings using the create_issue tool.
-- **claude** or **cursor**: Write the report to `docs/fitness-report.md`.
+- **claude**, **codex**, or **cursor**: Write the report to `docs/fitness-report.md`.
 
 ## Scope
 
@@ -170,4 +170,4 @@ If a domain is skipped, redistribute its weight proportionally.
 2. Analyze each domain systematically
 3. Assign scores with evidence
 4. Rank action items by severity
-5. Compose the unified report (issue if github, file if claude/cursor)
+5. Compose the unified report (issue if github, file if claude/codex/cursor)

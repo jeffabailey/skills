@@ -93,6 +93,79 @@ Domain skills write reports to `docs/<domain>-review.md`. The full review writes
 - Accessibility: 10% (skipped for backend-only projects)
 - Process: 10%
 
+## Using the skills in a GitHub Action
+
+You can run the project fitness review (or any domain skill) in CI using [Claude Code GitHub Actions](https://github.com/anthropics/claude-code-action). The runner must have the skills available so Claude Code can load them.
+
+### 1. Prerequisites
+
+- Add **ANTHROPIC_API_KEY** to your repository secrets (Settings → Secrets and variables → Actions). Get a key from [console.anthropic.com](https://console.anthropic.com/).
+- Optional: Install the [Claude GitHub App](https://github.com/apps/claude) for your repo if you want `@claude` in comments; not required for workflow-triggered runs.
+
+### 2. Check out the repo and install the skills
+
+Your workflow must check out the repository and install the skills from this repo so Claude Code can find them. Clone this repo (or your fork) and symlink each skill into the directory Claude Code uses:
+
+```yaml
+- uses: actions/checkout@v4
+  with:
+    repository: jeffabailey/skills   # or your fork
+    path: skills
+
+- name: Install project fitness review skills
+  run: |
+    mkdir -p ~/.claude/skills
+    for skill in review-architecture review-security review-reliability review-testing review-performance review-algorithms review-data review-accessibility review-process review-full review-jit-test-gen; do
+      ln -sf "$GITHUB_WORKSPACE/skills/$skill" ~/.claude/skills/$skill
+    done
+```
+
+If the workflow runs in the same repo that contains the skills (e.g. this repo), use the workspace as the source and omit the separate checkout for `skills`:
+
+```yaml
+- uses: actions/checkout@v4
+
+- name: Install project fitness review skills
+  run: |
+    mkdir -p ~/.claude/skills
+    for skill in review-architecture review-security review-reliability review-testing review-performance review-algorithms review-data review-accessibility review-process review-full review-jit-test-gen; do
+      ln -sf "$GITHUB_WORKSPACE/$skill" ~/.claude/skills/$skill
+    done
+```
+
+### 3. Run the Claude Code action with a review prompt
+
+Use the `prompt` input to request a full review or a specific domain. The action will run in automation mode and use the installed skills.
+
+```yaml
+- uses: anthropics/claude-code-action@v1
+  with:
+    anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+    prompt: "Run a full project fitness review on this repository. Use the review-full skill. Write the unified report to docs/fitness-report.md."
+    claude_args: "--max-turns 15"
+```
+
+To run a single domain (e.g. security) use natural language that triggers that skill:
+
+```yaml
+prompt: "Run a security review of this project using the review-security skill. Write the report to docs/security-review.md."
+```
+
+### 4. Use the report (optional)
+
+Upload the report as an artifact or commit it in a follow-up step:
+
+```yaml
+- uses: actions/upload-artifact@v4
+  if: always()
+  with:
+    name: fitness-report
+    path: docs/fitness-report.md
+  continue-on-error: true
+```
+
+See [Claude Code GitHub Actions](https://code.claude.com/docs/en/github-actions) and the [action usage docs](https://github.com/anthropics/claude-code-action/blob/main/docs/usage.md) for authentication (e.g. AWS Bedrock, Google Vertex), security, and `claude_args` (e.g. `--model`, `--max-turns`).
+
 ## Testing the Skills
 
 The `tests/` directory contains test plans for validating that the skills themselves work correctly. This is not about reviewing your project -- it is about verifying the skills behave as designed. Run all tests with the `claude` CLI against a target project.

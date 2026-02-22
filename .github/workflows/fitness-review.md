@@ -8,6 +8,8 @@ on:
   schedule: weekly on sunday
   workflow_dispatch:
 
+engine: claude
+
 permissions:
   contents: read
   issues: read

@@ -7,6 +7,10 @@ on:
     - cron: '0 2 * * 0'   # Weekly Sunday 2 AM UTC
   workflow_dispatch:
 
+permissions:
+  id-token: write   # Required for claude-code-action OIDC token
+  contents: read
+
 jobs:
   review:
     runs-on: ubuntu-latest

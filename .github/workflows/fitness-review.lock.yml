@@ -25,7 +25,7 @@
 # testing, performance, algorithms, data, accessibility, process, and maintainability.
 # Use agent_type to choose runner: github (Copilot), claude, codex (OpenAI), or cursor (local).
 #
-# gh-aw-metadata: {"schema_version":"v1","frontmatter_hash":"c409fa961c594883d8859d27d38dcc73b36f1a8bbd6c0ae822c043f5f1a1e889","compiler_version":"v0.49.0"}
+# gh-aw-metadata: {"schema_version":"v1","frontmatter_hash":"1dfd46bb6fb1be300672c53810326e04cd981c0d4f8252bb24e2b21de2608f97","compiler_version":"v0.49.0"}
 
 name: "Project Fitness Review"
 "on":

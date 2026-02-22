@@ -8,7 +8,7 @@ on:
   schedule: weekly on sunday
   workflow_dispatch:
 
-engine: claude
+engine: copilot
 
 permissions:
   contents: read

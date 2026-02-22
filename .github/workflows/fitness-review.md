@@ -30,6 +30,8 @@ network: defaults
 
 tools:
   github:
+    # lockdown: false allows the agent to use all available GitHub tools (read and write).
+    # Remove this setting or set to true to restrict to read-only GitHub tool access.
     lockdown: false
 
 safe-outputs:

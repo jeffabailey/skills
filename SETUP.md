@@ -67,7 +67,7 @@ Or via **Actions** → **Project Fitness Review** → **Run workflow**.
 gh aw secrets set ANTHROPIC_API_KEY --value "YOUR_ANTHROPIC_KEY"
 ```
 
-Then trigger via `gh aw run fitness-review` or the Actions tab. Get an API key at [console.anthropic.com](https://console.anthropic.com/).
+Then trigger via `gh aw run fitness-review` or the Actions tab. Get an API key at [console.anthropic.com](https://console.anthropic.com/). See `.github/RUN.md` for agent_type (github/claude/cursor) and running with Cursor or Claude locally.
 
 ---
 
@@ -95,7 +95,7 @@ jobs:
       - name: Install project fitness review skills
         run: |
           mkdir -p ~/.claude/skills
-          for skill in review-architecture review-security review-reliability review-testing review-performance review-algorithms review-data review-accessibility review-process review-full review-jit-test-gen; do
+          for skill in review-architecture review-security review-reliability review-testing review-performance review-algorithms review-data review-accessibility review-process review-maintainability review-full review-jit-test-gen; do
             ln -sf "$GITHUB_WORKSPACE/$skill" ~/.claude/skills/$skill
           done
         # If skills are in a separate checkout:
@@ -135,7 +135,7 @@ Skills can be used in Cursor-based automation by symlinking into `~/.cursor/skil
 ```bash
 git clone https://github.com/jeffabailey/skills.git ~/Projects/skills
 
-for skill in review-architecture review-security review-reliability review-testing review-performance review-algorithms review-data review-accessibility review-process review-full review-jit-test-gen; do
+for skill in review-architecture review-security review-reliability review-testing review-performance review-algorithms review-data review-accessibility review-process review-maintainability review-full review-jit-test-gen; do
   ln -sf ~/Projects/skills/$skill ~/.cursor/skills/$skill
 done
 ```
@@ -145,7 +145,7 @@ done
 ```bash
 git clone https://github.com/jeffabailey/skills.git .cursor/skills-source
 
-for skill in review-architecture review-security review-reliability review-testing review-performance review-algorithms review-data review-accessibility review-process review-full review-jit-test-gen; do
+for skill in review-architecture review-security review-reliability review-testing review-performance review-algorithms review-data review-accessibility review-process review-maintainability review-full review-jit-test-gen; do
   ln -sf "$(pwd)/.cursor/skills-source/$skill" .cursor/skills/$skill
 done
 ```
@@ -161,7 +161,7 @@ Add `.cursor/skills-source/` to `.gitignore` if you don’t want to commit the c
 ```bash
 git clone https://github.com/jeffabailey/skills.git ~/Projects/skills
 
-for skill in review-architecture review-security review-reliability review-testing review-performance review-algorithms review-data review-accessibility review-process review-full review-jit-test-gen; do
+for skill in review-architecture review-security review-reliability review-testing review-performance review-algorithms review-data review-accessibility review-process review-maintainability review-full review-jit-test-gen; do
   ln -sf ~/Projects/skills/$skill ~/.claude/skills/$skill
 done
 ```
@@ -180,7 +180,7 @@ Uses the same [SKILL.md agentskills format](https://code.visualstudio.com/docs/c
 git clone https://github.com/jeffabailey/skills.git ~/Projects/skills
 
 mkdir -p ~/.copilot/skills
-for skill in review-architecture review-security review-reliability review-testing review-performance review-algorithms review-data review-accessibility review-process review-full review-jit-test-gen; do
+for skill in review-architecture review-security review-reliability review-testing review-performance review-algorithms review-data review-accessibility review-process review-maintainability review-full review-jit-test-gen; do
   ln -sf ~/Projects/skills/$skill ~/.copilot/skills/$skill
 done
 ```

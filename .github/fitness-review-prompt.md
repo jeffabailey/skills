@@ -1,48 +1,12 @@
----
-description: |
-  Run a full project fitness review across architecture, security, reliability,
-  testing, performance, algorithms, data, accessibility, process, and maintainability.
-  Use agent_type to choose runner: github (Copilot), claude, or cursor (local).
-
-on:
-  schedule: weekly on sunday
-  workflow_dispatch:
-    inputs:
-      agent_type:
-        description: "Agent runner: github (Copilot), claude, or cursor"
-        required: true
-        default: github
-        type: choice
-        options:
-          - github
-          - claude
-          - cursor
-
-engine: claude
-
-permissions:
-  contents: read
-  issues: read
-  pull-requests: read
-
-network: defaults
-
-tools:
-  github:
-    lockdown: false
-
-safe-outputs:
-  create-issue:
-    title-prefix: "[fitness-report] "
-    labels: [report, fitness-review, automation]
-    close-older-issues: true
----
-
 # Project Fitness Review
 
-Analyze this repository and produce a comprehensive fitness report. Create a GitHub issue with your findings (github runner) or write to `docs/fitness-report.md` (claude/cursor).
+> Canonical prompt for Cursor and Claude. Same content as `.github/workflows/fitness-review.md` body. Update both when changing the review spec.
 
-**Canonical prompt:** Same content in `.github/fitness-review-prompt.md` for Cursor/Claude.
+Analyze this repository and produce a comprehensive fitness report.
+
+**Output (depends on runner):**
+- **github**: Create a GitHub issue with your findings using the create_issue tool.
+- **claude** or **cursor**: Write the report to `docs/fitness-report.md`.
 
 ## Scope
 
@@ -206,4 +170,4 @@ If a domain is skipped, redistribute its weight proportionally.
 2. Analyze each domain systematically
 3. Assign scores with evidence
 4. Rank action items by severity
-5. Compose the unified report and create the issue (or write to docs/fitness-report.md for claude/cursor)
+5. Compose the unified report (issue if github, file if claude/cursor)

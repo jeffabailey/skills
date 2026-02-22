@@ -1,6 +1,6 @@
 ---
 name: review-full
-description: Runs a comprehensive project fitness review combining architecture, security, reliability, testing, performance, algorithms, data, accessibility, and process analysis. Use when the user says "full review", "comprehensive review", "project fitness", "review everything", or wants all review skills run on current changes before shipping.
+description: Runs a comprehensive project fitness review combining architecture, security, reliability, testing, performance, algorithms, data, accessibility, process, and maintainability analysis. Use when the user says "full review", "comprehensive review", "project fitness", "review everything", or wants all review skills run on current changes before shipping.
 ---
 
 # Full Project Fitness Review
@@ -29,6 +29,7 @@ Use the Task tool to launch these agents concurrently:
 7. **Data** (`/review:review-data`) - Schema design, migration safety, data integrity fitness
 8. **Accessibility** (`/review:review-accessibility`) - UX and a11y fitness (if frontend code exists)
 9. **Process** (`/review:review-process`) - Development workflow and documentation fitness
+10. **Maintainability** (`/review:review-maintainability`) - Complexity, understandability, technical debt, code smells fitness
 
 Skip review-accessibility if the project has no frontend code (no HTML, CSS, JSX, TSX, Vue, Svelte files).
 Skip review-data if the project has no database code (no SQL files, migrations, ORM models, or database configuration).
@@ -63,6 +64,7 @@ Write the report to `docs/fitness-report.md` with this structure:
 | Data | X/10 | [status emoji] |
 | Accessibility | X/10 | [status emoji] |
 | Process | X/10 | [status emoji] |
+| Maintainability | X/10 | [status emoji] |
 
 Status: 8-10 = Healthy, 5-7 = Needs Attention, 1-4 = Critical
 
@@ -80,6 +82,9 @@ Status: 8-10 = Healthy, 5-7 = Needs Attention, 1-4 = Critical
 ### Security
 [scores and findings from review-security]
 
+### Maintainability
+[scores and findings from review-maintainability]
+
 ### Algorithms
 [scores and findings from review-algorithms]
 
@@ -96,15 +101,16 @@ Based on guidance from https://jeffbailey.us/categories/fundamentals/
 ### Scoring
 
 Overall score = weighted average:
-- Architecture: 15%
-- Security: 15%
+- Architecture: 14%
+- Security: 14%
 - Reliability: 10%
 - Testing: 10%
 - Performance: 10%
 - Algorithms: 10%
 - Data: 10% (0% if skipped)
-- Accessibility: 10% (0% if skipped)
-- Process: 10%
+- Accessibility: 8% (0% if skipped)
+- Process: 8%
+- Maintainability: 6%
 
 If a domain is skipped, redistribute its weight proportionally across the remaining domains.
 

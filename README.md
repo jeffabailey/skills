@@ -21,6 +21,7 @@ This repository and the article [Fundamental Skills](https://jeffbailey.us/blog/
 | `review-data` | Schema Design, Migration Safety, Data Integrity, Query Correctness, Data Modeling, Pipeline Quality | "data review", "schema design", "migration safety" |
 | `review-accessibility` | Semantic HTML, Keyboard Nav, Screen Reader, Color/Contrast, Progressive Enhancement, Responsive, Usability | "accessibility review", "a11y check", "WCAG compliance" |
 | `review-process` | Documentation, Workflow, Code Review, Dependencies, Organization, Portability, Leadership | "process review", "repo health", "development practices" |
+| `review-maintainability` | Structural Complexity, Understandability, Technical Debt, Coupling Depth, Code Smell Density | "maintainability review", "code complexity", "understandability" |
 | `review-full` | All of the above (weighted average) | "full review", "comprehensive review", "project fitness" |
 | `review-jit-test-gen` | Generates tests (no scores) | "generate tests", "write tests for changes" |
 
@@ -38,7 +39,7 @@ Skills are installed automatically via [mcp-configure](https://github.com/jeffab
 git clone https://github.com/jeffabailey/skills.git ~/Projects/skills
 
 # Symlink all review skills
-for skill in review-architecture review-security review-reliability review-testing review-performance review-algorithms review-data review-accessibility review-process review-full review-jit-test-gen; do
+for skill in review-architecture review-security review-reliability review-testing review-performance review-algorithms review-data review-accessibility review-process review-maintainability review-full review-jit-test-gen; do
   ln -sf ~/Projects/skills/$skill ~/.claude/skills/$skill
 done
 ```
@@ -47,7 +48,7 @@ done
 
 ```bash
 git clone https://github.com/jeffbailey/skills.git ~/Projects/skills
-for skill in review-architecture review-security review-reliability review-testing review-performance review-algorithms review-data review-accessibility review-process review-full review-jit-test-gen; do
+for skill in review-architecture review-security review-reliability review-testing review-performance review-algorithms review-data review-accessibility review-process review-maintainability review-full review-jit-test-gen; do
   ln -sf ~/Projects/skills/$skill ~/.cursor/skills/$skill
 done
 ```
@@ -66,6 +67,7 @@ done
 /review:review-data            # Schema, migration, and data integrity
 /review:review-accessibility   # A11y compliance check
 /review:review-process         # Development process audit
+/review:review-maintainability # Maintainability, complexity, understandability
 /review:review-full            # Run all reviews, unified report
 /review:review-jit-test-gen    # Generate tests for changed code
 ```
@@ -135,7 +137,7 @@ Your workflow must check out the repository and install the skills from this rep
 - name: Install project fitness review skills
   run: |
     mkdir -p ~/.claude/skills
-    for skill in review-architecture review-security review-reliability review-testing review-performance review-algorithms review-data review-accessibility review-process review-full review-jit-test-gen; do
+    for skill in review-architecture review-security review-reliability review-testing review-performance review-algorithms review-data review-accessibility review-process review-maintainability review-full review-jit-test-gen; do
       ln -sf "$GITHUB_WORKSPACE/skills/$skill" ~/.claude/skills/$skill
     done
 ```
@@ -148,7 +150,7 @@ If the workflow runs in the same repo that contains the skills (e.g. this repo),
 - name: Install project fitness review skills
   run: |
     mkdir -p ~/.claude/skills
-    for skill in review-architecture review-security review-reliability review-testing review-performance review-algorithms review-data review-accessibility review-process review-full review-jit-test-gen; do
+    for skill in review-architecture review-security review-reliability review-testing review-performance review-algorithms review-data review-accessibility review-process review-maintainability review-full review-jit-test-gen; do
       ln -sf "$GITHUB_WORKSPACE/$skill" ~/.claude/skills/$skill
     done
 ```

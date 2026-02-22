@@ -6,7 +6,7 @@ metadata:
   description: >
     Reusable Claude Code skills that review software project fitness across
     architecture, security, reliability, testing, performance, algorithms,
-    data, accessibility, and process.
+    data, accessibility, process, and maintainability.
   annotations:
     backstage.io/techdocs-ref: dir:.
     github.com/project-slug: jeffabailey/skills

@@ -55,7 +55,7 @@ jobs:
       - name: Check workflow file timestamps
         uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8
         env:
-          GH_AW_WORKFLOW_FILE: "fitness-review-copilot.lock.yml"
+          GH_AW_WORKFLOW_FILE: "fitness-review-copilot.yml"
         with:
           script: |
             const { setupGlobals } = require('/opt/gh-aw/actions/setup_globals.cjs');
@@ -164,7 +164,7 @@ jobs:
           </system>
           GH_AW_PROMPT_EOF
           cat << 'GH_AW_PROMPT_EOF'
-          {{#runtime-import .github/workflows/fitness-review-copilot.md}}
+          {{#runtime-import .github/fitness-review-prompt.md}}
           GH_AW_PROMPT_EOF
           } > "$GH_AW_PROMPT"
       - name: Interpolate variables and render templates
@@ -954,7 +954,7 @@ jobs:
         uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8
         env:
           WORKFLOW_NAME: "Project Fitness Review (Copilot)"
-          WORKFLOW_DESCRIPTION: "Run a full project fitness review using GitHub Copilot (use when Claude returns 529 Overloaded).\nSame scope as fitness-review.md; alternative engine."
+          WORKFLOW_DESCRIPTION: "Run a full project fitness review using GitHub Copilot (fallback when Claude returns 529 Overloaded)."
           HAS_PATCH: ${{ needs.agent.outputs.has_patch }}
         with:
           script: |

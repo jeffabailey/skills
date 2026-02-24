@@ -67,7 +67,7 @@ Or via **Actions** → **Project Fitness Review** → **Run workflow**.
 gh aw secrets set ANTHROPIC_API_KEY --value "YOUR_ANTHROPIC_KEY"
 ```
 
-Then trigger via `gh aw run fitness-review` or the Actions tab. Get an API key at [console.anthropic.com](https://console.anthropic.com/). See `.github/RUN.md` for agent_type (github/claude/codex/cursor) and running with Cursor or Claude locally.
+Then trigger via `gh aw run fitness-review` or the Actions tab. Get an API key at [console.anthropic.com](https://console.anthropic.com/). See `.github/RUN.md` for agent_type (github/claude/codex/cursor) and running with Cursor or Claude locally. **When Claude returns 529 Overloaded:** run **Project Fitness Review (Copilot)** instead (requires `COPILOT_GITHUB_TOKEN`).
 
 ---
 

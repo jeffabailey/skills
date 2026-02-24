@@ -59,3 +59,19 @@ Runs in Cursor IDE — **not in GitHub Actions**. Cursor is a local/desktop tool
 3. Or use the review-full skill: `/review:review-full` (if skills are installed)
 
 The prompt adapts output: GitHub creates an issue; Cursor/Claude writes to `docs/fitness-report.md`.
+
+## Troubleshooting
+
+### 529 Overloaded (Claude/Anthropic)
+
+If the agent job fails with `API Error: 529` or `overloaded_error`:
+
+- **Cause:** Anthropic's API was temporarily overloaded (transient).
+- **Fix:** Re-run the workflow: Actions → Project Fitness Review → Re-run failed jobs, or `gh workflow run "Project Fitness Review" -f agent_type=github` for a fresh run.
+- **Alternative:** Switch to Copilot: set `engine: copilot` in the .md frontmatter, add `COPILOT_GITHUB_TOKEN` secret, run `gh aw compile`, then commit the updated lock file.
+
+### Lock file outdated
+
+If you see `ERR_CONFIG: Lock file ... is outdated`:
+
+- **Fix:** Run `gh aw compile`, then commit both `.github/workflows/fitness-review.md` and `.github/workflows/fitness-review.lock.yml`.

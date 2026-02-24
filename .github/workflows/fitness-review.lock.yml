@@ -25,7 +25,7 @@
 # testing, performance, algorithms, data, accessibility, process, and maintainability.
 # Use agent_type to choose runner: github (Copilot), claude, codex (OpenAI), or cursor (local).
 #
-# gh-aw-metadata: {"schema_version":"v1","frontmatter_hash":"c409fa961c594883d8859d27d38dcc73b36f1a8bbd6c0ae822c043f5f1a1e889","compiler_version":"v0.49.0"}
+# gh-aw-metadata: {"schema_version":"v1","frontmatter_hash":"5e2978bb77c587e1b6d2cc73400bc34bc1c58566c2220920b0400e4d4ae1be81","compiler_version":"v0.49.0"}
 
 name: "Project Fitness Review"
 "on":
@@ -50,7 +50,7 @@ permissions: {}
 concurrency:
   group: "gh-aw-${{ github.workflow }}"
 
-run-name: "Project Fitness Review"
+run-name: "Project Fitness Review — agent: ${{ github.event.inputs.agent_type || 'scheduled' }}"
 
 jobs:
   activation:

@@ -21,6 +21,8 @@ on:
 
 engine: claude
 
+run-name: "Project Fitness Review — agent: ${{ github.event.inputs.agent_type || 'scheduled' }}"
+
 permissions:
   contents: read
   issues: read

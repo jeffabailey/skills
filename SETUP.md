@@ -44,11 +44,10 @@ gh aw secrets set ANTHROPIC_API_KEY --value "YOUR_ANTHROPIC_KEY"   # engine: cla
 # Or for Codex:   engine: codex   → gh aw secrets set OPENAI_API_KEY --value "YOUR_OPENAI_KEY"
 ```
 
-**Compile and commit:**
+**Commit and push:**
 
 ```bash
-gh aw compile
-git add .github/workflows/fitness-review.md .github/workflows/fitness-review.lock.yml
+git add .github/workflows/fitness-review.yml
 git commit -m "Add fitness review workflow"
 git push
 ```
@@ -67,7 +66,7 @@ Or via **Actions** → **Project Fitness Review** → **Run workflow**.
 gh aw secrets set ANTHROPIC_API_KEY --value "YOUR_ANTHROPIC_KEY"
 ```
 
-Then trigger via `gh aw run fitness-review` or the Actions tab. Get an API key at [console.anthropic.com](https://console.anthropic.com/). See `.github/RUN.md` for agent_type (github/claude/codex/cursor) and running with Cursor or Claude locally. **When Claude returns 529 Overloaded:** run **Project Fitness Review (Copilot)** instead (requires `COPILOT_GITHUB_TOKEN`).
+Then trigger via `gh aw run fitness-review` or the Actions tab. Get an API key at [console.anthropic.com](https://console.anthropic.com/). See `.github/RUN.md` for agent_type options and running with Claude locally. **When Claude returns 529 Overloaded:** run **Project Fitness Review (Copilot)** instead (requires `COPILOT_GITHUB_TOKEN`).
 
 ---
 
@@ -254,6 +253,6 @@ All skills are in the repo root. Use these names when symlinking:
 
 **Skills not loading in Cursor/Claude:** Check `~/.cursor/skills/` or `~/.claude/skills/` exists and symlinks resolve (`ls -la`). Restart the IDE or agent.
 
-**GitHub Agentic Workflow fails:** Ensure one of `COPILOT_GITHUB_TOKEN`, `ANTHROPIC_API_KEY`, or `OPENAI_API_KEY` is set in repository secrets. Run `gh aw compile` after editing the workflow.
+**GitHub Agentic Workflow fails:** Ensure one of `COPILOT_GITHUB_TOKEN`, `ANTHROPIC_API_KEY`, or `OPENAI_API_KEY` is set in repository secrets. Edit `.github/workflows/fitness-review.yml` directly (no compilation needed).
 
 **Claude Code Action OIDC error:** Add `id-token: write` to workflow permissions (see Option B).

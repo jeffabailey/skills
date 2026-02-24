@@ -111,7 +111,7 @@ Use [gh-aw](https://github.github.io/gh-aw/) with Copilot, Claude, or Codex. Add
 gh extension install github/gh-aw
 gh aw add jeffabailey/skills/fitness-review
 gh aw secrets set COPILOT_GITHUB_TOKEN --value "YOUR_PAT"  # or ANTHROPIC_API_KEY / OPENAI_API_KEY
-gh aw compile && git add .github/workflows/ && git commit -m "Add fitness review" && git push
+git add .github/workflows/ && git commit -m "Add fitness review" && git push
 ```
 
 Reports are created as GitHub issues. See **[SETUP.md](SETUP.md)** for full pipeline and IDE setup.

@@ -105,16 +105,18 @@ Domain skills write reports to `docs/<domain>-review.md`. The full review writes
 
 ### GitHub Agentic Workflows (recommended)
 
-Use [gh-aw](https://github.github.io/gh-aw/) with Copilot, Claude, or Codex. Add the workflow and configure one secret:
+Use [gh-aw](https://github.github.io/gh-aw/) with Claude Code (default), GitHub Copilot, or OpenAI Codex. Add the workflow and configure the secret for your engine:
 
 ```bash
 gh extension install github/gh-aw
 gh aw add jeffabailey/skills/fitness-review
-gh aw secrets set COPILOT_GITHUB_TOKEN --value "YOUR_PAT"  # or ANTHROPIC_API_KEY / OPENAI_API_KEY
-git add .github/workflows/ && git commit -m "Add fitness review" && git push
+gh aw secrets set ANTHROPIC_API_KEY --value "YOUR_KEY"       # Claude (default)
+# gh aw secrets set COPILOT_GITHUB_TOKEN --value "YOUR_TOKEN" # Copilot
+# gh aw secrets set OPENAI_API_KEY --value "YOUR_KEY"          # Codex
+git add .github/workflows/ .github/scripts/ && git commit -m "Add fitness review" && git push
 ```
 
-Reports are created as GitHub issues. See **[SETUP.md](SETUP.md)** for full pipeline and IDE setup.
+Select the engine from the **Run workflow** dropdown (default: claude). Reports are created as GitHub issues. See **[SETUP.md](SETUP.md)** for full pipeline and IDE setup.
 
 ### Claude Code GitHub Action (alternative)
 

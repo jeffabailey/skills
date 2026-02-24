@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Workflow validation tests using act (dry-run mode)
-# Tests that both fitness-review workflows are valid and parseable.
+# Tests that the fitness-review workflow is valid and properly configured.
 set -euo pipefail
 
 PASS=0
@@ -13,190 +13,175 @@ fail() { FAIL=$((FAIL + 1)); echo "  FAIL: $1"; }
 echo "=== Workflow Validation Tests ==="
 echo ""
 
-# ---- Test 1: Both workflow files exist ----
-echo "--- File existence ---"
+# ---- File structure ----
+echo "--- File structure ---"
 if [ -f .github/workflows/fitness-review.yml ]; then
   pass "fitness-review.yml exists"
 else
   fail "fitness-review.yml missing"
 fi
 
-if [ -f .github/workflows/fitness-review-copilot.yml ]; then
-  pass "fitness-review-copilot.yml exists"
+if [ ! -f .github/workflows/fitness-review-copilot.yml ]; then
+  pass "No separate Copilot workflow (single engine)"
 else
-  fail "fitness-review-copilot.yml missing"
+  fail "fitness-review-copilot.yml should not exist"
 fi
 
-# ---- Test 2: Lock files removed ----
-echo "--- Lock files removed ---"
 if [ ! -f .github/workflows/fitness-review.lock.yml ]; then
-  pass "No .lock.yml for Claude workflow"
+  pass "No .lock.yml file"
 else
   fail "fitness-review.lock.yml still exists"
 fi
 
-if [ ! -f .github/workflows/fitness-review-copilot.lock.yml ]; then
-  pass "No .lock.yml for Copilot workflow"
-else
-  fail "fitness-review-copilot.lock.yml still exists"
-fi
-
-# ---- Test 3: .md source files removed ----
-echo "--- Source .md files removed ---"
 if [ ! -f .github/workflows/fitness-review.md ]; then
-  pass "No .md source for Claude workflow"
+  pass "No .md source file"
 else
   fail "fitness-review.md still exists"
 fi
 
-if [ ! -f .github/workflows/fitness-review-copilot.md ]; then
-  pass "No .md source for Copilot workflow"
-else
-  fail "fitness-review-copilot.md still exists"
-fi
-
-# ---- Test 4: aw lock directory removed ----
-echo "--- aw directory removed ---"
 if [ ! -d .github/aw ]; then
   pass "No .github/aw directory"
 else
   fail ".github/aw directory still exists"
 fi
 
-# ---- Test 5: No auto-generated header ----
-echo "--- No auto-generated metadata ---"
-if ! grep -q "gh-aw-metadata" .github/workflows/fitness-review.yml; then
-  pass "No gh-aw-metadata in Claude workflow"
-else
-  fail "gh-aw-metadata still present in Claude workflow"
-fi
-
-if ! grep -q "gh-aw-metadata" .github/workflows/fitness-review-copilot.yml; then
-  pass "No gh-aw-metadata in Copilot workflow"
-else
-  fail "gh-aw-metadata still present in Copilot workflow"
-fi
-
-if ! grep -q "DO NOT EDIT" .github/workflows/fitness-review.yml; then
-  pass "No DO NOT EDIT in Claude workflow"
-else
-  fail "DO NOT EDIT still in Claude workflow"
-fi
-
-if ! grep -q "DO NOT EDIT" .github/workflows/fitness-review-copilot.yml; then
-  pass "No DO NOT EDIT in Copilot workflow"
-else
-  fail "DO NOT EDIT still in Copilot workflow"
-fi
-
-# ---- Test 6: Cursor removed from agent options ----
-echo "--- Cursor removed ---"
-if ! grep -q "cursor" .github/workflows/fitness-review.yml; then
-  pass "No cursor option in Claude workflow"
-else
-  fail "cursor option still in Claude workflow"
-fi
-
-if ! grep -q "cursor" .github/workflows/fitness-review-copilot.yml; then
-  pass "No cursor option in Copilot workflow"
-else
-  fail "cursor option still in Copilot workflow"
-fi
-
-# ---- Test 7: act can list jobs for both workflows ----
-echo "--- act workflow parsing ---"
-CLAUDE_LIST=$(act --list -W .github/workflows/fitness-review.yml $PLATFORM_ARGS 2>&1)
-if echo "$CLAUDE_LIST" | grep -q "agent"; then
-  pass "act lists agent job in Claude workflow"
-else
-  fail "act cannot list agent job in Claude workflow"
-fi
-
-if echo "$CLAUDE_LIST" | grep -q "activation"; then
-  pass "act lists activation job in Claude workflow"
-else
-  fail "act cannot list activation job in Claude workflow"
-fi
-
-COPILOT_LIST=$(act --list -W .github/workflows/fitness-review-copilot.yml $PLATFORM_ARGS 2>&1)
-if echo "$COPILOT_LIST" | grep -q "agent"; then
-  pass "act lists agent job in Copilot workflow"
-else
-  fail "act cannot list agent job in Copilot workflow"
-fi
-
-# ---- Test 8: Both workflows have expected jobs ----
-echo "--- Expected jobs present ---"
-for JOB in activation agent detection safe_outputs conclusion; do
-  if echo "$CLAUDE_LIST" | grep -q "$JOB"; then
-    pass "Claude workflow has $JOB job"
-  else
-    fail "Claude workflow missing $JOB job"
-  fi
-done
-
-for JOB in activation agent detection safe_outputs conclusion; do
-  if echo "$COPILOT_LIST" | grep -q "$JOB"; then
-    pass "Copilot workflow has $JOB job"
-  else
-    fail "Copilot workflow missing $JOB job"
-  fi
-done
-
-# ---- Test 9: Claude workflow has schedule trigger ----
-echo "--- Triggers ---"
-if grep -q "schedule:" .github/workflows/fitness-review.yml; then
-  pass "Claude workflow has schedule trigger"
-else
-  fail "Claude workflow missing schedule trigger"
-fi
-
-if grep -q "workflow_dispatch:" .github/workflows/fitness-review.yml; then
-  pass "Claude workflow has workflow_dispatch trigger"
-else
-  fail "Claude workflow missing workflow_dispatch trigger"
-fi
-
-if grep -q "workflow_dispatch:" .github/workflows/fitness-review-copilot.yml; then
-  pass "Copilot workflow has workflow_dispatch trigger"
-else
-  fail "Copilot workflow missing workflow_dispatch trigger"
-fi
-
-# ---- Test 10: Engine IDs correct ----
-echo "--- Engine configuration ---"
-if grep -q 'engine_id: "claude"' .github/workflows/fitness-review.yml; then
-  pass "Claude workflow engine_id is claude"
-else
-  fail "Claude workflow engine_id is wrong"
-fi
-
-if grep -q 'engine_id: "copilot"' .github/workflows/fitness-review-copilot.yml; then
-  pass "Copilot workflow engine_id is copilot"
-else
-  fail "Copilot workflow engine_id is wrong"
-fi
-
-# ---- Test 11: Secrets referenced correctly ----
-echo "--- Secret references ---"
-if grep -q "ANTHROPIC_API_KEY" .github/workflows/fitness-review.yml; then
-  pass "Claude workflow references ANTHROPIC_API_KEY"
-else
-  fail "Claude workflow missing ANTHROPIC_API_KEY"
-fi
-
-if grep -q "COPILOT_GITHUB_TOKEN" .github/workflows/fitness-review-copilot.yml; then
-  pass "Copilot workflow references COPILOT_GITHUB_TOKEN"
-else
-  fail "Copilot workflow missing COPILOT_GITHUB_TOKEN"
-fi
-
-# ---- Test 12: Prompt file still exists ----
-echo "--- Prompt file ---"
 if [ -f .github/fitness-review-prompt.md ]; then
   pass "Standalone prompt file exists"
 else
   fail "fitness-review-prompt.md missing"
+fi
+
+# ---- Engine config script ----
+echo "--- Engine config script ---"
+if [ -f .github/scripts/engine-config.py ]; then
+  pass "engine-config.py exists"
+else
+  fail "engine-config.py missing"
+fi
+
+if [ -x .github/scripts/engine-config.py ]; then
+  pass "engine-config.py is executable"
+else
+  fail "engine-config.py is not executable"
+fi
+
+# Validate engine-config.py outputs for each engine
+for ENGINE in claude copilot codex; do
+  ENGINE_OUTPUT=$(python3 .github/scripts/engine-config.py --engine "$ENGINE" 2>&1)
+  if echo "$ENGINE_OUTPUT" | grep -q "^engine_id=$ENGINE"; then
+    pass "engine-config.py outputs engine_id=$ENGINE"
+  else
+    fail "engine-config.py missing engine_id for $ENGINE"
+  fi
+  if echo "$ENGINE_OUTPUT" | grep -q "^engine_name="; then
+    pass "engine-config.py outputs engine_name for $ENGINE"
+  else
+    fail "engine-config.py missing engine_name for $ENGINE"
+  fi
+  if echo "$ENGINE_OUTPUT" | grep -q "^secret_name="; then
+    pass "engine-config.py outputs secret_name for $ENGINE"
+  else
+    fail "engine-config.py missing secret_name for $ENGINE"
+  fi
+  if echo "$ENGINE_OUTPUT" | grep -q "^install_cmd=\|^install_cmd<<"; then
+    pass "engine-config.py outputs install_cmd for $ENGINE"
+  else
+    fail "engine-config.py missing install_cmd for $ENGINE"
+  fi
+  if echo "$ENGINE_OUTPUT" | grep -q "^concurrency_prefix="; then
+    pass "engine-config.py outputs concurrency_prefix for $ENGINE"
+  else
+    fail "engine-config.py missing concurrency_prefix for $ENGINE"
+  fi
+done
+
+# ---- Clean headers ----
+echo "--- Clean headers ---"
+if ! grep -q "gh-aw-metadata" .github/workflows/fitness-review.yml; then
+  pass "No gh-aw-metadata"
+else
+  fail "gh-aw-metadata still present"
+fi
+
+if ! grep -q "DO NOT EDIT" .github/workflows/fitness-review.yml; then
+  pass "No DO NOT EDIT header"
+else
+  fail "DO NOT EDIT still present"
+fi
+
+# ---- Multi-engine support ----
+echo "--- Multi-engine support ---"
+if grep -q "engine:" .github/workflows/fitness-review.yml && grep -q "claude" .github/workflows/fitness-review.yml && grep -q "copilot" .github/workflows/fitness-review.yml && grep -q "codex" .github/workflows/fitness-review.yml; then
+  pass "Engine dropdown with claude, copilot, codex"
+else
+  fail "Missing engine dropdown or engine choices"
+fi
+
+if grep -q "engine-config.py" .github/workflows/fitness-review.yml; then
+  pass "Workflow references engine-config.py"
+else
+  fail "Workflow does not reference engine-config.py"
+fi
+
+if grep -q "steps.engine-config.outputs" .github/workflows/fitness-review.yml; then
+  pass "Workflow uses engine-config step outputs"
+else
+  fail "Workflow does not use engine-config step outputs"
+fi
+
+# Engine-specific secrets should be in the script, not hardcoded as the sole option in YAML
+if ! grep -q 'engine_id: "claude"' .github/workflows/fitness-review.yml; then
+  pass "No hardcoded engine_id in YAML"
+else
+  fail "Hardcoded engine_id still in YAML"
+fi
+
+# ---- No agent_type or cursor ----
+echo "--- No legacy patterns ---"
+if ! grep -q "cursor" .github/workflows/fitness-review.yml; then
+  pass "No cursor in workflow"
+else
+  fail "cursor still in workflow"
+fi
+
+if ! grep -q "agent_type" .github/workflows/fitness-review.yml; then
+  pass "No agent_type dropdown"
+else
+  fail "agent_type dropdown still present"
+fi
+
+# ---- act parsing ----
+echo "--- act workflow parsing ---"
+JOB_LIST=$(act --list -W .github/workflows/fitness-review.yml $PLATFORM_ARGS 2>&1)
+
+for JOB in activation agent detection safe_outputs conclusion; do
+  if echo "$JOB_LIST" | grep -q "$JOB"; then
+    pass "Has $JOB job"
+  else
+    fail "Missing $JOB job"
+  fi
+done
+
+# ---- Triggers ----
+echo "--- Triggers ---"
+if grep -q "schedule:" .github/workflows/fitness-review.yml; then
+  pass "Has schedule trigger"
+else
+  fail "Missing schedule trigger"
+fi
+
+if grep -q "workflow_dispatch:" .github/workflows/fitness-review.yml; then
+  pass "Has workflow_dispatch trigger"
+else
+  fail "Missing workflow_dispatch trigger"
+fi
+
+# ---- Prompt reference ----
+echo "--- Prompt ---"
+if grep -q "runtime-import .github/fitness-review-prompt.md" .github/workflows/fitness-review.yml; then
+  pass "Runtime-import points to canonical prompt"
+else
+  fail "Runtime-import path is wrong"
 fi
 
 if ! grep -q "Cursor" .github/fitness-review-prompt.md; then

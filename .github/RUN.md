@@ -1,48 +1,48 @@
 # Running the Fitness Review
 
-The fitness review runs with **GitHub agents** (Claude or Copilot) in GitHub Actions, or **locally** via Claude Code CLI.
+The fitness review runs in **GitHub Actions** (multiple engine support) or **locally** via the Claude Code CLI.
 
 ## File layout
 
 | File | Purpose |
 |------|---------|
-| `.github/workflows/fitness-review.yml` | Claude workflow (primary, deterministic YAML) |
-| `.github/workflows/fitness-review-copilot.yml` | Copilot workflow (fallback when Claude returns 529) |
+| `.github/workflows/fitness-review.yml` | GitHub Actions workflow (multi-engine) |
+| `.github/scripts/engine-config.py` | Engine-specific configuration (claude, copilot, codex) |
 | `.github/fitness-review-prompt.md` | Standalone prompt for Claude Code CLI (local use) |
 
-## agent_type: claude (default)
+## GitHub Actions
 
-Runs in GitHub Actions via [gh-aw](https://github.github.io/gh-aw/) with Claude Code.
+Runs weekly on Sunday and on manual dispatch via [gh-aw](https://github.github.io/gh-aw/).
 
 **Prerequisites:**
 - `gh` CLI v2.0+ and `gh extension install github/gh-aw`
-- Secret: `ANTHROPIC_API_KEY`
+- At least one engine secret (see below)
 
-**Run:**
+**Engine secrets:**
+
+| Engine | Secret | Where to get it |
+|--------|--------|-----------------|
+| Claude (default) | `ANTHROPIC_API_KEY` | [console.anthropic.com](https://console.anthropic.com/) |
+| Copilot | `COPILOT_GITHUB_TOKEN` | GitHub PAT with `copilot-requests` scope |
+| Codex | `OPENAI_API_KEY` | [platform.openai.com](https://platform.openai.com/) |
+
+**Run (default — Claude):**
 ```bash
 gh aw run fitness-review
 # Or: Actions → Project Fitness Review → Run workflow
-# Select agent_type: claude or copilot
 ```
 
-**Via Claude Code (local or CI):**
+**Run with a specific engine:**
+```bash
+# Via Actions tab: select engine from the dropdown
+# Or: Actions → Project Fitness Review → Run workflow → engine: copilot
+```
+
+## Local (Claude Code CLI)
+
 ```bash
 # Install skills (see SETUP.md), then:
 claude --prompt "$(cat .github/fitness-review-prompt.md)"
-# Or use anthropics/claude-code-action with that prompt
-```
-
-## agent_type: copilot
-
-Fallback when Claude returns 529 Overloaded. Runs via a separate workflow using GitHub Copilot.
-
-**Prerequisites:**
-- `COPILOT_GITHUB_TOKEN` (PAT with `copilot-requests` scope)
-
-**Run:**
-```bash
-gh workflow run "Project Fitness Review (Copilot)" -f agent_type=copilot
-# Or: Actions → Project Fitness Review (Copilot) → Run workflow
 ```
 
 ## Troubleshooting
@@ -52,5 +52,5 @@ gh workflow run "Project Fitness Review (Copilot)" -f agent_type=copilot
 If the agent job fails with `API Error: 529` or `overloaded_error`:
 
 - **Cause:** Anthropic's API was temporarily overloaded (transient).
-- **Fix 1:** Re-run the workflow (often succeeds on retry): Actions → Re-run failed jobs.
-- **Fix 2:** Use the Copilot fallback: run **Project Fitness Review (Copilot)** instead. Requires `COPILOT_GITHUB_TOKEN` (PAT with `copilot-requests` scope). Trigger via Actions or `gh workflow run "Project Fitness Review (Copilot)" -f agent_type=copilot`.
+- **Fix:** Re-run the workflow — usually succeeds on retry. Actions → Re-run failed jobs.
+- **Alternative:** Re-run with `engine: copilot` or `engine: codex` if overload persists.

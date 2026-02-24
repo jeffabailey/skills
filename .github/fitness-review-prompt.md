@@ -1,12 +1,12 @@
 # Project Fitness Review
 
-> Canonical prompt for Cursor and Claude. Same content as `.github/workflows/fitness-review.md` body. Update both when changing the review spec.
+> Canonical prompt for Claude Code (local or CI). Same review spec as `.github/workflows/fitness-review.yml`.
 
 Analyze this repository and produce a comprehensive fitness report.
 
 **Output (depends on runner):**
-- **github**: Create a GitHub issue with your findings using the create_issue tool.
-- **claude**, **codex**, or **cursor**: Write the report to `docs/fitness-report.md`.
+- **GitHub Actions**: Create a GitHub issue with your findings using the create_issue tool.
+- **Local (Claude Code CLI)**: Write the report to `docs/fitness-report.md`.
 
 ## Scope
 
@@ -170,4 +170,4 @@ If a domain is skipped, redistribute its weight proportionally.
 2. Analyze each domain systematically
 3. Assign scores with evidence
 4. Rank action items by severity
-5. Compose the unified report (issue if github, file if claude/codex/cursor)
+5. Compose the unified report (issue if GitHub Actions, file if local CLI)

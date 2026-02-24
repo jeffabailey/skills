@@ -67,8 +67,8 @@ The prompt adapts output: GitHub creates an issue; Cursor/Claude writes to `docs
 If the agent job fails with `API Error: 529` or `overloaded_error`:
 
 - **Cause:** Anthropic's API was temporarily overloaded (transient).
-- **Fix:** Re-run the workflow: Actions → Project Fitness Review → Re-run failed jobs, or `gh workflow run "Project Fitness Review" -f agent_type=github` for a fresh run.
-- **Alternative:** Switch to Copilot: set `engine: copilot` in the .md frontmatter, add `COPILOT_GITHUB_TOKEN` secret, run `gh aw compile`, then commit the updated lock file.
+- **Fix 1:** Re-run the workflow (often succeeds on retry): Actions → Re-run failed jobs.
+- **Fix 2:** Use the Copilot fallback: run **Project Fitness Review (Copilot)** instead. Requires `COPILOT_GITHUB_TOKEN` (PAT with `copilot-requests` scope). Trigger via Actions or `gh workflow run "Project Fitness Review (Copilot)" -f agent_type=github`.
 
 ### Lock file outdated
 

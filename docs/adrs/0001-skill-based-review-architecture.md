@@ -51,4 +51,4 @@ The `review-full` skill launches all domain skills in parallel using Claude Code
 - The `review-full` orchestrator depends on all domain skills being installed; missing skills are silently skipped.
 - Checklist updates require editing markdown files, not code -- lowering the contribution barrier.
 - Reports are written to `docs/` as markdown, making them version-controllable and diffable.
-- Natural language triggers overlap between domains (e.g., "check performance" could mean `review-performance` or `review-algorithms`), so trigger phrases must be carefully scoped.
+- Natural language triggers overlap between domains (e.g., "check performance" could mean `review-performance` or `review-algorithms`), so trigger phrases must be carefully scoped. **Resolution:** each skill's trigger phrases should be domain-specific and avoid general terms that apply to multiple domains; prefer phrases like "check algorithm correctness" over "check performance" for `review-algorithms`, and document any remaining ambiguities in the skill's SKILL.md.

@@ -244,6 +244,7 @@ All skills are in the repo root. Use these names when symlinking:
 - `review-data`
 - `review-accessibility`
 - `review-process`
+- `review-maintainability`
 - `review-full`
 - `review-jit-test-gen`
 

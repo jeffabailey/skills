@@ -183,9 +183,7 @@ COPILOT_AGENT_CLI = (
 CODEX_AGENT_CLI = (
     "/bin/bash -c 'export PATH=\"$(find /opt/hostedtoolcache -maxdepth 4"
     " -type d -name bin 2>/dev/null | tr '\"'\"'\\n'\"'\"' '\"'\"':'\"'\"'"
-    ")$PATH\"; codex --full-auto"
-    " --mcp-config /tmp/gh-aw/mcp-config/mcp-servers.json"
-    " --debug-file /tmp/gh-aw/agent-stdio.log --verbose"
+    ")$PATH\"; codex exec --full-auto --json"
     " \"$(cat /tmp/gh-aw/aw-prompts/prompt.txt)\""
     "${GH_AW_MODEL_AGENT_CODEX:+ --model \"$GH_AW_MODEL_AGENT_CODEX\"}'"
 )
@@ -220,8 +218,7 @@ COPILOT_DETECTION_CLI = (
 )
 
 CODEX_DETECTION_CLI = (
-    "codex --full-auto"
-    " --debug-file /tmp/gh-aw/threat-detection/detection.log --verbose"
+    "codex exec --full-auto --json"
     " \"$(cat /tmp/gh-aw/aw-prompts/prompt.txt)\""
     "${GH_AW_MODEL_DETECTION_CODEX:+ --model \"$GH_AW_MODEL_DETECTION_CODEX\"}"
     " 2>&1 | tee -a /tmp/gh-aw/threat-detection/detection.log"

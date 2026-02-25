@@ -295,14 +295,14 @@ ENGINES = {
     "codex": {
         "engine_id": "codex",
         "engine_name": "OpenAI Codex CLI",
-        "agent_version": "0.1.2025062000",
+        "agent_version": "0.104.0",
         "secret_name": "OPENAI_API_KEY",
         "secret_env_name": "OPENAI_API_KEY",
         "secret_docs_url": (
             "https://github.github.com/gh-aw/reference/engines/"
             "#openai-codex"
         ),
-        "install_cmd": "npm install -g --silent @openai/codex@0.1.2025062000",
+        "install_cmd": "npm install -g --silent @openai/codex@0.104.0",
         "setup_node": "true",
         "awf_extra_flags": "",
         "model_env_var": "GH_AW_MODEL_AGENT_CODEX",
@@ -312,7 +312,7 @@ ENGINES = {
         "agent_log_path": "/tmp/gh-aw/agent-stdio.log",
         "concurrency_prefix": "gh-aw-codex",
         "detection_install_cmd": (
-            "npm install -g --silent @openai/codex@0.1.2025062000"
+            "npm install -g --silent @openai/codex@0.104.0"
         ),
         "detection_secret_name": "OPENAI_API_KEY",
         "detection_setup_node": "true",

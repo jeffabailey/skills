@@ -55,7 +55,20 @@ The current domain weights (used by `review-full`) are:
 | Process | 8% |
 | Maintainability | 6% |
 
-If you propose adding or removing a domain, update both `review-full/SKILL.md` and `README.md` to keep them consistent.
+### Adding or removing a skill
+
+The skill list appears in multiple files in different formats. When adding, removing, or renaming a skill, update **all** of these locations:
+
+1. **`README.md`** — Skills table and installation `for` loops
+2. **`CONTRIBUTING.md`** — Scoring weights table (this file)
+3. **`review-full/SKILL.md`** — Domain launch list and scoring weights
+4. **`SETUP.md`** — All platform-specific install `for` loops and the skill reference list
+5. **`.github/fitness-review-prompt.md`** — Review domains section
+6. **`tests/trigger-tests.md`** — Trigger test cases for the skill
+7. **`tests/functional-tests.md`** — Functional test scenarios for the skill
+8. **`tests/skill-structure-tests.sh`** — `SKILLS` array
+
+The PR template checklist will remind you to verify these locations. CI will catch missing directories or SKILL.md files but cannot verify that every prose reference is updated.
 
 ## Questions
 

@@ -17,6 +17,12 @@ __pycache__/
 # Node
 node_modules/
 
+# Secrets / credentials
+.env
+.env.*
+*.pem
+*.key
+
 # Test artifacts
 /tmp/
 .gitnexus

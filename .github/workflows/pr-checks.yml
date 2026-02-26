@@ -1,0 +1,81 @@
+# PR Checks
+#
+# Runs structural validation on pull requests and pushes to main.
+# No secrets required — all checks are syntactic/structural.
+
+name: "PR Checks"
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  workflow-validation:
+    name: Workflow & engine-config validation
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Validate engine-config.py syntax
+        run: python3 -c "import ast; ast.parse(open('.github/scripts/engine-config.py').read())"
+
+      - name: Validate engine-config.py outputs for all engines
+        run: |
+          for engine in claude copilot codex; do
+            echo "--- Testing engine: $engine ---"
+            output=$(python3 .github/scripts/engine-config.py --engine "$engine")
+            echo "$output" | grep -q "^engine_id=$engine" || { echo "FAIL: missing engine_id for $engine"; exit 1; }
+            for key in engine_name secret_name concurrency_prefix install_cmd; do
+              echo "$output" | grep -qE "^${key}=|^${key}<<" || { echo "FAIL: missing $key for $engine"; exit 1; }
+            done
+            echo "  PASS: $engine"
+          done
+
+      - name: Validate workflow YAML syntax
+        run: python3 -c "import yaml; yaml.safe_load(open('.github/workflows/fitness-review.yml'))"
+
+  skill-structure:
+    name: Skill structure validation
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run skill structure tests
+        run: bash tests/skill-structure-tests.sh
+
+  markdown-links:
+    name: Internal link check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check referenced files exist
+        run: |
+          status=0
+          for file in SETUP.md CONTRIBUTING.md LICENSE catalog-info.yaml; do
+            if [ ! -f "$file" ]; then
+              echo "FAIL: README references $file but it does not exist"
+              status=1
+            else
+              echo "PASS: $file exists"
+            fi
+          done
+          for dir in review-architecture review-security review-reliability review-testing review-performance review-algorithms review-data review-accessibility review-process review-maintainability review-full review-jit-test-gen; do
+            if [ ! -d "$dir" ]; then
+              echo "FAIL: $dir/ directory missing"
+              status=1
+            else
+              echo "PASS: $dir/ exists"
+            fi
+          done
+          exit $status

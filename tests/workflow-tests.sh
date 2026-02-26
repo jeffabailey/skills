@@ -144,17 +144,21 @@ else
   fail "agent_type dropdown still present"
 fi
 
-# ---- act parsing ----
+# ---- act parsing (skipped if act is not installed) ----
 echo "--- act workflow parsing ---"
-JOB_LIST=$(act --list -W .github/workflows/fitness-review.yml $PLATFORM_ARGS 2>&1)
+if command -v act &>/dev/null; then
+  JOB_LIST=$(act --list -W .github/workflows/fitness-review.yml $PLATFORM_ARGS 2>&1)
 
-for JOB in activation agent detection safe_outputs conclusion; do
-  if echo "$JOB_LIST" | grep -q "$JOB"; then
-    pass "Has $JOB job"
-  else
-    fail "Missing $JOB job"
-  fi
-done
+  for JOB in activation agent detection safe_outputs conclusion; do
+    if echo "$JOB_LIST" | grep -q "$JOB"; then
+      pass "Has $JOB job"
+    else
+      fail "Missing $JOB job"
+    fi
+  done
+else
+  echo "  SKIP: act not installed — skipping job list validation"
+fi
 
 # ---- Triggers ----
 echo "--- Triggers ---"

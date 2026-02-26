@@ -29,7 +29,7 @@ review-<domain>/
     checklist.md         # detailed checklist items
 ```
 
-- `SKILL.md` must include: a `## Triggers` section, a `## Workflow` section, and a `## Scoring` section.
+- `SKILL.md` must include: YAML frontmatter with `name` and `description` (including trigger phrases), a `## Workflow` section, and a `## Scoring Dimensions` section.
 - Scoring weights in `review-full/SKILL.md` must stay consistent with the weights listed in `README.md`.
 - Trigger phrases must be domain-specific. Avoid general phrases that overlap with other skills (see [ADR 0001](docs/adrs/0001-skill-based-review-architecture.md)).
 

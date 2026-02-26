@@ -37,15 +37,16 @@ Domain skills write reports to `docs/<domain>-review.md`. The full review writes
 
 | Domain | Weight |
 |--------|--------|
-| Architecture | 15% |
-| Security | 15% |
+| Architecture | 14% |
+| Security | 14% |
 | Reliability | 10% |
 | Testing | 10% |
 | Performance | 10% |
 | Algorithms | 10% |
 | Data | 10% (skipped if no database code) |
-| Accessibility | 10% (skipped for backend-only projects) |
-| Process | 10% |
+| Accessibility | 8% (skipped for backend-only projects) |
+| Process | 8% |
+| Maintainability | 6% |
 
 When a domain is skipped, its weight redistributes proportionally across the remaining domains.
 

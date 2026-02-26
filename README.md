@@ -1,5 +1,7 @@
 # Project Fitness Review Skills
 
+[![PR Checks](https://github.com/jeffabailey/skills/actions/workflows/pr-checks.yml/badge.svg)](https://github.com/jeffabailey/skills/actions/workflows/pr-checks.yml) [![Project Fitness Review](https://github.com/jeffabailey/skills/actions/workflows/fitness-review.yml/badge.svg)](https://github.com/jeffabailey/skills/actions/workflows/fitness-review.yml)
+
 Reusable skills for **Cursor**, **Claude Code**, **VS Code (Copilot)**, and **pipelines** (GitHub Agentic Workflows, Claude Code Action) that review software project fitness across architecture, security, reliability, testing, performance, algorithms, data, accessibility, and process. Based on guidance from the [Fundamentals series](https://jeffbailey.us/categories/fundamentals/).
 
 **Repository:** [github.com/jeffabailey/skills](https://github.com/jeffabailey/skills)

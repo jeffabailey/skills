@@ -67,7 +67,7 @@ fi
 
 # Validate engine-config.py outputs for each engine
 for ENGINE in claude copilot codex; do
-  ENGINE_OUTPUT=$(python3 .github/scripts/engine-config.py --engine "$ENGINE" 2>&1)
+  ENGINE_OUTPUT=$(python3 .github/scripts/engine-config.py --engine "$ENGINE")
   if echo "$ENGINE_OUTPUT" | grep -q "^engine_id=$ENGINE"; then
     pass "engine-config.py outputs engine_id=$ENGINE"
   else

@@ -45,6 +45,16 @@ gh aw run fitness-review
 claude --prompt "$(cat .github/fitness-review-prompt.md)"
 ```
 
+## Notifications
+
+GitHub sends email notifications for failed workflow runs by default. To ensure you are alerted:
+
+1. Go to **Settings → Notifications → Actions** on github.com
+2. Ensure **Send notifications for failed workflows only** is checked
+3. Optionally configure a **Slack integration**: install the [GitHub Slack app](https://github.com/integrations/slack) and subscribe with `/github subscribe jeffabailey/skills workflows:{event:"failure"}`
+
+The README badges show current pipeline status at a glance.
+
 ## Troubleshooting
 
 ### 529 Overloaded (Claude/Anthropic)

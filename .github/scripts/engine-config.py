@@ -317,11 +317,11 @@ def write_outputs(engine_id: str, config: dict[str, str]) -> None:
     # Derive keys that always match their non-detection counterparts.
     # Kept as separate outputs so the workflow can reference them independently.
     config = {
+        **config,
         "engine_id": engine_id,
         "detection_install_cmd": config["install_cmd"],
         "detection_secret_name": config["secret_name"],
         "detection_setup_node": config["setup_node"],
-        **config,
     }
 
     # Values longer than this use a heredoc delimiter in GITHUB_OUTPUT

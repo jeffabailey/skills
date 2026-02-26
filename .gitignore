@@ -1,0 +1,21 @@
+# macOS
+.DS_Store
+._*
+
+# IDEs
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# Node
+node_modules/
+
+# Test artifacts
+/tmp/

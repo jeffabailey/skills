@@ -211,4 +211,4 @@ See review-process/references/checklist.md for the full process checklist
 derived from software development fundamentals.
 ```
 
-Write the report to `docs/process-fitness-report.md`.
+Write the report to `docs/process-review.md`.

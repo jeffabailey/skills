@@ -73,29 +73,23 @@ for ENGINE in claude copilot codex; do
   else
     fail "engine-config.py missing engine_id for $ENGINE"
   fi
-  if echo "$ENGINE_OUTPUT" | grep -q "^engine_name="; then
-    pass "engine-config.py outputs engine_name for $ENGINE"
-  else
-    fail "engine-config.py missing engine_name for $ENGINE"
-  fi
-  if echo "$ENGINE_OUTPUT" | grep -q "^secret_name="; then
-    pass "engine-config.py outputs secret_name for $ENGINE"
-  else
-    fail "engine-config.py missing secret_name for $ENGINE"
-  fi
+  for KEY in engine_name secret_name concurrency_prefix; do
+    if echo "$ENGINE_OUTPUT" | grep -q "^${KEY}="; then
+      pass "engine-config.py outputs $KEY for $ENGINE"
+    else
+      fail "engine-config.py missing $KEY for $ENGINE"
+    fi
+  done
+  # install_cmd may use heredoc delimiter for long values
   if echo "$ENGINE_OUTPUT" | grep -q "^install_cmd=\|^install_cmd<<"; then
     pass "engine-config.py outputs install_cmd for $ENGINE"
   else
     fail "engine-config.py missing install_cmd for $ENGINE"
   fi
-  if echo "$ENGINE_OUTPUT" | grep -q "^concurrency_prefix="; then
-    pass "engine-config.py outputs concurrency_prefix for $ENGINE"
-  else
-    fail "engine-config.py missing concurrency_prefix for $ENGINE"
-  fi
 done
 
 # ---- Clean headers ----
+echo ""
 echo "--- Clean headers ---"
 if ! grep -q "gh-aw-metadata" .github/workflows/fitness-review.yml; then
   pass "No gh-aw-metadata"

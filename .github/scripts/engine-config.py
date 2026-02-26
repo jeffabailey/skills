@@ -85,37 +85,9 @@ CLAUDE_DETECTION_ALLOWED_TOOLS = ",".join([
 # Domain allowlists
 # ---------------------------------------------------------------------------
 
-CLAUDE_DOMAINS = ",".join([
-    "*.githubusercontent.com",
-    "anthropic.com", "api.anthropic.com",
+# Shared infrastructure: CRL/OCSP, package managers, GitHub, Docker, etc.
+COMMON_DOMAINS = [
     "api.github.com", "api.snapcraft.io",
-    "archive.ubuntu.com", "azure.archive.ubuntu.com",
-    "cdn.playwright.dev", "codeload.github.com",
-    "crl.geotrust.com", "crl.globalsign.com", "crl.identrust.com",
-    "crl.sectigo.com", "crl.thawte.com", "crl.usertrust.com",
-    "crl.verisign.com", "crl3.digicert.com", "crl4.digicert.com",
-    "crls.ssl.com", "files.pythonhosted.org",
-    "ghcr.io", "github-cloud.githubusercontent.com",
-    "github-cloud.s3.amazonaws.com", "github.com",
-    "host.docker.internal", "json-schema.org", "json.schemastore.org",
-    "keyserver.ubuntu.com", "lfs.github.com",
-    "objects.githubusercontent.com",
-    "ocsp.digicert.com", "ocsp.geotrust.com", "ocsp.globalsign.com",
-    "ocsp.identrust.com", "ocsp.sectigo.com", "ocsp.ssl.com",
-    "ocsp.thawte.com", "ocsp.usertrust.com", "ocsp.verisign.com",
-    "packagecloud.io", "packages.cloud.google.com",
-    "packages.microsoft.com", "playwright.download.prss.microsoft.com",
-    "ppa.launchpad.net", "pypi.org", "raw.githubusercontent.com",
-    "registry.npmjs.org",
-    "s.symcb.com", "s.symcd.com", "security.ubuntu.com",
-    "sentry.io", "statsig.anthropic.com",
-    "ts-crl.ws.symantec.com", "ts-ocsp.ws.symantec.com",
-])
-
-COPILOT_DOMAINS = ",".join([
-    "api.business.githubcopilot.com", "api.enterprise.githubcopilot.com",
-    "api.github.com", "api.githubcopilot.com",
-    "api.individual.githubcopilot.com", "api.snapcraft.io",
     "archive.ubuntu.com", "azure.archive.ubuntu.com",
     "crl.geotrust.com", "crl.globalsign.com", "crl.identrust.com",
     "crl.sectigo.com", "crl.thawte.com", "crl.usertrust.com",
@@ -129,30 +101,44 @@ COPILOT_DOMAINS = ",".join([
     "packages.microsoft.com", "ppa.launchpad.net",
     "raw.githubusercontent.com", "registry.npmjs.org",
     "s.symcb.com", "s.symcd.com", "security.ubuntu.com",
-    "telemetry.enterprise.githubcopilot.com",
     "ts-crl.ws.symantec.com", "ts-ocsp.ws.symantec.com",
-])
+]
 
-CODEX_DOMAINS = ",".join([
-    "api.github.com", "api.openai.com", "api.snapcraft.io",
-    "archive.ubuntu.com", "azure.archive.ubuntu.com",
+CLAUDE_EXTRA_DOMAINS = [
+    "*.githubusercontent.com",
+    "anthropic.com", "api.anthropic.com",
     "cdn.playwright.dev", "codeload.github.com",
-    "crl.geotrust.com", "crl.globalsign.com", "crl.identrust.com",
-    "crl.sectigo.com", "crl.thawte.com", "crl.usertrust.com",
-    "crl.verisign.com", "crl3.digicert.com", "crl4.digicert.com",
-    "crls.ssl.com", "files.pythonhosted.org",
-    "ghcr.io", "github.com", "host.docker.internal",
-    "json-schema.org", "json.schemastore.org", "keyserver.ubuntu.com",
-    "objects.githubusercontent.com",
-    "ocsp.digicert.com", "ocsp.geotrust.com", "ocsp.globalsign.com",
-    "ocsp.identrust.com", "ocsp.sectigo.com", "ocsp.ssl.com",
-    "ocsp.thawte.com", "ocsp.usertrust.com", "ocsp.verisign.com",
-    "packagecloud.io", "packages.cloud.google.com",
-    "packages.microsoft.com", "ppa.launchpad.net", "pypi.org",
-    "raw.githubusercontent.com", "registry.npmjs.org",
-    "s.symcb.com", "s.symcd.com", "security.ubuntu.com",
-    "ts-crl.ws.symantec.com", "ts-ocsp.ws.symantec.com",
-])
+    "files.pythonhosted.org",
+    "ghcr.io", "github-cloud.githubusercontent.com",
+    "github-cloud.s3.amazonaws.com",
+    "lfs.github.com", "objects.githubusercontent.com",
+    "playwright.download.prss.microsoft.com",
+    "pypi.org",
+    "sentry.io", "statsig.anthropic.com",
+]
+
+COPILOT_EXTRA_DOMAINS = [
+    "api.business.githubcopilot.com", "api.enterprise.githubcopilot.com",
+    "api.githubcopilot.com", "api.individual.githubcopilot.com",
+    "telemetry.enterprise.githubcopilot.com",
+]
+
+CODEX_EXTRA_DOMAINS = [
+    "api.openai.com",
+    "cdn.playwright.dev", "codeload.github.com",
+    "files.pythonhosted.org",
+    "ghcr.io", "objects.githubusercontent.com",
+    "pypi.org",
+]
+
+
+def _domains(extra: list[str]) -> str:
+    return ",".join(sorted(set(COMMON_DOMAINS + extra)))
+
+
+CLAUDE_DOMAINS = _domains(CLAUDE_EXTRA_DOMAINS)
+COPILOT_DOMAINS = _domains(COPILOT_EXTRA_DOMAINS)
+CODEX_DOMAINS = _domains(CODEX_EXTRA_DOMAINS)
 
 # ---------------------------------------------------------------------------
 # CLI commands — agent (the inner command after awf --)
@@ -228,18 +214,22 @@ CODEX_DETECTION_CLI = (
 # Engine definitions
 # ---------------------------------------------------------------------------
 
+# Version constants — single source of truth for install_cmd strings
+CLAUDE_VERSION = "2.1.50"
+COPILOT_VERSION = "0.0.414"
+CODEX_VERSION = "0.104.0"
+
 ENGINES = {
     "claude": {
-        "engine_id": "claude",
         "engine_name": "Claude Code",
-        "agent_version": "2.1.50",
+        "agent_version": CLAUDE_VERSION,
         "secret_name": "ANTHROPIC_API_KEY",
         "secret_env_name": "ANTHROPIC_API_KEY",
         "secret_docs_url": (
             "https://github.github.com/gh-aw/reference/engines/"
             "#anthropic-claude-code"
         ),
-        "install_cmd": "npm install -g --silent @anthropic-ai/claude-code@2.1.50",
+        "install_cmd": f"npm install -g --silent @anthropic-ai/claude-code@{CLAUDE_VERSION}",
         "setup_node": "true",
         "awf_extra_flags": "--tty",
         "model_env_var": "GH_AW_MODEL_AGENT_CLAUDE",
@@ -248,11 +238,6 @@ ENGINES = {
         "log_parser": "parse_claude_log.cjs",
         "agent_log_path": "/tmp/gh-aw/agent-stdio.log",
         "concurrency_prefix": "gh-aw-claude",
-        "detection_install_cmd": (
-            "npm install -g --silent @anthropic-ai/claude-code@2.1.50"
-        ),
-        "detection_secret_name": "ANTHROPIC_API_KEY",
-        "detection_setup_node": "true",
         "extra_agent_env": "",
         "mcp_gateway_config_style": "claude",
         "allowed_domains": CLAUDE_DOMAINS,
@@ -260,16 +245,15 @@ ENGINES = {
         "detection_cli_cmd": CLAUDE_DETECTION_CLI,
     },
     "copilot": {
-        "engine_id": "copilot",
         "engine_name": "GitHub Copilot CLI",
-        "agent_version": "0.0.414",
+        "agent_version": COPILOT_VERSION,
         "secret_name": "COPILOT_GITHUB_TOKEN",
         "secret_env_name": "COPILOT_GITHUB_TOKEN",
         "secret_docs_url": (
             "https://github.github.com/gh-aw/reference/engines/"
             "#github-copilot-default"
         ),
-        "install_cmd": "/opt/gh-aw/actions/install_copilot_cli.sh 0.0.414",
+        "install_cmd": f"/opt/gh-aw/actions/install_copilot_cli.sh {COPILOT_VERSION}",
         "setup_node": "false",
         "awf_extra_flags": "",
         "model_env_var": "GH_AW_MODEL_AGENT_COPILOT",
@@ -278,11 +262,6 @@ ENGINES = {
         "log_parser": "parse_copilot_log.cjs",
         "agent_log_path": "/tmp/gh-aw/sandbox/agent/logs/",
         "concurrency_prefix": "gh-aw-copilot",
-        "detection_install_cmd": (
-            "/opt/gh-aw/actions/install_copilot_cli.sh 0.0.414"
-        ),
-        "detection_secret_name": "COPILOT_GITHUB_TOKEN",
-        "detection_setup_node": "false",
         "extra_agent_env": "COPILOT_AGENT_RUNNER_TYPE=STANDALONE",
         "mcp_gateway_config_style": "copilot",
         "allowed_domains": COPILOT_DOMAINS,
@@ -290,16 +269,15 @@ ENGINES = {
         "detection_cli_cmd": COPILOT_DETECTION_CLI,
     },
     "codex": {
-        "engine_id": "codex",
         "engine_name": "OpenAI Codex CLI",
-        "agent_version": "0.104.0",
+        "agent_version": CODEX_VERSION,
         "secret_name": "OPENAI_API_KEY",
         "secret_env_name": "OPENAI_API_KEY",
         "secret_docs_url": (
             "https://github.github.com/gh-aw/reference/engines/"
             "#openai-codex"
         ),
-        "install_cmd": "npm install -g --silent @openai/codex@0.104.0",
+        "install_cmd": f"npm install -g --silent @openai/codex@{CODEX_VERSION}",
         "setup_node": "true",
         "awf_extra_flags": "",
         "model_env_var": "GH_AW_MODEL_AGENT_CODEX",
@@ -308,11 +286,6 @@ ENGINES = {
         "log_parser": "parse_codex_log.cjs",
         "agent_log_path": "/tmp/gh-aw/agent-stdio.log",
         "concurrency_prefix": "gh-aw-codex",
-        "detection_install_cmd": (
-            "npm install -g --silent @openai/codex@0.104.0"
-        ),
-        "detection_secret_name": "OPENAI_API_KEY",
-        "detection_setup_node": "true",
         "extra_agent_env": "",
         "mcp_gateway_config_style": "claude",
         "allowed_domains": CODEX_DOMAINS,
@@ -322,9 +295,19 @@ ENGINES = {
 }
 
 
-def write_outputs(config: dict[str, str]) -> None:
+def write_outputs(engine_id: str, config: dict[str, str]) -> None:
     """Write config values to GITHUB_OUTPUT or stdout."""
     output_file = os.environ.get("GITHUB_OUTPUT")
+
+    # Derive keys that always match their non-detection counterparts.
+    # Kept as separate outputs so the workflow can reference them independently.
+    config = {
+        "engine_id": engine_id,
+        "detection_install_cmd": config["install_cmd"],
+        "detection_secret_name": config["secret_name"],
+        "detection_setup_node": config["setup_node"],
+        **config,
+    }
 
     lines: list[str] = []
     for key, value in sorted(config.items()):
@@ -357,8 +340,7 @@ def main() -> None:
     )
     args = parser.parse_args()
 
-    engine = ENGINES[args.engine]
-    write_outputs(engine)
+    write_outputs(args.engine, ENGINES[args.engine])
 
 
 if __name__ == "__main__":

@@ -144,10 +144,18 @@ CODEX_DOMAINS = _domains(CODEX_EXTRA_DOMAINS)
 # CLI commands — agent (the inner command after awf --)
 # ---------------------------------------------------------------------------
 
-CLAUDE_AGENT_CLI = (
-    "/bin/bash -c 'export PATH=\"$(find /opt/hostedtoolcache -maxdepth 4"
+# Adds hostedtoolcache bin dirs and GOROOT to PATH so the agent can find
+# language runtimes (node, python, go, etc.) installed by setup-* actions.
+_TOOLCACHE_PATH = (
+    "export PATH=\"$(find /opt/hostedtoolcache -maxdepth 4"
     " -type d -name bin 2>/dev/null | tr '\"'\"'\\n'\"'\"' '\"'\"':'\"'\"'"
     ")$PATH\"; [ -n \"$GOROOT\" ] && export PATH=\"$GOROOT/bin:$PATH\" || true"
+)
+
+# Claude Code agent: set up PATH, run claude with MCP, allowed tools,
+# bypass permissions, and stream-json output.  Reads prompt from file.
+CLAUDE_AGENT_CLI = (
+    f"/bin/bash -c '{_TOOLCACHE_PATH}"
     " && claude --print --disable-slash-commands --no-chrome"
     " --mcp-config /tmp/gh-aw/mcp-config/mcp-servers.json"
     f" --allowed-tools {CLAUDE_AGENT_ALLOWED_TOOLS}"
@@ -157,6 +165,8 @@ CLAUDE_AGENT_CLI = (
     "${GH_AW_MODEL_AGENT_CLAUDE:+ --model \"$GH_AW_MODEL_AGENT_CLAUDE\"}'"
 )
 
+# Copilot agent: run copilot CLI with workspace dirs, full tool/path access,
+# and prompt from file.  No PATH setup needed (copilot is pre-installed).
 COPILOT_AGENT_CLI = (
     "/bin/bash -c '/usr/local/bin/copilot --add-dir /tmp/gh-aw/"
     " --log-level all --log-dir /tmp/gh-aw/sandbox/agent/logs/"
@@ -166,18 +176,21 @@ COPILOT_AGENT_CLI = (
     "${GH_AW_MODEL_AGENT_COPILOT:+ --model \"$GH_AW_MODEL_AGENT_COPILOT\"}'"
 )
 
+# Codex agent: set up PATH, run codex in full-auto JSON mode with prompt.
 CODEX_AGENT_CLI = (
-    "/bin/bash -c 'export PATH=\"$(find /opt/hostedtoolcache -maxdepth 4"
-    " -type d -name bin 2>/dev/null | tr '\"'\"'\\n'\"'\"' '\"'\"':'\"'\"'"
-    ")$PATH\"; codex exec --full-auto --json"
+    f"/bin/bash -c '{_TOOLCACHE_PATH}"
+    " && codex exec --full-auto --json"
     " \"$(cat /tmp/gh-aw/aw-prompts/prompt.txt)\""
     "${GH_AW_MODEL_AGENT_CODEX:+ --model \"$GH_AW_MODEL_AGENT_CODEX\"}'"
 )
 
 # ---------------------------------------------------------------------------
 # CLI commands — detection (full run script, no awf wrapper)
+# Detection commands run directly (not inside awf) with restricted tool sets
+# and tee output to the detection log.
 # ---------------------------------------------------------------------------
 
+# Claude detection: restricted tools, tee to detection log.
 CLAUDE_DETECTION_CLI = (
     "claude --print --disable-slash-commands --no-chrome"
     f" --allowed-tools '{CLAUDE_DETECTION_ALLOWED_TOOLS}'"
@@ -188,6 +201,7 @@ CLAUDE_DETECTION_CLI = (
     " 2>&1 | tee -a /tmp/gh-aw/threat-detection/detection.log"
 )
 
+# Copilot detection: set up dirs, allow only shell tools, tee to detection log.
 COPILOT_DETECTION_CLI = (
     "COPILOT_CLI_INSTRUCTION=\"$(cat /tmp/gh-aw/aw-prompts/prompt.txt)\"\n"
     "mkdir -p /tmp/ /tmp/gh-aw/ /tmp/gh-aw/agent/ /tmp/gh-aw/sandbox/agent/logs/\n"
@@ -203,6 +217,7 @@ COPILOT_DETECTION_CLI = (
     " 2>&1 | tee /tmp/gh-aw/threat-detection/detection.log"
 )
 
+# Codex detection: full-auto JSON mode, tee to detection log.
 CODEX_DETECTION_CLI = (
     "codex exec --full-auto --json"
     " \"$(cat /tmp/gh-aw/aw-prompts/prompt.txt)\""
@@ -309,11 +324,14 @@ def write_outputs(engine_id: str, config: dict[str, str]) -> None:
         **config,
     }
 
+    # Values longer than this use a heredoc delimiter in GITHUB_OUTPUT
+    # to avoid shell quoting issues with long CLI command strings.
+    heredoc_threshold = 200
+
     lines: list[str] = []
     for key, value in sorted(config.items()):
         value_str = str(value)
-        # Use heredoc delimiter for multiline or long values
-        if "\n" in value_str or len(value_str) > 200:
+        if "\n" in value_str or len(value_str) > heredoc_threshold:
             lines.append(f"{key}<<GH_AW_EOF")
             lines.append(value_str)
             lines.append("GH_AW_EOF")

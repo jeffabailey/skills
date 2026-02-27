@@ -66,6 +66,8 @@ else
 fi
 
 # Validate engine-config.py outputs for each engine
+# Unset GITHUB_OUTPUT so the script writes to stdout instead of the GH Actions file
+unset GITHUB_OUTPUT
 for ENGINE in claude copilot codex; do
   ENGINE_OUTPUT=$(python3 .github/scripts/engine-config.py --engine "$ENGINE")
   if echo "$ENGINE_OUTPUT" | grep -q "^engine_id=$ENGINE"; then

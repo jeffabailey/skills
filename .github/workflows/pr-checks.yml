@@ -31,6 +31,7 @@ jobs:
 
       - name: Validate engine-config.py outputs for all engines
         run: |
+          unset GITHUB_OUTPUT
           for engine in claude copilot codex; do
             echo "--- Testing engine: $engine ---"
             output=$(python3 .github/scripts/engine-config.py --engine "$engine")

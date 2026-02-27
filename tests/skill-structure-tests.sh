@@ -70,6 +70,25 @@ for skill in "${SKILLS[@]}"; do
   fi
 done
 
+# ---- Standardized sections ----
+echo "--- Standardized sections ---"
+for skill in "${SKILLS[@]}"; do
+  domain="${skill#review-}"
+  if [ "$domain" = "full" ] || [ "$domain" = "jit-test-gen" ] || [ "$domain" = "apply" ]; then
+    continue
+  fi
+  if grep -q "## Confidence and Severity" "$skill/SKILL.md"; then
+    pass "$skill has Confidence and Severity section"
+  else
+    fail "$skill missing Confidence and Severity section"
+  fi
+  if grep -q "## Scoring Dimensions (1-10 each)" "$skill/SKILL.md"; then
+    pass "$skill has standard Scoring Dimensions header"
+  else
+    fail "$skill has non-standard Scoring header"
+  fi
+done
+
 # ---- Summary ----
 echo ""
 echo "=== Results: $PASS passed, $FAIL failed ==="

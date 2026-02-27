@@ -1,6 +1,6 @@
 ---
 name: review-reliability
-description: Analyzes code and configuration for production reliability fitness, producing scores (1-10) across observability, availability design, timeout/retry hygiene, CI/CD maturity, incident readiness, capacity planning, and container/deploy hygiene. Use when the user says /review:review-reliability, requests a reliability review, says check observability, asks if the system is production ready, wants a monitoring setup review, asks about CI/CD pipeline quality, or wants an operational readiness assessment.
+description: Analyzes code and configuration for production reliability fitness, producing scores (1-10) across observability, availability design, timeout/retry hygiene, CI/CD maturity, incident readiness, capacity planning, and container/deploy hygiene. Use when the user says /review:review-reliability, requests a reliability review, says check observability, asks if the system is production ready, wants a monitoring setup review, asks about CI/CD pipeline quality, or wants an operational readiness assessment. Only reports findings with confidence >= 7/10.
 ---
 
 # Reliability Fitness Review
@@ -28,6 +28,24 @@ Analyze the codebase (or specified files/modules) for production reliability fit
 9. **Score each dimension** with specific file:line evidence.
 
 10. **Produce the report** with scores, evidence, and prioritized action items.
+
+## Confidence and Severity
+
+### Confidence Threshold
+
+Only report findings with confidence >= 7/10. For each finding, assess:
+- Is this a real pattern in the code, not a guess about runtime behavior?
+- Can you point to a specific file and line?
+- Is the problematic pattern actually reachable in normal execution?
+
+If any answer is no, do not report it. It is better to miss a theoretical issue than to flood the report with noise.
+
+### Severity Levels
+
+- **CRITICAL** -- Directly causes outages or data loss under normal conditions. No health checks, no graceful shutdown, single point of failure on critical path, no monitoring of production systems.
+- **HIGH** -- Causes outages or degraded service under realistic conditions. Missing timeouts on external calls, no circuit breakers on failing dependencies, no rollback capability, no alerting on error rate spikes.
+- **MEDIUM** -- Reduces reliability under specific conditions. Missing retry backoff, incomplete observability coverage, no capacity planning, deployment without smoke tests.
+- **LOW** -- Defense-in-depth improvements. Additional metrics coverage, improved alert tuning, documentation of runbooks, container image optimization.
 
 ## Scoring Dimensions (1-10 each)
 
@@ -270,6 +288,18 @@ Overall fitness score: X.X / 10 (average of dimensions)
 
 ## Detailed Findings
 
+### Finding 1: [Title]
+- **Severity:** CRITICAL / HIGH / MEDIUM / LOW
+- **Confidence:** X/10
+- **Dimension:** [which scoring dimension]
+- **Location:** file:line
+- **Description:** What the issue is and why it matters.
+- **Evidence:** The specific code pattern found.
+- **Impact:** What could go wrong in production.
+- **Remediation:** Concrete fix with code example or specific steps.
+
+(repeat for each finding, ordered by severity)
+
 ### Observability (X/10)
 - Evidence: file:line references
 - Issues found
@@ -285,8 +315,10 @@ Overall fitness score: X.X / 10 (average of dimensions)
 ## Checklist Reference
 
 See references/checklist.md for the full reliability checklist.
+
+## Reference
+
+Based on guidance from https://jeffbailey.us/categories/fundamentals/
 ```
 
 Refer to the reliability checklist at `review-reliability/references/checklist.md` for detailed checks within each dimension.
-
-Reference: https://jeffbailey.us/categories/fundamentals/

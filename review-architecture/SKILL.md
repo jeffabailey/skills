@@ -1,13 +1,11 @@
 ---
 name: review-architecture
-description: Analyzes code for software architecture fitness, producing scores (1-10) across coupling, cohesion, layering, modularity, naming, API design, and maintainability. Use when the user says /review:review-architecture, requests an architecture review, asks about coupling and cohesion, wants to analyze design or check code structure, asks to review naming or API design, or needs architecture fitness scores. Triggers on "architecture review", "coupling and cohesion", "analyze design", "check code structure", "review naming", "API design".
+description: Analyzes code for software architecture fitness, producing scores (1-10) across coupling, cohesion, layering, modularity, naming, API design, and maintainability. Use when the user says /review:review-architecture, requests an architecture review, asks about coupling and cohesion, wants to analyze design or check code structure, asks to review naming or API design, or needs architecture fitness scores. Triggers on "architecture review", "coupling and cohesion", "analyze design", "check code structure", "review naming", "API design". Only reports findings with confidence >= 7/10.
 ---
 
 # Software Architecture Fitness Review
 
 Analyze the codebase (or specified files/modules) for software architecture fitness. Identify structural problems, design violations, and maintainability risks using evidence from the code.
-
-Reference: https://jeffbailey.us/categories/fundamentals/
 
 ## Workflow
 
@@ -30,6 +28,24 @@ Reference: https://jeffbailey.us/categories/fundamentals/
 9. **Score each dimension** with specific file:line evidence.
 
 10. **Produce the report** with scores, evidence, and prioritized action items.
+
+## Confidence and Severity
+
+### Confidence Threshold
+
+Only report findings with confidence >= 7/10. For each finding, assess:
+- Is this a real pattern in the code, not a guess about runtime behavior?
+- Can you point to a specific file and line?
+- Is the problematic pattern actually reachable in normal execution?
+
+If any answer is no, do not report it. It is better to miss a theoretical issue than to flood the report with noise.
+
+### Severity Levels
+
+- **CRITICAL** -- Fundamental structural flaw causing cascading failures across the codebase. Circular dependency chains spanning core modules, complete absence of module boundaries, domain logic coupled to infrastructure with no separation.
+- **HIGH** -- Significant structural problem affecting maintainability under realistic conditions. Skip-layer violations on critical paths, god classes centralizing unrelated responsibilities, API contracts that break consumers on every change.
+- **MEDIUM** -- Structural concern that degrades quality under specific conditions. Inconsistent naming patterns across modules, partial layering violations, API inconsistencies that confuse consumers but don't break them.
+- **LOW** -- Improvement opportunities for long-term maintainability. Naming conventions that could be clearer, minor cohesion improvements, defensive API design patterns that could be added.
 
 ## Scoring Dimensions (1-10 each)
 
@@ -225,6 +241,18 @@ Overall fitness score: X.X / 10 (average of dimensions)
 
 ## Detailed Findings
 
+### Finding 1: [Title]
+- **Severity:** CRITICAL / HIGH / MEDIUM / LOW
+- **Confidence:** X/10
+- **Dimension:** [which scoring dimension]
+- **Location:** file:line
+- **Description:** What the issue is and why it matters.
+- **Evidence:** The specific code pattern found.
+- **Impact:** What could go wrong as the codebase evolves.
+- **Remediation:** Concrete fix with code example or specific steps.
+
+(repeat for each finding, ordered by severity)
+
 ### Coupling (X/10)
 - Evidence: file:line references
 - Issues found
@@ -240,6 +268,10 @@ Overall fitness score: X.X / 10 (average of dimensions)
 ## Checklist Reference
 
 See references/checklist.md for the full architecture checklist.
+
+## Reference
+
+Based on guidance from https://jeffbailey.us/categories/fundamentals/
 ```
 
 Refer to the architecture checklist at `review-architecture/references/checklist.md` for detailed checks within each dimension.

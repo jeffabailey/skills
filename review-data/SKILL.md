@@ -1,6 +1,6 @@
 ---
 name: review-data
-description: Analyzes database schema design, migration safety, data integrity, query correctness, data modeling, and pipeline quality, producing fitness scores (1-10) with file:line evidence. Use when the user says /review:review-data, requests a data review, asks about schema design, migration safety, data integrity, query correctness, data modeling, or pipeline quality. Distinct from review-performance (which asks "are queries fast?"); this asks "is the schema correct? are migrations safe? will data integrity hold?"
+description: Analyzes database schema design, migration safety, data integrity, query correctness, data modeling, and pipeline quality, producing fitness scores (1-10) with file:line evidence. Use when the user says /review:review-data, requests a data review, asks about schema design, migration safety, data integrity, query correctness, data modeling, or pipeline quality. Distinct from review-performance (which asks "are queries fast?"); this asks "is the schema correct? are migrations safe? will data integrity hold?" Only reports findings with confidence >= 7/10.
 ---
 
 # Data Fitness Review
@@ -26,6 +26,24 @@ Analyze the codebase (or specified files/modules) for data fitness. Identify gap
 8. **Score each dimension** with specific file:line evidence.
 
 9. **Produce the report** with scores, evidence, and prioritized action items.
+
+## Confidence and Severity
+
+### Confidence Threshold
+
+Only report findings with confidence >= 7/10. For each finding, assess:
+- Is this a real pattern in the code, not a guess about runtime behavior?
+- Can you point to a specific file and line?
+- Is the problematic pattern actually reachable in normal execution?
+
+If any answer is no, do not report it. It is better to miss a theoretical issue than to flood the report with noise.
+
+### Severity Levels
+
+- **CRITICAL** -- Data integrity issue causing corruption or loss under normal conditions. Missing foreign keys allowing orphaned records, no transactions around multi-step operations, irreversible migrations with no rollback, schema changes that silently drop data.
+- **HIGH** -- Significant data quality or safety issue under realistic conditions. Missing unique constraints where duplicates cause bugs, N+1 queries on high-traffic paths, no validation on data pipeline outputs, unsafe migration patterns on large tables.
+- **MEDIUM** -- Data concern under specific conditions. Inconsistent soft-delete handling, missing temporal columns, suboptimal normalization level, JSON columns used where structured schema would be better.
+- **LOW** -- Data modeling improvement opportunities. Better naming conventions, additional CHECK constraints, improved audit trail coverage, pipeline monitoring enhancements.
 
 ## Scoring Dimensions (1-10 each)
 
@@ -222,6 +240,18 @@ Overall fitness score: X.X / 10 (average of dimensions)
 
 ## Detailed Findings
 
+### Finding 1: [Title]
+- **Severity:** CRITICAL / HIGH / MEDIUM / LOW
+- **Confidence:** X/10
+- **Dimension:** [which scoring dimension]
+- **Location:** file:line
+- **Description:** What the issue is and why it matters.
+- **Evidence:** The specific code pattern found.
+- **Impact:** What could go wrong with data integrity or quality.
+- **Remediation:** Concrete fix with code example or specific steps.
+
+(repeat for each finding, ordered by severity)
+
 ### Schema Design (X/10)
 - Evidence: file:line references
 - Issues found
@@ -237,8 +267,10 @@ Overall fitness score: X.X / 10 (average of dimensions)
 ## Checklist Reference
 
 See references/checklist.md for the full data checklist.
+
+## Reference
+
+Based on guidance from https://jeffbailey.us/categories/fundamentals/
 ```
 
 Refer to the data checklist at `review-data/references/checklist.md` for detailed checks within each dimension.
-
-Reference: https://jeffbailey.us/categories/fundamentals/

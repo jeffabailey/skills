@@ -1,6 +1,6 @@
 ---
 name: review-accessibility
-description: Reviews frontend code for accessibility and usability fitness, scoring across semantic HTML, keyboard navigation, screen reader support, color/contrast, progressive enhancement, responsive design, and usability heuristics. Use when the user says /review:accessibility, requests an accessibility audit, asks for a11y review, wants WCAG compliance check, or needs usability evaluation of frontend code.
+description: Reviews frontend code for accessibility and usability fitness, scoring across semantic HTML, keyboard navigation, screen reader support, color/contrast, progressive enhancement, responsive design, and usability heuristics. Use when the user says /review:accessibility, requests an accessibility audit, asks for a11y review, wants WCAG compliance check, or needs usability evaluation of frontend code. Only reports findings with confidence >= 7/10.
 ---
 
 # Accessibility and Usability Fitness Review
@@ -19,7 +19,25 @@ Analyze frontend code (HTML, CSS, JavaScript, templates, components) for accessi
 
 5. **Produce the report** -- Write a structured report with scores, evidence, and prioritized action items.
 
-## Scoring Rubric (1-10 per dimension)
+## Confidence and Severity
+
+### Confidence Threshold
+
+Only report findings with confidence >= 7/10. For each finding, assess:
+- Is this a real pattern in the code, not a guess about runtime behavior?
+- Can you point to a specific file and line?
+- Is the problematic pattern actually reachable in normal execution?
+
+If any answer is no, do not report it. It is better to miss a theoretical issue than to flood the report with noise.
+
+### Severity Levels
+
+- **CRITICAL** -- Complete barrier preventing users from accessing content or functionality. Missing alt text on informational images, no keyboard access to primary navigation, form inputs with no labels, focus trap with no escape.
+- **HIGH** -- Significant barrier affecting a large group of users under realistic conditions. Missing skip links, color-only status indicators, missing ARIA states on interactive widgets, touch targets below 44px on primary actions.
+- **MEDIUM** -- Partial barrier affecting some users under specific conditions. Inconsistent heading hierarchy, missing aria-live for dynamic content, contrast ratios slightly below thresholds, incomplete responsive design at certain breakpoints.
+- **LOW** -- Enhancement opportunities. Additional ARIA landmarks, improved focus indicator styling, better error message specificity, progressive enhancement for edge cases.
+
+## Scoring Dimensions (1-10 each)
 
 Score meanings:
 - **1-3**: Major gaps, significant barriers to users
@@ -160,24 +178,37 @@ Write the report to `docs/accessibility-review.md` with this structure:
 
 ## Detailed Findings
 
-### [Dimension Name]
-**Score: X/10**
+### Finding 1: [Title]
+- **Severity:** CRITICAL / HIGH / MEDIUM / LOW
+- **Confidence:** X/10
+- **Dimension:** [which scoring dimension]
+- **Location:** file:line
+- **Description:** What the issue is and why it matters.
+- **Evidence:** The specific code pattern found.
+- **Impact:** What users are affected and how.
+- **Remediation:** Concrete fix with code example or specific steps.
 
-Evidence:
-- file:line — description of finding
+(repeat for each finding, ordered by severity)
+
+### [Dimension Name] (X/10)
+- Evidence: file:line references
+- Issues found
+- Recommendations
 
 ### ...
 
-## Action Items (prioritized)
+## Top 5 Action Items (by impact)
 
-1. [HIGH] Description — file(s) affected — expected impact
-2. [HIGH] ...
-3. [MEDIUM] ...
-4. [LOW] ...
+1. [CRITICAL/HIGH/MEDIUM] Description -- file:line
+2. ...
 
 ## Checklist Reference
 
 See references/checklist.md for the full accessibility checklist used in this review.
+
+## Reference
+
+Based on guidance from https://jeffbailey.us/categories/fundamentals/
 ```
 
 Prioritize action items by: severity of user impact, number of users affected, and effort to fix. Systemic issues rank above one-off issues.

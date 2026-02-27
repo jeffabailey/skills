@@ -1,0 +1,9 @@
+# Default owner for all files
+* @jeffabailey
+
+# Workflow and engine configuration
+.github/workflows/ @jeffabailey
+.github/scripts/ @jeffabailey
+
+# Skill definitions
+review-*/ @jeffabailey

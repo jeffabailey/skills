@@ -1,6 +1,6 @@
 ---
 name: review-testing
-description: Analyzes a codebase for software testing fitness, producing scores (1-10) across test pyramid balance, test quality, coverage strategy, performance testing, debugging support, and CI integration. Use when the user says /review:review-testing, requests a test quality review, asks about testing strategy, wants test pyramid analysis, asks about QA practices, or needs testing fitness scores before shipping.
+description: Analyzes a codebase for software testing fitness, producing scores (1-10) across test pyramid balance, test quality, coverage strategy, performance testing, debugging support, and CI integration. Use when the user says /review:review-testing, requests a test quality review, asks about testing strategy, wants test pyramid analysis, asks about QA practices, or needs testing fitness scores before shipping. Only reports findings with confidence >= 7/10.
 ---
 
 # Software Testing Fitness Review
@@ -26,6 +26,24 @@ Analyze the codebase (or specified files/modules) for software testing fitness. 
 8. **Score each dimension** with specific file:line evidence.
 
 9. **Produce the report** with scores, evidence, and prioritized action items.
+
+## Confidence and Severity
+
+### Confidence Threshold
+
+Only report findings with confidence >= 7/10. For each finding, assess:
+- Is this a real pattern in the code, not a guess about runtime behavior?
+- Can you point to a specific file and line?
+- Is the problematic pattern actually reachable in normal execution?
+
+If any answer is no, do not report it. It is better to miss a theoretical issue than to flood the report with noise.
+
+### Severity Levels
+
+- **CRITICAL** -- Fundamental testing gap that allows defects to reach production undetected. No tests at all, critical business logic completely untested, CI pipeline runs no tests before merge.
+- **HIGH** -- Significant testing gap under realistic conditions. Inverted test pyramid with most tests as slow E2E, critical paths (auth, payments) have only happy-path tests, flaky tests silently retried with no tracking.
+- **MEDIUM** -- Testing weakness that reduces confidence under specific conditions. Missing boundary value tests, no performance testing, test names that don't describe behavior, incomplete CI integration.
+- **LOW** -- Improvement opportunities for test quality. Better test naming conventions, additional edge case coverage, test data factory improvements, coverage reporting enhancements.
 
 ## Scoring Dimensions (1-10 each)
 
@@ -207,6 +225,18 @@ Overall fitness score: X.X / 10 (average of dimensions)
 
 ## Detailed Findings
 
+### Finding 1: [Title]
+- **Severity:** CRITICAL / HIGH / MEDIUM / LOW
+- **Confidence:** X/10
+- **Dimension:** [which scoring dimension]
+- **Location:** file:line
+- **Description:** What the issue is and why it matters.
+- **Evidence:** The specific code pattern found.
+- **Impact:** What could go wrong in production.
+- **Remediation:** Concrete fix with code example or specific steps.
+
+(repeat for each finding, ordered by severity)
+
 ### Test Pyramid Balance (X/10)
 **Evidence:** [specific files, test counts, execution times]
 **Strengths:** ...
@@ -250,6 +280,10 @@ Overall fitness score: X.X / 10 (average of dimensions)
 See review-testing/references/checklist.md for the full testing checklist
 derived from software testing, quality assurance, performance testing,
 and debugging fundamentals.
+
+## Reference
+
+Based on guidance from https://jeffbailey.us/categories/fundamentals/
 ```
 
 Refer to the testing checklist at `review-testing/references/checklist.md` for detailed checks within each dimension.

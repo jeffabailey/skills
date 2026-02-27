@@ -1,0 +1,36 @@
+# macOS
+.DS_Store
+._*
+
+# IDEs
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# Node
+node_modules/
+
+# Secrets / credentials
+.env
+.env.*
+*.pem
+*.key
+
+# Per-project config (users create in their repos)
+fitness-config.json
+.fitness-config.json
+
+# Generated review reports
+docs/*-review.md
+docs/fitness-report.md
+
+# Test artifacts
+/tmp/
+.gitnexus

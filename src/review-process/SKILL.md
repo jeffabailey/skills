@@ -1,6 +1,6 @@
 ---
 name: review-process
-description: Evaluates a repository's development process maturity across documentation, workflow, code review, dependency management, project organization, portability, and leadership signals. Use when the user says /review:process, requests a process review, asks for development process fitness scores, wants to assess repo health or contributor readiness, or asks how well a project follows software development best practices.
+description: Evaluates a repository's development process maturity across documentation, workflow, code review, dependency management, project organization, portability, and leadership signals. Use when the user says /review:process, requests a process review, asks for development process fitness scores, wants to assess repo health or contributor readiness, or asks how well a project follows software development best practices. Only reports findings with confidence >= 7/10.
 ---
 
 # Development Process Fitness Review
@@ -13,6 +13,24 @@ Analyze the repository for development process maturity. Score each dimension 1-
 2. **Score each dimension** - Evaluate the seven dimensions below. Cite specific files and lines as evidence.
 3. **Identify gaps** - Note missing artifacts, stale docs, or process antipatterns.
 4. **Produce the report** - Write scores, evidence, and action items in the output format below.
+
+## Confidence and Severity
+
+### Confidence Threshold
+
+Only report findings with confidence >= 7/10. For each finding, assess:
+- Is this a real pattern in the code, not a guess about runtime behavior?
+- Can you point to a specific file and line?
+- Is the problematic pattern actually reachable in normal execution?
+
+If any answer is no, do not report it. It is better to miss a theoretical issue than to flood the report with noise.
+
+### Severity Levels
+
+- **CRITICAL** -- Process gap that directly causes quality or collaboration failures. No CI pipeline, no version control discipline, secrets committed to repository, no dependency management.
+- **HIGH** -- Significant process gap affecting team productivity under realistic conditions. No code review process, stale documentation misleading contributors, no automated testing in pipeline, no CODEOWNERS.
+- **MEDIUM** -- Process weakness that reduces effectiveness under specific conditions. Inconsistent commit message conventions, partial CI coverage, dependency updates not automated, missing PR templates.
+- **LOW** -- Process improvement opportunities. Better issue labeling, additional ADRs, changelog improvements, portability enhancements.
 
 ## Scoring Dimensions (1-10 each)
 
@@ -190,6 +208,18 @@ Produce a markdown report with this structure:
 
 ## Detailed Findings
 
+### Finding 1: [Title]
+- **Severity:** CRITICAL / HIGH / MEDIUM / LOW
+- **Confidence:** X/10
+- **Dimension:** [which scoring dimension]
+- **Location:** file:line
+- **Description:** What the issue is and why it matters.
+- **Evidence:** The specific code pattern found.
+- **Impact:** What could go wrong for contributors or quality.
+- **Remediation:** Concrete fix with code example or specific steps.
+
+(repeat for each finding, ordered by severity)
+
 ### Documentation Quality (X/10)
 **Evidence:** [specific files and observations]
 **Strengths:** ...
@@ -197,9 +227,9 @@ Produce a markdown report with this structure:
 
 [Repeat for each dimension]
 
-## Top 5 Action Items
+## Top 5 Action Items (by impact)
 
-1. [Highest impact improvement with specific recommendation]
+1. [CRITICAL/HIGH/MEDIUM] Description -- file:line
 2. ...
 3. ...
 4. ...
@@ -209,6 +239,10 @@ Produce a markdown report with this structure:
 
 See review-process/references/checklist.md for the full process checklist
 derived from software development fundamentals.
+
+## Reference
+
+Based on guidance from https://jeffbailey.us/categories/fundamentals/
 ```
 
-Write the report to `docs/process-fitness-report.md`.
+Write the report to `docs/process-review.md`.

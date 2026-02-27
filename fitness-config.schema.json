@@ -1,0 +1,49 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Fitness Review Config",
+  "description": "Configuration for project fitness review skills: weights, thresholds, and scoring ranges.",
+  "type": "object",
+  "required": ["version"],
+  "properties": {
+    "version": { "type": "integer", "const": 1 },
+    "weights": {
+      "type": "object",
+      "description": "Domain weights for full review weighted average (must sum to 100)",
+      "properties": {
+        "architecture": { "type": "number", "minimum": 0, "maximum": 100 },
+        "security": { "type": "number", "minimum": 0, "maximum": 100 },
+        "reliability": { "type": "number", "minimum": 0, "maximum": 100 },
+        "testing": { "type": "number", "minimum": 0, "maximum": 100 },
+        "performance": { "type": "number", "minimum": 0, "maximum": 100 },
+        "algorithms": { "type": "number", "minimum": 0, "maximum": 100 },
+        "data": { "type": "number", "minimum": 0, "maximum": 100 },
+        "accessibility": { "type": "number", "minimum": 0, "maximum": 100 },
+        "process": { "type": "number", "minimum": 0, "maximum": 100 },
+        "maintainability": { "type": "number", "minimum": 0, "maximum": 100 }
+      },
+      "additionalProperties": false
+    },
+    "statusThresholds": {
+      "type": "object",
+      "description": "Score ranges for Healthy, Needs Attention, Critical",
+      "properties": {
+        "healthy": { "type": "array", "items": { "type": "number" }, "minItems": 2, "maxItems": 2 },
+        "needsAttention": { "type": "array", "items": { "type": "number" }, "minItems": 2, "maxItems": 2 },
+        "critical": { "type": "array", "items": { "type": "number" }, "minItems": 2, "maxItems": 2 }
+      }
+    },
+    "security": {
+      "type": "object",
+      "properties": {
+        "confidenceThreshold": { "type": "number", "minimum": 1, "maximum": 10 }
+      }
+    },
+    "scoring": {
+      "type": "object",
+      "properties": {
+        "goodRange": { "type": "array", "items": { "type": "number" }, "minItems": 2, "maxItems": 2 },
+        "badRange": { "type": "array", "items": { "type": "number" }, "minItems": 2, "maxItems": 2 }
+      }
+    }
+  }
+}

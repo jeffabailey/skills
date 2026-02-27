@@ -1,6 +1,6 @@
 ---
 name: review-maintainability
-description: Analyzes code for maintainability, understandability, and simplicity fitness, producing scores (1-10) across structural complexity, comprehensibility, technical debt indicators, coupling/dependency depth, and code smell density. Use when the user says /review:review-maintainability, requests a maintainability review, asks about code complexity or understandability, wants cyclomatic/cognitive complexity analysis, or needs simplicity/maintainability fitness scores. Triggers on "maintainability review", "understandability", "code complexity", "cognitive complexity", "cyclomatic complexity", "simplicity", "code smells".
+description: Analyzes code for maintainability, understandability, and simplicity fitness, producing scores (1-10) across structural complexity, comprehensibility, technical debt indicators, coupling/dependency depth, and code smell density. Use when the user says /review:review-maintainability, requests a maintainability review, asks about code complexity or understandability, wants cyclomatic/cognitive complexity analysis, or needs simplicity/maintainability fitness scores. Triggers on "maintainability review", "understandability", "code complexity", "cognitive complexity", "cyclomatic complexity", "simplicity", "code smells". Only reports findings with confidence >= 7/10.
 ---
 
 # Maintainability & Understandability Fitness Review
@@ -26,6 +26,24 @@ Reference: [Fundamentals of Maintainability](https://jeffbailey.us/blog/2026/02/
 7. **Score each dimension** with file:line evidence.
 
 8. **Produce the report** with scores, evidence, and prioritized action items.
+
+## Confidence and Severity
+
+### Confidence Threshold
+
+Only report findings with confidence >= 7/10. For each finding, assess:
+- Is this a real pattern in the code, not a guess about runtime behavior?
+- Can you point to a specific file and line?
+- Is the problematic pattern actually reachable in normal execution?
+
+If any answer is no, do not report it. It is better to miss a theoretical issue than to flood the report with noise.
+
+### Severity Levels
+
+- **CRITICAL** -- Maintainability issue that actively prevents safe modification of the codebase. God classes over 1000 lines with intertwined responsibilities, no tests making refactoring impossible, circular dependencies spanning core modules.
+- **HIGH** -- Significant maintainability problem under realistic conditions. Functions over 100 lines with deep nesting, extensive code duplication across critical paths, misleading abstractions that cause bugs during modification.
+- **MEDIUM** -- Maintainability concern that slows development under specific conditions. Inconsistent naming patterns, cyclomatic complexity above 15, magic numbers in business logic, scattered TODO/FIXME without tracking.
+- **LOW** -- Improvement opportunities for long-term maintainability. Minor naming improvements, additional documentation for non-obvious decisions, small refactoring to reduce nesting depth.
 
 ## Scoring Dimensions (1-10 each)
 
@@ -178,6 +196,18 @@ Overall fitness score: X.X / 10 (average of dimensions)
 
 ## Detailed Findings
 
+### Finding 1: [Title]
+- **Severity:** CRITICAL / HIGH / MEDIUM / LOW
+- **Confidence:** X/10
+- **Dimension:** [which scoring dimension]
+- **Location:** file:line
+- **Description:** What the issue is and why it matters.
+- **Evidence:** The specific code pattern found.
+- **Impact:** What could go wrong during maintenance or refactoring.
+- **Remediation:** Concrete fix with code example or specific steps.
+
+(repeat for each finding, ordered by severity)
+
 ### Structural Complexity (X/10)
 - Evidence: file:line references
 - Issues found
@@ -199,7 +229,11 @@ Overall fitness score: X.X / 10 (average of dimensions)
 | TODO/FIXME count | X | &lt; 5 tracked | ... |
 | God class count (500+ LOC) | X | 0 | ... |
 
-## References
+## Checklist Reference
 
-See review-maintainability/references/checklist.md for the full checklist. Based on [Fundamentals of Maintainability](https://jeffbailey.us/blog/2026/02/22/fundamentals-of-maintainability/).
+See review-maintainability/references/checklist.md for the full checklist.
+
+## Reference
+
+Based on [Fundamentals of Maintainability](https://jeffbailey.us/blog/2026/02/22/fundamentals-of-maintainability/) and guidance from https://jeffbailey.us/categories/fundamentals/
 ```

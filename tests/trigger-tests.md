@@ -143,6 +143,23 @@ Should NOT trigger:
 - "Write a new feature"
 - "Check for security issues"
 
+## review-maintainability
+
+Should trigger:
+- "Review maintainability"
+- "Check code complexity"
+- "Analyze understandability"
+- "Code smell review"
+- "Cyclomatic complexity analysis"
+- "How maintainable is this code?"
+- "Cognitive complexity check"
+- `/review:review-maintainability`
+
+Should NOT trigger:
+- "Review architecture" (that's review-architecture)
+- "Check performance"
+- "Generate tests"
+
 ## review-full
 
 Should trigger:
@@ -171,3 +188,18 @@ Should NOT trigger:
 - "Review test quality" (that's review-testing)
 - "Run the tests"
 - "Check performance"
+
+## review-apply
+
+Should trigger:
+- "Apply the fitness report"
+- "Address review feedback"
+- "Fix the review issues"
+- "Apply review from issue #18"
+- "https://github.com/owner/repo/issues/42" (fitness report issue URL)
+- `/review:review-apply`
+
+Should NOT trigger:
+- "Full review" (that's review-full)
+- "Review the architecture"
+- "Generate tests"

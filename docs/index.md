@@ -15,8 +15,10 @@ Reusable Claude Code skills that review software project fitness across architec
 | `review-data` | Schema design, migration safety, data integrity, query correctness, data modeling |
 | `review-accessibility` | Semantic HTML, keyboard nav, screen reader, color/contrast, responsive design |
 | `review-process` | Documentation, workflow, code review, dependencies, organization, portability |
+| `review-maintainability` | Structural complexity, understandability, technical debt, coupling depth, code smells |
 | `review-full` | All of the above with weighted scoring |
 | `review-jit-test-gen` | Generates tests for changed code (no scores) |
+| `review-apply` | Applies fitness report findings from GitHub issues (no scores) |
 
 Each domain skill produces scores (1--10) with `file:line` evidence and prioritized action items.
 
@@ -37,15 +39,16 @@ Domain skills write reports to `docs/<domain>-review.md`. The full review writes
 
 | Domain | Weight |
 |--------|--------|
-| Architecture | 15% |
-| Security | 15% |
+| Architecture | 14% |
+| Security | 14% |
 | Reliability | 10% |
 | Testing | 10% |
 | Performance | 10% |
 | Algorithms | 10% |
 | Data | 10% (skipped if no database code) |
-| Accessibility | 10% (skipped for backend-only projects) |
-| Process | 10% |
+| Accessibility | 8% (skipped for backend-only projects) |
+| Process | 8% |
+| Maintainability | 6% |
 
 When a domain is skipped, its weight redistributes proportionally across the remaining domains.
 

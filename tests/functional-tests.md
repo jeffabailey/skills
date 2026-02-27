@@ -187,6 +187,29 @@ For each test scenario:
 **When:** Run `/review:review-process`
 **Then:** Dependency Management score reflects staleness
 
+## review-maintainability
+
+### Test: Scores are produced for all dimensions
+
+**Given:** A codebase with at least 5 source files
+**When:** Run `/review:review-maintainability`
+**Then:**
+- Report contains scores (1-10) for: Structural Complexity, Comprehensibility, Technical Debt, Coupling/Dependency Depth, Code Smell Density
+- Each score has at least one file:line evidence citation
+- Report written to `docs/maintainability-review.md`
+
+### Test: Detects high cyclomatic complexity
+
+**Given:** Function with deeply nested conditionals (4+ levels)
+**When:** Run `/review:review-maintainability`
+**Then:** Structural Complexity score reflects the nesting with specific file:line reference
+
+### Test: Detects code smells
+
+**Given:** Code with duplicated blocks, god classes, or long methods
+**When:** Run `/review:review-maintainability`
+**Then:** Code Smell Density score is low with specific examples cited
+
 ## review-full
 
 ### Test: Produces unified report
@@ -223,3 +246,48 @@ For each test scenario:
 **Given:** File with changes that are already well-tested
 **When:** Run `/review:review-jit-test-gen`
 **Then:** Reports that existing coverage is sufficient, generates only gap-filling tests
+
+## review-apply
+
+### Test: Fetches and parses a fitness report issue
+
+**Given:** An open GitHub issue with the `fitness-review` label containing a fitness report
+**When:** Run `/review:review-apply` with the issue URL
+**Then:**
+- Action items are extracted and listed by priority
+- Each item is classified as actionable or deferred
+- User is presented with a triage for confirmation
+
+### Test: Addresses actionable items
+
+**Given:** A fitness report with actionable items referencing specific files
+**When:** User confirms the triage
+**Then:**
+- Referenced files are read and modified
+- Changes are minimal and targeted to the action item
+- A summary of changes is produced
+
+### Test: Closes the issue after completion
+
+**Given:** All actionable items have been addressed from a GitHub issue source
+**When:** Changes are complete
+**Then:**
+- A comment is posted to the issue with a summary
+- The issue is closed with reason "completed"
+
+### Test: Falls back to local file when no open issue exists
+
+**Given:** No open GitHub issue with the `fitness-review` label, and `docs/fitness-report.md` exists with a valid fitness report
+**When:** Run `/review:review-apply` with no arguments
+**Then:**
+- The local file is read as the report source
+- Action items are extracted and triaged normally
+- After completion, the summary is presented directly (no issue comment or close)
+
+### Test: Reads a user-specified local file
+
+**Given:** A fitness report at a non-default path (e.g., `reports/review.md`)
+**When:** Run `/review:review-apply reports/review.md`
+**Then:**
+- The specified file is read as the report source
+- Action items are extracted and triaged normally

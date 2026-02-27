@@ -17,15 +17,18 @@ This guide covers installing and using the skills across **pipelines** (GitHub A
 
 ### Option A: GitHub Agentic Workflows (recommended)
 
-Uses [gh-aw](https://github.github.io/gh-aw/) — Markdown workflows with Copilot, Claude, or Codex.
+Uses [gh-aw](https://github.github.io/gh-aw/) with multiple engine support (Claude, Copilot, Codex).
 
 **Prerequisites:**
 
 - `gh` CLI v2.0.0+
-- One of:
-  - **Copilot**: `COPILOT_GITHUB_TOKEN` (PAT with `copilot-requests` scope)
-  - **Claude**: `ANTHROPIC_API_KEY`
-  - **Codex**: `OPENAI_API_KEY`
+- At least one engine secret:
+
+| Engine | Secret | Source |
+|--------|--------|--------|
+| Claude (default) | `ANTHROPIC_API_KEY` | [console.anthropic.com](https://console.anthropic.com/) |
+| Copilot | `COPILOT_GITHUB_TOKEN` | GitHub PAT with `copilot-requests` scope |
+| Codex | `OPENAI_API_KEY` | [platform.openai.com](https://platform.openai.com/) |
 
 **Install:**
 
@@ -38,17 +41,13 @@ gh extension install github/gh-aw
 ```bash
 cd your-repo
 gh aw add jeffabailey/skills/fitness-review
-# REQUIRED: Configure one secret (set engine in .md frontmatter first):
-gh aw secrets set ANTHROPIC_API_KEY --value "YOUR_ANTHROPIC_KEY"   # engine: claude (default)
-# Or for Copilot: engine: copilot → gh aw secrets set COPILOT_GITHUB_TOKEN --value "YOUR_PAT"
-# Or for Codex:   engine: codex   → gh aw secrets set OPENAI_API_KEY --value "YOUR_OPENAI_KEY"
+gh aw secrets set ANTHROPIC_API_KEY --value "YOUR_ANTHROPIC_KEY"
 ```
 
-**Compile and commit:**
+**Commit and push:**
 
 ```bash
-gh aw compile
-git add .github/workflows/fitness-review.md .github/workflows/fitness-review.lock.yml
+git add .github/workflows/fitness-review.yml
 git commit -m "Add fitness review workflow"
 git push
 ```
@@ -65,9 +64,12 @@ Or via **Actions** → **Project Fitness Review** → **Run workflow**.
 
 ```bash
 gh aw secrets set ANTHROPIC_API_KEY --value "YOUR_ANTHROPIC_KEY"
+# Optional: add secrets for alternative engines
+gh aw secrets set COPILOT_GITHUB_TOKEN --value "YOUR_COPILOT_TOKEN"
+gh aw secrets set OPENAI_API_KEY --value "YOUR_OPENAI_KEY"
 ```
 
-Then trigger via `gh aw run fitness-review` or the Actions tab. Get an API key at [console.anthropic.com](https://console.anthropic.com/). See `.github/RUN.md` for agent_type (github/claude/codex/cursor) and running with Cursor or Claude locally.
+Then trigger via `gh aw run fitness-review` or the Actions tab. Select the engine from the dropdown (default: Claude). See `.github/RUN.md` for details. If Claude returns 529 Overloaded, re-run or try a different engine.
 
 ---
 
@@ -247,6 +249,7 @@ All skills live under `src/`. The install commands above symlink every directory
 - `src/review-maintainability`
 - `src/review-full`
 - `src/review-jit-test-gen`
+- `src/review-apply`
 
 ---
 
@@ -254,6 +257,6 @@ All skills live under `src/`. The install commands above symlink every directory
 
 **Skills not loading in Cursor/Claude:** Check `~/.cursor/skills/` or `~/.claude/skills/` exists and symlinks resolve (`ls -la`). Restart the IDE or agent.
 
-**GitHub Agentic Workflow fails:** Ensure one of `COPILOT_GITHUB_TOKEN`, `ANTHROPIC_API_KEY`, or `OPENAI_API_KEY` is set in repository secrets. Run `gh aw compile` after editing the workflow.
+**GitHub Agentic Workflow fails:** Ensure the secret for your selected engine is set (`ANTHROPIC_API_KEY` for Claude, `COPILOT_GITHUB_TOKEN` for Copilot, `OPENAI_API_KEY` for Codex). Edit `.github/workflows/fitness-review.yml` directly (no compilation needed). Engine config lives in `.github/scripts/engine-config.py`.
 
 **Claude Code Action OIDC error:** Add `id-token: write` to workflow permissions (see Option B).

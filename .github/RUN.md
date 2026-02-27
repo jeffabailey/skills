@@ -1,61 +1,102 @@
 # Running the Fitness Review
 
-The fitness review can run with **GitHub agents** (Copilot, Claude, or Codex), or **Cursor** locally. Use the `agent_type` input (GitHub) or choose your runner when running locally.
+The fitness review runs in **GitHub Actions** (multiple engine support) or **locally** via the Claude Code CLI.
 
 ## File layout
 
 | File | Purpose |
 |------|---------|
-| `.github/workflows/fitness-review.md` | gh-aw config + prompt (source for GitHub) |
-| `.github/workflows/fitness-review.lock.yml` | Compiled workflow (auto-generated; run `gh aw compile` to regenerate) |
-| `.github/fitness-review-prompt.md` | Standalone prompt for Cursor/Claude (same content as the .md body) |
+| `.github/workflows/fitness-review.yml` | GitHub Actions workflow (multi-engine) |
+| `.github/scripts/engine-config.py` | Engine-specific configuration (claude, copilot, codex) |
+| `.github/fitness-review-prompt.md` | Standalone prompt for Claude Code CLI (local use) |
 
-## agent_type: github
+## GitHub Actions
 
-Runs in GitHub Actions via [gh-aw](https://github.github.io/gh-aw/) with Copilot or Claude.
+Runs weekly on Sunday and on manual dispatch via [gh-aw](https://github.github.io/gh-aw/).
 
 **Prerequisites:**
 - `gh` CLI v2.0+ and `gh extension install github/gh-aw`
-- One secret (per engine):
-  - **Claude**: `ANTHROPIC_API_KEY`
-  - **Copilot**: `COPILOT_GITHUB_TOKEN` (PAT with `copilot-requests` scope)
-  - **Codex (OpenAI)**: `OPENAI_API_KEY`
+- At least one engine secret (see below)
 
-**Run:**
+**Engine secrets:**
+
+| Engine | Secret | Where to get it |
+|--------|--------|-----------------|
+| Claude (default) | `ANTHROPIC_API_KEY` | [console.anthropic.com](https://console.anthropic.com/) |
+| Copilot | `COPILOT_GITHUB_TOKEN` | GitHub PAT with `copilot-requests` scope |
+| Codex | `OPENAI_API_KEY` | [platform.openai.com](https://platform.openai.com/) |
+
+**Run (default — Claude):**
 ```bash
 gh aw run fitness-review
 # Or: Actions → Project Fitness Review → Run workflow
-# Select agent_type: github | claude | codex | cursor
 ```
 
-**Note:** `agent_type` is passed for documentation/tracking. The engine is set in the `.md` frontmatter (`engine: claude` | `engine: copilot` | `engine: codex`). Change it and run `gh aw compile` to use a different engine. `agent_type=cursor` means run locally — see below.
+**Run with a specific engine:**
+```bash
+# Via Actions tab: select engine from the dropdown
+# Or: Actions → Project Fitness Review → Run workflow → engine: copilot
+```
 
-## agent_type: claude
+## Local (Claude Code CLI)
 
-Runs via Claude (API, Claude Code, or gh-aw with engine: claude).
-
-**Via gh-aw (GitHub Actions):** Set `engine: claude` in the .md frontmatter (default), add `ANTHROPIC_API_KEY` secret, then `gh aw compile`.
-
-**Via Claude Code (local or CI):**
 ```bash
 # Install skills (see SETUP.md), then:
 claude --prompt "$(cat .github/fitness-review-prompt.md)"
-# Or use anthropics/claude-code-action with that prompt
 ```
 
-## agent_type: codex
+## Notifications
 
-Runs in GitHub Actions via gh-aw with [OpenAI Codex](https://github.github.com/gh-aw/reference/engines/).
+GitHub sends email notifications for failed workflow runs by default. To ensure you are alerted:
 
-**Via gh-aw (GitHub Actions):** Set `engine: codex` in the .md frontmatter, add `OPENAI_API_KEY` secret, then `gh aw compile`.
+1. Go to **Settings → Notifications → Actions** on github.com
+2. Ensure **Send notifications for failed workflows only** is checked
+3. Optionally configure a **Slack integration**: install the [GitHub Slack app](https://github.com/integrations/slack) and subscribe with `/github subscribe jeffabailey/skills workflows:{event:"failure"}`
 
-## agent_type: cursor
+The README badges show current pipeline status at a glance.
 
-Runs in Cursor IDE — **not in GitHub Actions**. Cursor is a local/desktop tool.
+## Troubleshooting
 
-**Run:**
-1. Open `.github/fitness-review-prompt.md` in Cursor
-2. In Composer (Cmd+I), paste or @-mention the prompt and say: "Run this fitness review on this repository. Write the report to docs/fitness-report.md."
-3. Or use the review-full skill: `/review:review-full` (if skills are installed)
+### 529 Overloaded (Claude/Anthropic)
 
-The prompt adapts output: GitHub creates an issue; Cursor/Claude writes to `docs/fitness-report.md`.
+If the agent job fails with `API Error: 529` or `overloaded_error`:
+
+- **Cause:** Anthropic's API was temporarily overloaded (transient).
+- **Fix:** Re-run the workflow — usually succeeds on retry. Actions → Re-run failed jobs.
+- **Alternative:** Re-run with `engine: copilot` or `engine: codex` if overload persists.
+
+### Agent Timeout
+
+If the agent job exceeds the workflow timeout:
+
+- **Cause:** The review scope is too large for a single pass, or the agent is stuck in a loop.
+- **Fix:** Re-run the workflow. If it times out again, reduce scope by running individual domain reviews instead of `review-full`.
+
+### MCP Server Failure
+
+If the agent step fails with `MCP connection error`, `MCP server unavailable`, or `tool not found`:
+
+- **Cause:** The MCP Gateway server could not start or lost connection mid-run.
+- **Fix:** Re-run the workflow — MCP server failures are usually transient.
+- **If persistent:** Verify the `mcp_config_path` in `engine-config.py` matches the engine's expected path. Claude: `/tmp/gh-aw/mcp-config/mcp-servers.json`. Copilot: `/home/runner/.copilot/mcp-config.json`.
+
+### Workflow Concurrency Queue
+
+If the workflow is queued but never starts:
+
+- **Cause:** The concurrency group (`gh-aw-${{ github.workflow }}`) limits to one concurrent run. A previous run may be stuck.
+- **Fix:** Cancel the stuck run from the Actions tab, then re-trigger.
+
+### Skill Installation Failure
+
+If the agent produces no scores or cannot find skills:
+
+- **Cause:** The skill symlink step failed, or skills are not in the expected directory.
+- **Fix:** Check the install step logs. Verify that the `for skill in ...` loop completed without errors and that skill directories exist in the checked-out workspace.
+
+### Engine Secret Missing or Invalid
+
+If the workflow fails at the `Validate context variables` step:
+
+- **Cause:** The secret for the selected engine is not set or has expired.
+- **Fix:** Re-add the secret: `gh aw secrets set <SECRET_NAME> --value "YOUR_KEY"`. See the engine secrets table above.

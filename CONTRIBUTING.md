@@ -29,7 +29,7 @@ src/review-<domain>/
     checklist.md         # detailed checklist items
 ```
 
-- `SKILL.md` must include: a `## Triggers` section, a `## Workflow` section, and a `## Scoring` section.
+- `SKILL.md` must include: YAML frontmatter with `name` and `description` (including trigger phrases) and a `## Workflow` section. Domain review skills must also include a `## Scoring Dimensions` section. Utility skills (`review-full`, `review-jit-test-gen`, `review-apply`) may omit scoring dimensions.
 - Scoring weights in `src/review-full/SKILL.md` must stay consistent with the weights listed in `README.md`.
 - Trigger phrases must be domain-specific. Avoid general phrases that overlap with other skills (see [ADR 0001](docs/adrs/0001-skill-based-review-architecture.md)).
 
@@ -55,7 +55,20 @@ The current domain weights (used by `review-full`) are:
 | Process | 8% |
 | Maintainability | 6% |
 
-If you propose adding or removing a domain, update both `src/review-full/SKILL.md` and `README.md` to keep them consistent.
+### Adding or removing a skill
+
+The skill list appears in multiple files in different formats. When adding, removing, or renaming a skill, update **all** of these locations:
+
+1. **`README.md`** — Skills table and installation (install commands use `src/*/` so new skills are picked up automatically; update the table)
+2. **`CONTRIBUTING.md`** — Scoring weights table (this file)
+3. **`src/review-full/SKILL.md`** — Domain launch list and scoring weights
+4. **`SETUP.md`** — Skill reference list (install commands use `src/*/` so new skills are picked up automatically)
+5. **`.github/fitness-review-prompt.md`** — Review domains section
+6. **`tests/trigger-tests.md`** — Trigger test cases for the skill
+7. **`tests/functional-tests.md`** — Functional test scenarios for the skill
+8. **`tests/skill-structure-tests.sh`** — `SKILLS` array
+
+The PR template checklist will remind you to verify these locations. CI will catch missing directories or SKILL.md files but cannot verify that every prose reference is updated.
 
 ## Questions
 

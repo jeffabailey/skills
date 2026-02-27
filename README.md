@@ -1,5 +1,7 @@
 # Project Fitness Review Skills
 
+[![PR Checks](https://github.com/jeffabailey/skills/actions/workflows/pr-checks.yml/badge.svg)](https://github.com/jeffabailey/skills/actions/workflows/pr-checks.yml) [![Project Fitness Review](https://github.com/jeffabailey/skills/actions/workflows/fitness-review.yml/badge.svg)](https://github.com/jeffabailey/skills/actions/workflows/fitness-review.yml)
+
 Reusable skills for **Cursor**, **Claude Code**, **VS Code (Copilot)**, and **pipelines** (GitHub Agentic Workflows, Claude Code Action) that review software project fitness across architecture, security, reliability, testing, performance, algorithms, data, accessibility, and process. Based on guidance from the [Fundamentals series](https://jeffbailey.us/categories/fundamentals/).
 
 **Repository:** [github.com/jeffabailey/skills](https://github.com/jeffabailey/skills)
@@ -24,6 +26,7 @@ This repository and the article [Fundamental Skills](https://jeffbailey.us/blog/
 | `review-maintainability` | Structural Complexity, Understandability, Technical Debt, Coupling Depth, Code Smell Density | "maintainability review", "code complexity", "understandability" |
 | `review-full` | All of the above (weighted average) | "full review", "comprehensive review", "project fitness" |
 | `review-jit-test-gen` | Generates tests (no scores) | "generate tests", "write tests for changes" |
+| `review-apply` | Applies fitness report findings (no scores) | "apply review", "address review feedback", "fix review issues" |
 
 Each domain skill produces scores (1-10) with file:line evidence and prioritized action items.
 
@@ -48,7 +51,6 @@ done
 
 ```bash
 git clone https://github.com/jeffabailey/skills.git ~/Projects/skills
-
 mkdir -p ~/.cursor/skills
 for skill in ~/Projects/skills/src/*/; do
   ln -sf "$(cd "$skill" && pwd)" ~/.cursor/skills/$(basename "$skill")
@@ -72,6 +74,7 @@ done
 /review:review-maintainability # Maintainability, complexity, understandability
 /review:review-full            # Run all reviews, unified report
 /review:review-jit-test-gen    # Generate tests for changed code
+/review:review-apply           # Apply fitness report from GitHub issue
 ```
 
 ### Natural Language
@@ -103,20 +106,38 @@ Domain skills write reports to `docs/<domain>-review.md`. The full review writes
 - Process: 8%
 - Maintainability: 6%
 
+### Customizing thresholds
+
+Place `fitness-config.json` in your project root to adjust weights, status thresholds, and confidence cutoffs **without editing SKILL.md**. Skills read it at runtime.
+
+```bash
+# From your project root (with skills cloned to ~/Projects/skills or similar)
+cp ~/Projects/skills/fitness-config.example.json fitness-config.json
+
+# Or use the script (Python 3.6+, works on Windows/macOS/Linux)
+python3 ~/Projects/skills/scripts/fitness-config.py init
+python3 ~/Projects/skills/scripts/fitness-config.py validate
+python3 ~/Projects/skills/scripts/fitness-config.py show
+```
+
+See `fitness-config.example.json` and `fitness-config.schema.json` for the schema.
+
 ## Using the skills in CI / pipelines
 
 ### GitHub Agentic Workflows (recommended)
 
-Use [gh-aw](https://github.github.io/gh-aw/) with Copilot, Claude, or Codex. Add the workflow and configure one secret:
+Use [gh-aw](https://github.github.io/gh-aw/) with Claude Code (default), GitHub Copilot, or OpenAI Codex. Add the workflow and configure the secret for your engine:
 
 ```bash
 gh extension install github/gh-aw
 gh aw add jeffabailey/skills/fitness-review
-gh aw secrets set COPILOT_GITHUB_TOKEN --value "YOUR_PAT"  # or ANTHROPIC_API_KEY / OPENAI_API_KEY
-gh aw compile && git add .github/workflows/ && git commit -m "Add fitness review" && git push
+gh aw secrets set ANTHROPIC_API_KEY --value "YOUR_KEY"       # Claude (default)
+# gh aw secrets set COPILOT_GITHUB_TOKEN --value "YOUR_TOKEN" # Copilot
+# gh aw secrets set OPENAI_API_KEY --value "YOUR_KEY"          # Codex
+git add .github/workflows/ .github/scripts/ && git commit -m "Add fitness review" && git push
 ```
 
-Reports are created as GitHub issues. See **[SETUP.md](SETUP.md)** for full pipeline and IDE setup.
+Select the engine from the **Run workflow** dropdown (default: claude). Reports are created as GitHub issues. See **[SETUP.md](SETUP.md)** for full pipeline and IDE setup.
 
 ### Claude Code GitHub Action (alternative)
 
@@ -273,6 +294,10 @@ The skill should produce more findings, fewer false positives, consistent scorin
 All skills live under `src/`. Install commands symlink each directory in `src/` (no hardcoded list). See `src/` for the current set of skills; each skill is described in its own `SKILL.md`.
 
 ```
+fitness-config.example.json   # Example config for custom thresholds
+fitness-config.schema.json    # JSON schema for validation
+scripts/
+  fitness-config.py           # validate, init, show (cross-platform)
 src/
   review-<domain>/          # one per domain (architecture, security, etc.)
     SKILL.md                # Skill definition (workflow + scoring rubric)
@@ -282,6 +307,8 @@ src/
     SKILL.md                # Orchestrator (no references needed)
   review-jit-test-gen/
     SKILL.md                # Test generator (no references needed)
+  review-apply/
+    SKILL.md                # Applies fitness report findings (no references needed)
 tests/
   trigger-tests.md          # What phrases should/shouldn't trigger each skill
   functional-tests.md       # Expected behavior for each skill

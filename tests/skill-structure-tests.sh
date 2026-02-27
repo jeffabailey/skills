@@ -11,7 +11,8 @@ fail() { FAIL=$((FAIL + 1)); echo "  FAIL: $1"; }
 
 SKILLS=(review-architecture review-security review-reliability review-testing
         review-performance review-algorithms review-data review-accessibility
-        review-process review-maintainability review-full review-jit-test-gen)
+        review-process review-maintainability review-full review-jit-test-gen
+        review-apply)
 
 echo "=== Skill Structure Tests ==="
 echo ""
@@ -44,7 +45,7 @@ done
 # ---- Checklists (domain skills only) ----
 echo "--- Checklists ---"
 for skill in "${SKILLS[@]}"; do
-  if [ "$skill" = "review-full" ] || [ "$skill" = "review-jit-test-gen" ]; then
+  if [ "$skill" = "review-full" ] || [ "$skill" = "review-jit-test-gen" ] || [ "$skill" = "review-apply" ]; then
     continue
   fi
   if [ -f "$skill/references/checklist.md" ]; then
@@ -58,7 +59,7 @@ done
 echo "--- Report paths ---"
 for skill in "${SKILLS[@]}"; do
   domain="${skill#review-}"
-  if [ "$domain" = "full" ] || [ "$domain" = "jit-test-gen" ]; then
+  if [ "$domain" = "full" ] || [ "$domain" = "jit-test-gen" ] || [ "$domain" = "apply" ]; then
     continue
   fi
   expected="docs/${domain}-review.md"

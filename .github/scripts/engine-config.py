@@ -161,6 +161,7 @@ CLAUDE_AGENT_CLI = (
     f" --allowed-tools {CLAUDE_AGENT_ALLOWED_TOOLS}"
     " --debug-file /tmp/gh-aw/agent-stdio.log --verbose"
     " --permission-mode bypassPermissions --output-format stream-json"
+    " --max-turns 200"
     " \"$(cat /tmp/gh-aw/aw-prompts/prompt.txt)\""
     "${GH_AW_MODEL_AGENT_CLAUDE:+ --model \"$GH_AW_MODEL_AGENT_CLAUDE\"}'"
 )
@@ -196,6 +197,7 @@ CLAUDE_DETECTION_CLI = (
     f" --allowed-tools '{CLAUDE_DETECTION_ALLOWED_TOOLS}'"
     " --debug-file /tmp/gh-aw/threat-detection/detection.log --verbose"
     " --permission-mode bypassPermissions --output-format stream-json"
+    " --max-turns 50"
     " \"$(cat /tmp/gh-aw/aw-prompts/prompt.txt)\""
     "${GH_AW_MODEL_DETECTION_CLAUDE:+ --model \"$GH_AW_MODEL_DETECTION_CLAUDE\"}"
     " 2>&1 | tee -a /tmp/gh-aw/threat-detection/detection.log"

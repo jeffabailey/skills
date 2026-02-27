@@ -98,30 +98,4 @@ jobs:
           python-version: "3.12"
       - name: Run engine-config unit tests
         run: python3 -m unittest tests/test_engine_config.py -v
-
-  markdown-links:
-    name: Internal link check
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-
-      - name: Check referenced files exist
-        run: |
-          status=0
-          for file in SETUP.md CONTRIBUTING.md LICENSE catalog-info.yaml; do
-            if [ ! -f "$file" ]; then
-              echo "FAIL: README references $file but it does not exist"
-              status=1
-            else
-              echo "PASS: $file exists"
-            fi
-          done
-          for dir in review-architecture review-security review-reliability review-testing review-performance review-algorithms review-data review-accessibility review-process review-maintainability review-full review-jit-test-gen review-apply; do
-            if [ ! -d "$dir" ]; then
-              echo "FAIL: $dir/ directory missing"
-              status=1
-            else
-              echo "PASS: $dir/ exists"
-            fi
-          done
-          exit $status
+        

@@ -36,26 +36,19 @@ See **[SETUP.md](SETUP.md)** for pipelines and IDE setup (Cursor, Claude Code, V
 
 ### Claude Code
 
-Skills are installed automatically via [mcp-configure](https://github.com/jeffabailey/ide). To install manually:
+Skills are installed automatically via [mcp-configure](https://github.com/jeffabailey/ide). To install manually, use the install script (see [SETUP.md](SETUP.md)):
 
 ```bash
-git clone https://github.com/jeffabailey/skills.git ~/Projects/skills
-
-mkdir -p ~/.claude/skills
-for skill in ~/Projects/skills/src/*/; do
-  ln -sf "$(cd "$skill" && pwd)" ~/.claude/skills/$(basename "$skill")
-done
+bash ~/Projects/skills/scripts/install-skills.sh --clone ~/Projects/skills ~/.claude/skills
 ```
 
 ### Cursor
 
 ```bash
-git clone https://github.com/jeffabailey/skills.git ~/Projects/skills
-mkdir -p ~/.cursor/skills
-for skill in ~/Projects/skills/src/*/; do
-  ln -sf "$(cd "$skill" && pwd)" ~/.cursor/skills/$(basename "$skill")
-done
+bash ~/Projects/skills/scripts/install-skills.sh --clone ~/Projects/skills ~/.cursor/skills
 ```
+
+The script removes an existing clone directory first if present, so re-runs succeed after moving the repo.
 
 ## Usage
 
@@ -150,34 +143,12 @@ You can run the project fitness review (or any domain skill) in CI using [Claude
 
 ### 2. Check out the repo and install the skills
 
-Your workflow must check out the repository and install the skills from this repo so Claude Code can find them. Clone this repo (or your fork) and symlink every directory under `src/` into the directory Claude Code uses:
+Your workflow must check out the repository and install the skills from this repo so Claude Code can find them. Use the install script from this repo:
 
-```yaml
-- uses: actions/checkout@v4
-  with:
-    repository: jeffabailey/skills   # or your fork
-    path: skills
-
-- name: Install project fitness review skills
-  run: |
-    mkdir -p ~/.claude/skills
-    for skill in "$GITHUB_WORKSPACE/skills/src"/*/; do
-      ln -sf "$(cd "$skill" && pwd)" ~/.claude/skills/$(basename "$skill")
-    done
-```
-
-If the workflow runs in the same repo that contains the skills (e.g. this repo), use the workspace as the source and omit the separate checkout for `skills`:
-
-```yaml
-- uses: actions/checkout@v4
-
-- name: Install project fitness review skills
-  run: |
-    mkdir -p ~/.claude/skills
-    for skill in "$GITHUB_WORKSPACE/src"/*/; do
-      ln -sf "$(cd "$skill" && pwd)" ~/.claude/skills/$(basename "$skill")
-    done
-```
+- **Same repo (e.g. this repo):** after `actions/checkout@v4`, run  
+  `bash scripts/install-skills.sh "$GITHUB_WORKSPACE" "$HOME/.claude/skills"`.
+- **Separate checkout:** checkout this repo (or your fork) with `path: skills`, then run  
+  `bash skills/scripts/install-skills.sh "$GITHUB_WORKSPACE/skills" "$HOME/.claude/skills"`.
 
 ### 3. Run the Claude Code action with a review prompt
 

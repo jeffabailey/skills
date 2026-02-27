@@ -267,6 +267,8 @@ jobs:
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           persist-credentials: false
+      - name: Install project fitness review skills
+        run: bash scripts/install-skills.sh "$GITHUB_WORKSPACE" "$HOME/.claude/skills"
       - name: Load engine configuration
         id: engine-config
         run: python3 .github/scripts/engine-config.py --engine "${{ inputs.engine || 'claude' }}"

@@ -95,13 +95,8 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Install project fitness review skills
-        run: |
-          mkdir -p ~/.claude/skills
-          for skill in "$GITHUB_WORKSPACE/src"/*/; do
-            ln -sf "$(cd "$skill" && pwd)" ~/.claude/skills/$(basename "$skill")
-          done
-        # If skills are in a separate checkout (e.g. path: skills):
-        # use SKILLS_ROOT="$GITHUB_WORKSPACE/skills" and loop over "$SKILLS_ROOT/src"/*/
+        run: bash scripts/install-skills.sh "$GITHUB_WORKSPACE" "$HOME/.claude/skills"
+        # If skills are in a separate checkout (e.g. path: skills), use SOURCE_DIR="$GITHUB_WORKSPACE/skills" and run the script from that checkout.
 
       - uses: anthropics/claude-code-action@v1
         with:
@@ -132,26 +127,21 @@ Skills can be used in Cursor-based automation by symlinking into `~/.cursor/skil
 **User-level (all projects):**
 
 ```bash
-git clone https://github.com/jeffabailey/skills.git ~/Projects/skills
-
-mkdir -p ~/.cursor/skills
-for skill in ~/Projects/skills/src/*/; do
-  ln -sf "$(cd "$skill" && pwd)" ~/.cursor/skills/$(basename "$skill")
-done
+bash ~/Projects/skills/scripts/install-skills.sh --clone ~/Projects/skills ~/.cursor/skills
 ```
+
+If the repo was moved, the script removes the existing clone directory first so the clone succeeds.
 
 **Project-level (one repo):**
 
 ```bash
+# If the directory already exists (e.g. repo was moved), remove it first so clone succeeds:
+rm -rf .cursor/skills-source
 git clone https://github.com/jeffabailey/skills.git .cursor/skills-source
-
-mkdir -p .cursor/skills
-for skill in "$(pwd)/.cursor/skills-source/src"/*/; do
-  ln -sf "$(cd "$skill" && pwd)" .cursor/skills/$(basename "$skill")
-done
+bash .cursor/skills-source/scripts/install-skills.sh "$(pwd)/.cursor/skills-source" "$(pwd)/.cursor/skills"
 ```
 
-Add `.cursor/skills-source/` to `.gitignore` if you don’t want to commit the clone.
+Run from your project root. Add `.cursor/skills-source/` to `.gitignore` if you don’t want to commit the clone.
 
 ---
 
@@ -160,15 +150,12 @@ Add `.cursor/skills-source/` to `.gitignore` if you don’t want to commit the c
 **User-level:**
 
 ```bash
-git clone https://github.com/jeffabailey/skills.git ~/Projects/skills
-
-mkdir -p ~/.claude/skills
-for skill in ~/Projects/skills/src/*/; do
-  ln -sf "$(cd "$skill" && pwd)" ~/.claude/skills/$(basename "$skill")
-done
+bash ~/Projects/skills/scripts/install-skills.sh --clone ~/Projects/skills ~/.claude/skills
 ```
 
-**Project-level:** same pattern but use `.claude/skills/` in the project root and loop over `src/*/`.
+(Clone runs from the script; if the directory already exists it is removed first.)
+
+**Project-level:** same pattern but use `$(pwd)/.claude/skills` as DEST and clone into e.g. `.claude/skills-source`.
 
 ---
 
@@ -179,12 +166,7 @@ Uses the same [SKILL.md agentskills format](https://code.visualstudio.com/docs/c
 **User-level:**
 
 ```bash
-git clone https://github.com/jeffabailey/skills.git ~/Projects/skills
-
-mkdir -p ~/.copilot/skills
-for skill in ~/Projects/skills/src/*/; do
-  ln -sf "$(cd "$skill" && pwd)" ~/.copilot/skills/$(basename "$skill")
-done
+bash ~/Projects/skills/scripts/install-skills.sh --clone ~/Projects/skills ~/.copilot/skills
 ```
 
 **Project-level:** use `.github/skills/` or `.claude/skills/` in the repo. Copilot checks both.

@@ -27,6 +27,10 @@ node_modules/
 fitness-config.json
 .fitness-config.json
 
+# Generated review reports
+docs/*-review.md
+docs/fitness-report.md
+
 # Test artifacts
 /tmp/
 .gitnexus

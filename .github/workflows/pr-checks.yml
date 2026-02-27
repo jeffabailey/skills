@@ -85,7 +85,7 @@ jobs:
               echo "PASS: $file exists"
             fi
           done
-          for dir in review-architecture review-security review-reliability review-testing review-performance review-algorithms review-data review-accessibility review-process review-maintainability review-full review-jit-test-gen; do
+          for dir in review-architecture review-security review-reliability review-testing review-performance review-algorithms review-data review-accessibility review-process review-maintainability review-full review-jit-test-gen review-apply; do
             if [ ! -d "$dir" ]; then
               echo "FAIL: $dir/ directory missing"
               status=1

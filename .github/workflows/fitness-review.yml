@@ -1050,7 +1050,7 @@ jobs:
         run: echo "${{ steps.engine-config.outputs.extra_agent_env }}" >> "$GITHUB_ENV"
       - name: Execute detection CLI
         id: agentic_execution
-        timeout-minutes: 20
+        timeout-minutes: 8
         run: |
           set -o pipefail
           ${{ steps.engine-config.outputs.detection_cli_cmd }}

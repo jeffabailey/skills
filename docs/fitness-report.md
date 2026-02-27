@@ -1,203 +1,238 @@
 # Project Fitness Report
 
 **Date:** 2026-02-26
-**Scope:** Entire repository — 12 skill directories (SKILL.md + checklists), CI/CD workflows, engine-config.py, test scripts, and documentation.
-**Architecture type:** Documentation/skills library — no traditional application code, no database, no frontend.
+**Scope:** Full repository -- 13 skill definitions, GitHub Actions CI/CD pipeline, engine-config.py, test scripts, and documentation
 
-## Overall Score: 7.3 / 10
+## Overall Score: 7.1 / 10
+
+> Data (10%) and Accessibility (8%) skipped -- no database code and no frontend. Remaining weights redistributed proportionally.
 
 | Domain | Score | Status |
 |--------|-------|--------|
-| Architecture | 8.1/10 | ✅ Healthy |
+| Architecture | 7.6/10 | ⚠️ Needs Attention |
 | Security | 8.5/10 | ✅ Healthy |
-| Reliability | 5.6/10 | ⚠️ Needs Attention |
-| Testing | 4.2/10 | ❌ Critical |
-| Performance | 7.6/10 | ⚠️ Needs Attention |
-| Algorithms | 7.8/10 | ⚠️ Needs Attention |
-| Data | — | ⏭️ Skipped (no DB) |
-| Accessibility | — | ⏭️ Skipped (no frontend) |
+| Reliability | 5.4/10 | ⚠️ Needs Attention |
+| Testing | 4.5/10 | ⚠️ Needs Attention |
+| Performance | 7.5/10 | ⚠️ Needs Attention |
+| Algorithms | 7.7/10 | ⚠️ Needs Attention |
+| Data | -- | Skipped (no database) |
+| Accessibility | -- | Skipped (no frontend) |
 | Process | 7.4/10 | ⚠️ Needs Attention |
-| Maintainability | 7.4/10 | ⚠️ Needs Attention |
+| Maintainability | 7.8/10 | ⚠️ Needs Attention |
 
-**Status:** 8-10 = ✅ Healthy, 5-7 = ⚠️ Needs Attention, 1-4 = ❌ Critical
-
-**Skipped domains (weights redistributed):** Data (no SQL, migrations, or ORM code), Accessibility (no HTML/CSS/JSX/TSX).
-**Redistributed weights:** Architecture 17.1%, Security 17.1%, Reliability 12.2%, Testing 12.2%, Performance 12.2%, Algorithms 12.2%, Process 9.8%, Maintainability 7.3%.
+Status: 8-10 = ✅ Healthy, 5-7 = ⚠️ Needs Attention, 1-4 = ❌ Critical
 
 ---
 
 ## Top 10 Action Items (Priority Order)
 
-1. **[HIGH]** Fix scoring weight inconsistency in `docs/index.md` — shows Architecture/Security at 15%, omits Maintainability entirely; contradicts the canonical 14%/6% in 4 other files — `docs/index.md:40-49`
-2. **[HIGH]** Pin actions in `pr-checks.yml` to full SHA hashes — uses mutable `@v4`/`@v5` tags while `fitness-review.yml` correctly uses SHA pins; supply chain risk — `.github/workflows/pr-checks.yml:22,25,51,60`
-3. **[HIGH]** Fix stale CONTRIBUTING.md section requirements — states SKILL.md must have `## Triggers` and `## Scoring` sections, but actual skills use frontmatter for triggers and `## Scoring Dimensions` for scoring — `CONTRIBUTING.md:32`
-4. **[HIGH]** Run `workflow-tests.sh` in CI (non-act subset) — 30+ assertions in `workflow-tests.sh` are not run in any CI workflow; extract the non-`act` tests into a CI-runnable script — `tests/workflow-tests.sh`
-5. **[HIGH]** Add Dependabot for GitHub Actions — no automated dependency monitoring for pinned action SHAs or engine CLI versions — `.github/dependabot.yml` (missing)
-6. **[MEDIUM]** Fix `write_outputs` dict merge order — `**config` spread overwrites explicit `engine_id`/`detection_*` keys if they ever collide; swap to safe order — `.github/scripts/engine-config.py:319-325`
-7. **[MEDIUM]** Add alerting for workflow failures — no mechanism to detect failures beyond manually checking Actions tab — `.github/workflows/fitness-review.yml`
-8. **[MEDIUM]** Delete stale `docs/process-fitness-report.md` — old report predates the naming fix; references outdated findings (claims "No CONTRIBUTING.md", "No .gitignore") — `docs/process-fitness-report.md`
-9. **[MEDIUM]** Separate stderr from stdout in `workflow-tests.sh` — `2>&1` on engine-config invocation could mix Python warnings into grepped output — `tests/workflow-tests.sh:70`
-10. **[LOW]** Add `.env*` and credential file patterns to `.gitignore` — defensive measure against accidental secret commits — `.gitignore`
+1. **[HIGH]** `review-apply` exists in `review-apply/SKILL.md` and tests but is absent from `README.md`, `SETUP.md`, `CONTRIBUTING.md`, `.github/fitness-review-prompt.md`, `docs/index.md`, and `.github/workflows/pr-checks.yml:88` -- violates `CONTRIBUTING.md:60-71` checklist
+2. **[HIGH]** Detection step/job timeout inversion -- `fitness-review.yml:983` sets job `timeout-minutes: 10` but `fitness-review.yml:1053` sets step `timeout-minutes: 20`; step timeout is unreachable -- `fitness-review.yml:983,1053`
+3. **[HIGH]** No automated failure alerting -- workflow failures discoverable only by checking Actions tab or relying on default GitHub email notifications -- `.github/workflows/fitness-review.yml`
+4. **[HIGH]** 132+ trigger scenarios in `tests/trigger-tests.md` are documented but never run in CI -- even 1 trigger per skill (13 checks) would catch regressions -- `tests/trigger-tests.md`
+5. **[HIGH]** `CONTRIBUTING.md:32` states SKILL.md must have `## Triggers` section but no skill uses that pattern; actual triggers are in YAML frontmatter `description` field -- `CONTRIBUTING.md:32`
+6. **[HIGH]** Shell test failures show `FAIL: description` but no expected-vs-actual output; `grep -q` produces no diagnostic on mismatch -- `tests/workflow-tests.sh:73-76`, `tests/skill-structure-tests.sh:35-39`
+7. **[HIGH]** Most changes bypass PRs (direct commits to `main`), skipping the PR template checklist, CI checks, and CODEOWNERS review -- git log shows `ec30ba6`, `027b10d`, `a5cd755`, etc.
+8. **[MEDIUM]** `--env-all` in AWF execution forwards all runner environment variables into the agent sandbox; consider passing only required variables -- `fitness-review.yml:729`
+9. **[MEDIUM]** Skill list duplicated across 10+ locations with no automated sync check; `review-apply` omission proves this already fails in practice -- `CONTRIBUTING.md:60-71`
+10. **[MEDIUM]** No linting enforcement in CI -- no shellcheck, yamllint, or markdownlint configured -- `.github/workflows/pr-checks.yml`
 
 ---
 
 ## Domain Details
 
-### Architecture — 8.1/10
+### Architecture -- 7.6/10 ⚠️
 
-| Dimension | Score | Evidence |
-|-----------|-------|----------|
-| Coupling | 8/10 | One-way dependency graph; `review-full` orchestrates, no skill depends on another; skill list repeated in 8 locations creates data coupling |
-| Cohesion | 9/10 | Each skill directory has single clear responsibility; SKILL.md + checklist separation is clean |
-| Layering | 8/10 | Skills / checklists / docs / tests / CI layers are identifiable; `fitness-review-prompt.md` partially duplicates `review-full/SKILL.md` |
-| Modularity | 9/10 | Consistent `review-<domain>/SKILL.md` interface; adding/removing skills documented in CONTRIBUTING.md |
-| Naming | 8/10 | All skills follow `review-<domain>` convention; output paths follow `docs/<domain>-review.md` convention (process path now fixed) |
-| API Design | 7/10 | Trigger phrases well-scoped; ADR 0001 documents overlap resolution; weight inconsistency in `docs/index.md:40-49` |
-| Maintainability | 8/10 | All SKILL.md under 300 lines; PR checks enforce structural correctness; domain list documented in CONTRIBUTING.md |
+| Dimension | Score |
+|-----------|-------|
+| Coupling | 8/10 |
+| Cohesion | 9/10 |
+| Layering | 8/10 |
+| Modularity | 8/10 |
+| Naming | 9/10 |
+| API Design | 7/10 |
+| Maintainability | 8/10 |
 
-**Strengths:** No circular dependencies; consistent skill structure; ADR 0001 explains key design trade-off; PR checks validate structure and report path convention on every PR.
+**Strengths:**
+- Flat, one-way dependency graph with zero circular dependencies. Each skill is self-contained; only `review-full` orchestrates.
+- Consistent `review-<domain>/SKILL.md + references/checklist.md` module interface documented in ADR 0001.
+- Excellent naming convention enforced by `skill-structure-tests.sh`.
 
-**Gaps:** Weight inconsistency in `docs/index.md`; `fitness-review-prompt.md` and `review-full/SKILL.md` are near-duplicates; CLAUDE.md and AGENTS.md contain identical content requiring manual sync.
-
----
-
-### Security — 8.5/10
-
-| Dimension | Score | Evidence |
-|-----------|-------|----------|
-| Input Validation | 9/10 | Workflow input constrained to `type: choice`; `argparse` with `choices=` in engine-config.py; safe output sanitization |
-| Authentication/Authorization | 9/10 | `permissions: {}` at workflow root; per-job least-privilege scoping; `persist-credentials: false` on all checkouts |
-| Data Protection | 8/10 | Secrets via GitHub Secrets; ephemeral keys masked immediately; log redaction on `always()`; `.gitignore` missing `.env` patterns |
-| Dependency Security | 7/10 | `fitness-review.yml` pins all actions by SHA; `pr-checks.yml` uses unpinned `@v4`/`@v5` tags — inconsistent |
-| Error Handling/Logging | 8/10 | `redact_secrets.cjs` covers 6 secret names; telemetry/error reporting disabled; `set -euo pipefail` in test scripts |
-| Cryptography | 9/10 | `openssl rand -base64 45` (~360 bits entropy); no weak algorithms; no hardcoded keys |
-
-**Strengths:** Exemplary least-privilege permissions model; SHA-pinned actions in main workflow; network allowlists per engine; ephemeral keys with immediate masking.
-
-**Gaps:** `pr-checks.yml` uses unpinned action tags (supply chain risk); `.gitignore` missing `.env*` patterns; `*.githubusercontent.com` wildcard in Claude domain allowlist.
+**Weaknesses:**
+- Skill list duplicated in 10+ locations creates shotgun surgery risk; `review-apply` already missing from major docs.
+- `fitness-review-prompt.md` partially duplicates `review-full/SKILL.md` domain list and weights.
+- `review-accessibility/SKILL.md:22` uses `## Scoring Rubric` instead of `## Scoring Dimensions`.
 
 ---
 
-### Reliability — 5.6/10
+### Security -- 8.5/10 ✅
 
-| Dimension | Score | Evidence |
-|-----------|-------|----------|
-| Observability | 3/10 | Visibility limited to GitHub Actions run logs; no metrics, dashboards, structured logging, or alerting |
-| Availability Design | 6/10 | Multi-engine failover; concurrency group prevents collisions; content via GitHub (high availability) |
-| Timeout/Retry Hygiene | 6/10 | Good timeout layering (bash 60s < MCP 120s < agent 30min); detection step timeout (20min) exceeds its job timeout (10min) |
-| CI/CD Maturity | 7/10 | PR checks + scheduled + manual dispatch; action versions pinned; `skill-structure-tests.sh` runs in CI |
-| Incident Readiness | 5/10 | `incident-response.md` with severity levels; `RUN.md` covers 6 failure modes; no alerts, no postmortem template |
-| Capacity Planning | 4/10 | Concurrency limits present; no documented API quotas, run durations, or runner-minute costs |
-| Container/Deploy Hygiene | 8/10 | Least-privilege permissions; `persist-credentials: false`; domain allowlists; container images pinned by tag |
+| Dimension | Score |
+|-----------|-------|
+| Input Validation | 9/10 |
+| Authentication/Authorization | 9/10 |
+| Data Protection | 8/10 |
+| Dependency Security | 9/10 |
+| Error Handling/Logging | 8/10 |
+| Cryptography | 9/10 |
 
-**Strengths:** Multi-engine failover architecture; incident-response.md and expanded RUN.md troubleshooting; least-privilege permissions.
+**Strengths:**
+- `permissions: {}` at workflow root with per-job least-privilege grants. `persist-credentials: false` on all checkouts.
+- All GitHub Actions pinned by full SHA. Dependabot configured for weekly updates.
+- Ephemeral API keys generated with `openssl rand -base64 45` (~360 bits) and masked immediately.
+- XPIA prompt injection defense active. `yaml.safe_load()` used correctly.
 
-**Gaps:** No observability beyond Actions UI; no alerting for failures; detection step/job timeout mismatch; no capacity documentation.
-
----
-
-### Testing — 4.2/10
-
-| Dimension | Score | Evidence |
-|-----------|-------|----------|
-| Test Pyramid Balance | 4/10 | Two automated bash scripts (structural); two manual test plans (100+ scenarios); no automated integration/E2E tests |
-| Test Quality | 6/10 | Bash scripts have clear pass/fail naming; manual tests follow Given/When/Then; no expected-vs-actual output on failure |
-| Coverage Strategy | 3/10 | No coverage tooling; engine-config.py partially covered by CI; skill behavior untested in CI |
-| Performance Testing | 1/10 | No benchmarks; N/A for this repo type |
-| Debugging Support | 4/10 | Descriptive PASS/FAIL messages; `set -euo pipefail`; no structured logging or reproduction helpers |
-| CI Integration | 5/10 | `pr-checks.yml` runs `skill-structure-tests.sh` on every PR; `workflow-tests.sh` not run in CI (requires `act`) |
-
-**Strengths:** `skill-structure-tests.sh` (56 assertions) runs in CI on every PR; manual test plans are well-structured with positive and negative cases; PR template reminds contributors to run `workflow-tests.sh` locally.
-
-**Gaps:** Testing remains the highest-priority gap. `workflow-tests.sh` not in CI; no automated skill behavior tests; `pr-checks.yml` duplicates some `workflow-tests.sh` logic; no expected-vs-actual diagnostics in test failures.
+**Findings (confidence >= 7/10):**
+- **MEDIUM** (8/10): `--env-all` passes all runner env vars into AWF sandbox -- `fitness-review.yml:729`
+- **MEDIUM** (8/10): `bypassPermissions` on Claude agent and `--allow-all-tools --allow-all-paths` on Copilot -- mitigated by allowed-tools list and firewall -- `engine-config.py:163,175`
+- **LOW** (9/10): `.claude/settings.local.json` committed with local filesystem path -- `settings.local.json:11`
+- **LOW** (8/10): `DEBUG: '*'` on safe outputs server could produce verbose logs -- `fitness-review.yml:608`
 
 ---
 
-### Performance — 7.6/10
+### Reliability -- 5.4/10 ⚠️
 
-| Dimension | Score | Evidence |
-|-----------|-------|----------|
-| Algorithmic Efficiency | 9/10 | O(1) dict lookup; `_domains()` with `sorted(set(...))` on bounded lists; all operations linear or better |
-| Parallel Execution Design | 9/10 | `review-full/SKILL.md` launches domain reviews concurrently; smart domain skipping |
-| Caching Strategy | 6/10 | Module-level domain dedup; `package-manager-cache: false` forces full npm install per run; Docker images pulled fresh each run |
-| Scalability Readiness | 7/10 | Multi-engine architecture easily extensible; top-level concurrency group prevents parallel runs |
-| Resource Utilization | 8/10 | Sparse checkout in activation job; bounded `find` with `maxdepth 4`; 1-day artifact retention |
-| Data Pipeline Efficiency | 7/10 | Delta-aware review scope via `git diff`; no skip-if-no-changes for scheduled runs |
+| Dimension | Score |
+|-----------|-------|
+| Observability | 3/10 |
+| Availability Design | 7/10 |
+| Timeout/Retry Hygiene | 6/10 |
+| CI/CD Maturity | 7/10 |
+| Incident Readiness | 5/10 |
+| Capacity Planning | 4/10 |
+| Container/Deploy Hygiene | 6/10 |
 
-**Strengths:** Excellent data structure usage in engine-config.py; parallel review design; efficient checkout strategy; bounded resource usage.
+**Strengths:**
+- Multi-engine failover (claude/copilot/codex) with per-engine concurrency groups.
+- Well-layered timeout hierarchy: Bash 60s < MCP 120s < agent 30min.
+- `--max-turns 200` (agent) and `--max-turns 50` (detection) bound agent resource consumption.
+- `docs/incident-response.md` with P1-P4 severity levels; `RUN.md` with 6 troubleshooting runbooks.
 
-**Gaps:** No npm/Docker caching across runs; single-agent bottleneck in CI (all domains in one session); weekly runs re-analyze entire codebase even without changes.
-
----
-
-### Algorithms — 7.8/10
-
-| Dimension | Score | Evidence |
-|-----------|-------|----------|
-| Algorithm Choice | 8/10 | Dictionary lookup, `",".join()`, `sorted()` — all appropriate for problem domain |
-| Data Structure Selection | 8/10 | `ENGINES` dict for O(1) key access; lists for concatenation; sets for dedup — correct patterns |
-| Complexity Awareness | 9/10 | No hidden quadratic behavior; all iterations over small, bounded (n<=57) collections |
-| Concurrency Safety | 8/10 | Single-threaded scripts; workflow concurrency groups prevent collisions; no shared mutable state |
-| Edge Case Handling | 6/10 | Dict merge order bug in `write_outputs` (explicit keys overwritten by `**config` spread); heredoc delimiter collision risk; stderr mixed into test output |
-| Correctness Patterns | 8/10 | Deterministic output (sorted keys/domains); guaranteed loop termination; idempotent engine-config.py |
-
-**Strengths:** Clean implementation with no overengineering; deterministic output via sorted iteration; version constants as single source of truth for install commands.
-
-**Gaps:** `write_outputs` dict merge order (`engine-config.py:319-325`) lets `**config` overwrite explicit keys; `GH_AW_EOF` heredoc delimiter has no collision guard; `workflow-tests.sh:70` mixes stderr into grepped output.
+**Weaknesses:**
+- No structured logging, metrics, dashboards, or alerting anywhere.
+- Detection step timeout (20min) exceeds its job timeout (10min) -- `fitness-review.yml:983,1053`.
+- No retry logic; manual re-run is the only failure recovery.
+- No documented API quotas, expected run duration, or runner-minute costs.
 
 ---
 
-### Process — 7.4/10
+### Testing -- 4.5/10 ⚠️
 
-| Dimension | Score | Evidence |
-|-----------|-------|----------|
-| Documentation Quality | 9/10 | README, SETUP, CONTRIBUTING, RUN.md, ADR, incident-response.md — comprehensive and cross-linked; `docs/index.md` has stale weights |
-| Development Workflow | 8/10 | PR-gate CI with 3 validation jobs; fitness-review on schedule + manual dispatch; no commit convention enforcement |
-| Code Review Practices | 7/10 | PR template with 5-item checklist; CODEOWNERS; issue templates; single-maintainer limits multi-reviewer evidence |
-| Dependency Management | 5/10 | Actions pinned to SHA; engine versions pinned; no Dependabot/Renovate; no vulnerability scanning |
-| Project Organization | 9/10 | Consistent `review-<domain>/` structure; tests, docs, CI cleanly separated; comprehensive `.gitignore`; `catalog-info.yaml` |
-| Portability | 7/10 | Markdown/YAML inherently portable; symlink install; no Windows path handling documented |
-| Technical Leadership Signals | 7/10 | ADR with alternatives and rationale; design article cross-linked; incident response; no changelog or roadmap |
+| Dimension | Score |
+|-----------|-------|
+| Test Pyramid Balance | 5/10 |
+| Test Quality | 6/10 |
+| Coverage Strategy | 4/10 |
+| Performance Testing | 1/10 |
+| Debugging Support | 4/10 |
+| CI Integration | 7/10 |
 
-**Strengths:** Documentation is the strongest area — README, SETUP, CONTRIBUTING, RUN.md, and ADR work together well. PR checks pipeline validates structure on every PR. CODEOWNERS and templates establish contributor workflow.
+**Strengths:**
+- 59+ automated shell assertions in CI across `skill-structure-tests.sh` and `workflow-tests.sh`.
+- 4 parallel CI jobs provide fast feedback on PRs.
+- Tests are deterministic and independent (file existence checks, grep pattern matching).
 
-**Gaps:** No Dependabot for automated dependency updates; `CONTRIBUTING.md:32` documents section requirements that don't match actual SKILL.md structure; no changelog or release tagging; no Windows support documented.
-
----
-
-### Maintainability — 7.4/10
-
-| Dimension | Score | Evidence |
-|-----------|-------|----------|
-| Structural Complexity | 8/10 | All SKILL.md under 300 lines; engine-config.py at 365 lines with flat structure; max nesting depth 2; no function over 25 lines |
-| Understandability | 7/10 | Consistent `review-<domain>` naming; SKILL.md internal structure uniform; `_TOOLCACHE_PATH` shell string hard to parse; scoring section headers inconsistent |
-| Technical Debt | 6/10 | Zero TODO/FIXME in code; weight inconsistency in `docs/index.md`; stale `docs/process-fitness-report.md`; CONTRIBUTING.md section requirements stale |
-| Coupling Depth | 9/10 | Flat module structure; skills fully independent; engine-config.py self-contained with stdlib only |
-| Code Smell Density | 7/10 | Skill list duplicated in 10+ locations (shotgun surgery); `review-accessibility/SKILL.md` uses different scoring section header than all other skills; stale report artifacts |
-
-**Strengths:** All files are readable and consistently structured; engine-config.py cleanly separates data from logic; zero TODO/FIXME/HACK markers; zero lint suppressions.
-
-**Gaps:** Skill list duplication across 10+ locations is the most significant maintainability risk; CONTRIBUTING.md documents conventions that don't match reality; stale reports and weight inconsistency indicate manual sync has already failed.
+**Weaknesses:**
+- 132+ trigger scenarios and 32+ functional scenarios exist only as manual markdown documentation.
+- Shell test failures show `FAIL: description` with no expected-vs-actual diagnostic output.
+- No coverage tooling, no performance benchmarks, no machine-parseable test output (TAP/JUnit).
+- `review-maintainability` trigger tests added but no automated trigger validation exists.
 
 ---
 
-## Previous Review Comparison (2026-02-22 → 2026-02-26)
+### Performance -- 7.5/10 ⚠️
 
-| Domain | Previous | Current | Change |
-|--------|----------|---------|--------|
-| Architecture | 7.6 | 8.1 | +0.5 |
-| Security | 8.7 | 8.5 | -0.2 |
-| Reliability | 5.0 | 5.6 | +0.6 |
-| Testing | 3.8 | 4.2 | +0.4 |
-| Performance | 7.8 | 7.6 | -0.2 |
-| Algorithms | 8.2 | 7.8 | -0.4 |
-| Process | 7.0 | 7.4 | +0.4 |
-| Maintainability | — | 7.4 | New |
-| **Overall** | **7.0** | **7.3** | **+0.3** |
+| Dimension | Score |
+|-----------|-------|
+| Algorithmic Efficiency | 8/10 |
+| Database Design | N/A |
+| Caching Strategy | N/A |
+| Scalability Readiness | 7/10 |
+| Resource Utilization | 8/10 |
+| Data Pipeline Efficiency | 7/10 |
 
-**What improved:** PR-triggered CI (`pr-checks.yml`), `skill-structure-tests.sh` (56 automated tests), expanded RUN.md troubleshooting (6 failure modes), `incident-response.md`, CODEOWNERS, issue/PR templates, `.gitignore`, process report path fix, engine-config.py readability improvements.
+**Strengths:**
+- All operations are O(n) or better on bounded, compile-time-constant inputs.
+- `review-full` launches domain reviews in parallel via Task tool.
+- `--max-turns 200` bounds agent resource consumption; `retention-days: 1` on artifacts is cost-conscious.
 
-**What remains:** Testing automation (workflow-tests.sh not in CI), observability/alerting, stale documentation (`docs/index.md` weights, `docs/process-fitness-report.md`, `CONTRIBUTING.md:32`), dependency automation (no Dependabot), and the engine-config.py `write_outputs` dict merge order bug.
+**Weaknesses:**
+- Single concurrent workflow run limitation (concurrency group).
+- No explicit `timeout-minutes` on all jobs in `fitness-review.yml`.
+- Docker images downloaded fresh each run (no caching).
+
+---
+
+### Algorithms -- 7.7/10 ⚠️
+
+| Dimension | Score |
+|-----------|-------|
+| Algorithm Choice | 8/10 |
+| Data Structure Selection | 8/10 |
+| Complexity Awareness | 9/10 |
+| Concurrency Safety | 9/10 |
+| Edge Case Handling | 6/10 |
+| Correctness Patterns | 8/10 |
+
+**Strengths:**
+- Dictionary lookup for O(1) engine config access; `sorted(set(...))` for deterministic dedup; `",".join()` for efficient string assembly.
+- No hidden quadratic behavior; all iterations over bounded collections (n < 80).
+- Single-threaded scripts with workflow concurrency groups preventing collisions.
+
+**Weaknesses:**
+- Dict merge order in `write_outputs` uses parameter shadowing (`config = {**config, ...}`) -- fragile if colliding keys are added -- `engine-config.py:321-327`
+- Heredoc delimiter `GH_AW_EOF` has no collision guard -- `engine-config.py:337-339`
+- `review-apply` missing from `pr-checks.yml:88` directory validation loop.
+- Skill list invariant already violated -- no automated enforcement exists.
+
+---
+
+### Process -- 7.4/10 ⚠️
+
+| Dimension | Score |
+|-----------|-------|
+| Documentation Quality | 8/10 |
+| Development Workflow | 8/10 |
+| Code Review Practices | 6/10 |
+| Dependency Management | 7/10 |
+| Project Organization | 9/10 |
+| Portability | 7/10 |
+| Technical Leadership | 7/10 |
+
+**Strengths:**
+- Comprehensive documentation: README, SETUP (5 platforms), CONTRIBUTING, RUN (6 runbooks), ADR, incident-response.
+- PR-gated CI with 4 parallel jobs; Dependabot active; SHA-pinned actions.
+- Clean `review-<domain>/` directory structure with consistent naming.
+- ADR 0001 documents the skill-based architecture decision with alternatives and rationale.
+
+**Weaknesses:**
+- Most commits go directly to `main` without PRs, bypassing the PR template checklist and CI checks.
+- No linting enforcement (no shellcheck, yamllint, markdownlint).
+- No CODE_OF_CONDUCT.md despite the process checklist calling for one.
+- Only 1 ADR; subsequent decisions (multi-engine, gh-aw, review-apply) lack formal ADRs.
+- No CHANGELOG, release tags, or semantic versioning.
+
+---
+
+### Maintainability -- 7.8/10 ⚠️
+
+| Dimension | Score |
+|-----------|-------|
+| Structural Complexity | 8/10 |
+| Understandability | 9/10 |
+| Technical Debt Indicators | 7/10 |
+| Coupling/Dependency Depth | 8/10 |
+| Code Smell Density | 7/10 |
+
+**Strengths:**
+- All executable files well under size limits; `engine-config.py` cleanly segmented at 367 lines; `main()` is 8 lines.
+- Zero TODO/FIXME/HACK in project code; zero lint suppressions; zero dead code.
+- Excellent naming and consistent patterns across all 13 skills.
+
+**Weaknesses:**
+- Skill list duplicated in 10+ locations (shotgun surgery); `review-apply` already inconsistent.
+- `_TOOLCACHE_PATH` (engine-config.py:149-152) uses multi-layer Python/shell quote escaping that is hard to read.
+- `fitness-review.yml` at 1150 lines is the one complexity outlier (platform constraint).
 
 ---
 

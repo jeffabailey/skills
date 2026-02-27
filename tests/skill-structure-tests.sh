@@ -7,7 +7,7 @@ PASS=0
 FAIL=0
 
 pass() { PASS=$((PASS + 1)); echo "  PASS: $1"; }
-fail() { FAIL=$((FAIL + 1)); echo "  FAIL: $1"; }
+fail() { FAIL=$((FAIL + 1)); echo "  FAIL: $1"; if [ -n "${2:-}" ]; then echo "        got: $2"; fi; }
 
 SKILLS=(review-architecture review-security review-reliability review-testing
         review-performance review-algorithms review-data review-accessibility

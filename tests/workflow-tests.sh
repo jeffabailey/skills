@@ -8,7 +8,7 @@ FAIL=0
 PLATFORM_ARGS="-P ubuntu-slim=catthehacker/ubuntu:act-latest -P ubuntu-latest=catthehacker/ubuntu:act-latest"
 
 pass() { PASS=$((PASS + 1)); echo "  PASS: $1"; }
-fail() { FAIL=$((FAIL + 1)); echo "  FAIL: $1"; }
+fail() { FAIL=$((FAIL + 1)); echo "  FAIL: $1"; if [ -n "${2:-}" ]; then echo "        got: $2"; fi; }
 
 echo "=== Workflow Validation Tests ==="
 echo ""
@@ -73,7 +73,8 @@ for ENGINE in claude copilot codex; do
   if echo "$ENGINE_OUTPUT" | grep -q "^engine_id=$ENGINE"; then
     pass "engine-config.py outputs engine_id=$ENGINE"
   else
-    fail "engine-config.py missing engine_id for $ENGINE"
+    actual_id=$(echo "$ENGINE_OUTPUT" | grep "^engine_id=" | head -1)
+    fail "engine-config.py missing engine_id for $ENGINE" "${actual_id:-<no engine_id line found>}"
   fi
   for KEY in engine_name secret_name concurrency_prefix; do
     if echo "$ENGINE_OUTPUT" | grep -q "^${KEY}="; then

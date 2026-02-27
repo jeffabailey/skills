@@ -105,6 +105,22 @@ Domain skills write reports to `docs/<domain>-review.md`. The full review writes
 - Process: 8%
 - Maintainability: 6%
 
+### Customizing thresholds
+
+Place `fitness-config.json` in your project root to adjust weights, status thresholds, and confidence cutoffs **without editing SKILL.md**. Skills read it at runtime.
+
+```bash
+# From your project root (with skills cloned to ~/Projects/skills or similar)
+cp ~/Projects/skills/fitness-config.example.json fitness-config.json
+
+# Or use the script (Python 3.6+, works on Windows/macOS/Linux)
+python3 ~/Projects/skills/scripts/fitness-config.py init
+python3 ~/Projects/skills/scripts/fitness-config.py validate
+python3 ~/Projects/skills/scripts/fitness-config.py show
+```
+
+See `fitness-config.example.json` and `fitness-config.schema.json` for the schema.
+
 ## Using the skills in CI / pipelines
 
 ### GitHub Agentic Workflows (recommended)
@@ -275,6 +291,10 @@ The skill should produce more findings, fewer false positives, consistent scorin
 ## Structure
 
 ```
+fitness-config.example.json   # Example config for custom thresholds
+fitness-config.schema.json    # JSON schema for validation
+scripts/
+  fitness-config.py           # validate, init, show (cross-platform)
 review-architecture/
   SKILL.md                # Skill definition (workflow + scoring rubric)
   references/

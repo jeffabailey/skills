@@ -68,6 +68,25 @@ jobs:
       - name: Run skill structure tests
         run: bash tests/skill-structure-tests.sh
 
+  fitness-config:
+    name: Fitness config validation
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Set up Python
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+        with:
+          python-version: "3.12"
+
+      - name: Validate fitness-config.example.json
+        run: python3 scripts/fitness-config.py validate fitness-config.example.json
+
+      - name: Validate fitness-config.py init
+        run: |
+          python3 scripts/fitness-config.py init /tmp/fitness-config-test.json
+          python3 scripts/fitness-config.py validate /tmp/fitness-config-test.json
+
   markdown-links:
     name: Internal link check
     runs-on: ubuntu-latest

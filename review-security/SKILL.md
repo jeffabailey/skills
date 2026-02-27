@@ -5,7 +5,11 @@ description: Analyzes code for security vulnerabilities and compliance risks, pr
 
 # Security Fitness Review
 
-Analyze the codebase (or specified files/modules) for security fitness. Identify vulnerabilities, insecure patterns, and compliance risks using evidence from the code. Follow the TFDM loop: identify threats, find vulnerabilities, evaluate defenses, and assess monitoring.
+Analyze the codebase (or specified files/modules) for security fitness.
+
+## Configuration
+
+If the project root contains `fitness-config.json` or `.fitness-config.json`, read it and use `security.confidenceThreshold` (default 7) for the minimum confidence to report findings. Otherwise use 7/10. Identify vulnerabilities, insecure patterns, and compliance risks using evidence from the code. Follow the TFDM loop: identify threats, find vulnerabilities, evaluate defenses, and assess monitoring.
 
 ## Workflow
 

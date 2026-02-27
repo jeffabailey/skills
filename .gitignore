@@ -23,6 +23,10 @@ node_modules/
 *.pem
 *.key
 
+# Per-project config (users create in their repos)
+fitness-config.json
+.fitness-config.json
+
 # Test artifacts
 /tmp/
 .gitnexus

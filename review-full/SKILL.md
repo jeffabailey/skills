@@ -7,6 +7,10 @@ description: Runs a comprehensive project fitness review combining architecture,
 
 Run all review skills in parallel to produce a unified fitness assessment.
 
+## Configuration
+
+If the project root contains `fitness-config.json` or `.fitness-config.json`, read it and use its `weights` and `statusThresholds` for scoring. Otherwise use the defaults below. See `fitness-config.example.json` in the skills repo for the schema.
+
 ## Workflow
 
 ### Step 1: Identify Review Scope

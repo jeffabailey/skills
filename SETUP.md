@@ -95,14 +95,11 @@ jobs:
       - name: Install project fitness review skills
         run: |
           mkdir -p ~/.claude/skills
-          for skill in review-architecture review-security review-reliability review-testing review-performance review-algorithms review-data review-accessibility review-process review-maintainability review-full review-jit-test-gen; do
-            ln -sf "$GITHUB_WORKSPACE/$skill" ~/.claude/skills/$skill
+          for skill in "$GITHUB_WORKSPACE/src"/*/; do
+            ln -sf "$(cd "$skill" && pwd)" ~/.claude/skills/$(basename "$skill")
           done
-        # If skills are in a separate checkout:
-        # with:
-        #   repository: jeffabailey/skills
-        #   path: skills
-        #   Then: ln -sf "$GITHUB_WORKSPACE/skills/$skill" ...
+        # If skills are in a separate checkout (e.g. path: skills):
+        # use SKILLS_ROOT="$GITHUB_WORKSPACE/skills" and loop over "$SKILLS_ROOT/src"/*/
 
       - uses: anthropics/claude-code-action@v1
         with:
@@ -135,8 +132,9 @@ Skills can be used in Cursor-based automation by symlinking into `~/.cursor/skil
 ```bash
 git clone https://github.com/jeffabailey/skills.git ~/Projects/skills
 
-for skill in review-architecture review-security review-reliability review-testing review-performance review-algorithms review-data review-accessibility review-process review-maintainability review-full review-jit-test-gen; do
-  ln -sf ~/Projects/skills/$skill ~/.cursor/skills/$skill
+mkdir -p ~/.cursor/skills
+for skill in ~/Projects/skills/src/*/; do
+  ln -sf "$(cd "$skill" && pwd)" ~/.cursor/skills/$(basename "$skill")
 done
 ```
 
@@ -145,8 +143,9 @@ done
 ```bash
 git clone https://github.com/jeffabailey/skills.git .cursor/skills-source
 
-for skill in review-architecture review-security review-reliability review-testing review-performance review-algorithms review-data review-accessibility review-process review-maintainability review-full review-jit-test-gen; do
-  ln -sf "$(pwd)/.cursor/skills-source/$skill" .cursor/skills/$skill
+mkdir -p .cursor/skills
+for skill in "$(pwd)/.cursor/skills-source/src"/*/; do
+  ln -sf "$(cd "$skill" && pwd)" .cursor/skills/$(basename "$skill")
 done
 ```
 
@@ -161,12 +160,13 @@ Add `.cursor/skills-source/` to `.gitignore` if you don’t want to commit the c
 ```bash
 git clone https://github.com/jeffabailey/skills.git ~/Projects/skills
 
-for skill in review-architecture review-security review-reliability review-testing review-performance review-algorithms review-data review-accessibility review-process review-maintainability review-full review-jit-test-gen; do
-  ln -sf ~/Projects/skills/$skill ~/.claude/skills/$skill
+mkdir -p ~/.claude/skills
+for skill in ~/Projects/skills/src/*/; do
+  ln -sf "$(cd "$skill" && pwd)" ~/.claude/skills/$(basename "$skill")
 done
 ```
 
-**Project-level:** same pattern but use `.claude/skills/` in the project root.
+**Project-level:** same pattern but use `.claude/skills/` in the project root and loop over `src/*/`.
 
 ---
 
@@ -180,8 +180,8 @@ Uses the same [SKILL.md agentskills format](https://code.visualstudio.com/docs/c
 git clone https://github.com/jeffabailey/skills.git ~/Projects/skills
 
 mkdir -p ~/.copilot/skills
-for skill in review-architecture review-security review-reliability review-testing review-performance review-algorithms review-data review-accessibility review-process review-maintainability review-full review-jit-test-gen; do
-  ln -sf ~/Projects/skills/$skill ~/.copilot/skills/$skill
+for skill in ~/Projects/skills/src/*/; do
+  ln -sf "$(cd "$skill" && pwd)" ~/.copilot/skills/$(basename "$skill")
 done
 ```
 
@@ -233,20 +233,20 @@ Review domains: architecture, security, reliability, testing, performance, algor
 
 ## Skill list
 
-All skills are in the repo root. Use these names when symlinking:
+All skills live under `src/`. The install commands above symlink every directory in `src/` (no hardcoded list). Current skills:
 
-- `review-architecture`
-- `review-security`
-- `review-reliability`
-- `review-testing`
-- `review-performance`
-- `review-algorithms`
-- `review-data`
-- `review-accessibility`
-- `review-process`
-- `review-maintainability`
-- `review-full`
-- `review-jit-test-gen`
+- `src/review-architecture`
+- `src/review-security`
+- `src/review-reliability`
+- `src/review-testing`
+- `src/review-performance`
+- `src/review-algorithms`
+- `src/review-data`
+- `src/review-accessibility`
+- `src/review-process`
+- `src/review-maintainability`
+- `src/review-full`
+- `src/review-jit-test-gen`
 
 ---
 

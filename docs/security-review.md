@@ -119,7 +119,7 @@ This repository is a **skills library** (SKILL.md markdown files and checklists)
 
 ## Checklist Reference
 
-See `review-security/references/checklist.md` for the full security checklist.
+See `src/review-security/references/checklist.md` for the full security checklist.
 
 ---
 

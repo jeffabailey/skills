@@ -83,6 +83,7 @@ What to check:
 - Magic numbers and strings without named constants
 - Suppressed linter/compiler warnings (eslint-disable, @SuppressWarnings, etc.)
 - Outdated or misleading comments
+- Redundant or useless documentation (e.g., lists that duplicate the source of truth and require manual sync; docs that add no unique value beyond code or a single canonical doc)
 - Test coverage for critical paths (low coverage increases refactoring risk)
 
 What good looks like (8-10):
@@ -91,6 +92,7 @@ What good looks like (8-10):
 - Named constants replace magic numbers; enums replace magic strings
 - No broad lint suppressions; targeted suppressions with justification
 - Comments are current and explain "why" not "what"
+- Documentation is minimal and non-redundant; no duplicate lists or prose that must be manually synced with code or structure
 - Critical paths have test coverage; refactoring is safe
 
 What bad looks like (1-3):
@@ -99,6 +101,7 @@ What bad looks like (1-3):
 - Numbers like 86400 or strings like "active" scattered without constants
 - eslint-disable-next-line or equivalent used to silence entire categories
 - Comments contradict code or describe removed behavior
+- Redundant documentation (e.g., hand-maintained lists that duplicate the source of truth; docs that add maintenance but no unique value)
 - No tests; any refactor risks breaking unknown behavior
 
 ### 4. Coupling and Dependency Depth

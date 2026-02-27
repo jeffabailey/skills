@@ -68,7 +68,7 @@ No instances of lists used for repeated membership checks, unbounded caches, or 
 
 - No nested loops over unbounded data.
 - No string concatenation inside loops (JavaScript uses `+` once for repository string).
-- Bash `for skill in ... do ln -sf ...` is O(n) over a bounded skill list (11 items).
+- Bash loops over `src/*/` and symlinks each; O(n) in the number of skills (no hardcoded list).
 - `JSON.stringify` is O(n) in output size; output is bounded by awInfo structure.
 
 No quadratic patterns, repeated sorting, or unbounded in-memory growth in project-owned code.

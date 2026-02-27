@@ -35,7 +35,7 @@
 
 **Strengths:** README is clear and actionable. ADR explains trade-offs and alternatives. Setup is reproducible via documented commands. Docs cross-link effectively.
 
-**Gaps:** No CONTRIBUTING.md (checklist expects one at `review-process/references/checklist.md:211`). No API docs — acceptable for a skill repo. Contribution steps appear in README testing section but not as a dedicated guide.
+**Gaps:** No CONTRIBUTING.md (checklist expects one at `src/review-process/references/checklist.md:211`). No API docs — acceptable for a skill repo. Contribution steps appear in README testing section but not as a dedicated guide.
 
 ---
 
@@ -67,7 +67,7 @@
 
 **Strengths:** Test expectations are documented. Repo is small; changes are reviewable by structure.
 
-**Gaps:** No PR template; no CODEOWNERS; review responsibility and turnaround undefined. PR history and review engagement not visible from local scan. Checklist expects PR template and CODEOWNERS (`review-process/references/checklist.md:97–98`, `SKILL.md:83`).
+**Gaps:** No PR template; no CODEOWNERS; review responsibility and turnaround undefined. PR history and review engagement not visible from local scan. Checklist expects PR template and CODEOWNERS (`src/review-process/references/checklist.md:97–98`, `SKILL.md:83`).
 
 ---
 
@@ -82,7 +82,7 @@
 
 **Strengths:** Actions and workflow deps are pinned. No traditional runtime dependencies to manage.
 
-**Gaps:** No Dependabot/Renovate for workflow updates (checklist: `review-process/references/checklist.md:136`). No vulnerability scanning — N/A for code, but workflow actions could be audited. No explicit dependency policy doc.
+**Gaps:** No Dependabot/Renovate for workflow updates (checklist: `src/review-process/references/checklist.md:136`). No vulnerability scanning — N/A for code, but workflow actions could be audited. No explicit dependency policy doc.
 
 ---
 
@@ -90,15 +90,15 @@
 
 **Evidence:**
 
-- **Directory structure** (from glob): `review-*/` per domain, each with `SKILL.md` and `references/checklist.md`; `docs/`, `tests/`, `.github/`. Aligns with `README.md:243–276`.
-- **Module boundaries:** Each skill is self-contained. `review-full/SKILL.md` orchestrates; `review-jit-test-gen/` is separate.
+- **Directory structure** (from glob): `src/review-*/` per domain, each with `SKILL.md` and `references/checklist.md`; `docs/`, `tests/`, `.github/`. Aligns with README Structure section.
+- **Module boundaries:** Each skill is self-contained. `src/review-full/SKILL.md` orchestrates; `src/review-jit-test-gen/` is separate.
 - **catalog-info.yaml** (lines 1–34): Backstage component metadata; `type: library`, `lifecycle: production`. Config separated from skills.
 - **Git ls-files:** `.claude/settings.local.json` not tracked — local config kept out of repo.
 - **No .gitignore:** `Read` on `.gitignore` returned “File not found.” SETUP.md:153 suggests adding `.cursor/skills-source/` to `.gitignore` but repo has no `.gitignore`.
 
 **Strengths:** Clear layout, domain boundaries, tests in `tests/`, docs in `docs/`. No build artifacts. Config in metadata files. No secrets in tracked files.
 
-**Gaps:** Missing `.gitignore` for `.cursor/skills-source/`, build artifacts, IDE files. Checklist expects comprehensive `.gitignore` (`review-process/references/checklist.md:173`).
+**Gaps:** Missing `.gitignore` for `.cursor/skills-source/`, build artifacts, IDE files. Checklist expects comprehensive `.gitignore` (`src/review-process/references/checklist.md:173`).
 
 ---
 
@@ -138,9 +138,9 @@
 ## Top 5 Action Items
 
 1. **Add CONTRIBUTING.md** — Document contribution workflow: fork, branch, PR, review expectations. Referenced in checklist but missing. Improves contributor clarity.
-2. **Add .gitignore** — Include `.cursor/skills-source/`, common IDE/editor paths, and OS files. Aligns with SETUP.md:153 and `review-process/references/checklist.md:173`.
+2. **Add .gitignore** — Include `.cursor/skills-source/`, common IDE/editor paths, and OS files. Aligns with SETUP.md:153 and `src/review-process/references/checklist.md:173`.
 3. **Add PR template** — Create `.github/PULL_REQUEST_TEMPLATE.md` with sections for change description, testing done, and impact. Supports consistent PR quality.
-4. **Add CODEOWNERS** — Map `review-*/`, `docs/`, `tests/` to maintainers so review ownership is clear. Addresses `review-process/SKILL.md:83`.
+4. **Add CODEOWNERS** — Map `src/review-*/`, `docs/`, `tests/` to maintainers so review ownership is clear. Addresses `src/review-process/SKILL.md:83`.
 5. **Add changelog or release notes** — Maintain `CHANGELOG.md` or similar to record what changed and when. Improves leadership and onboarding.
 
 ---
@@ -159,4 +159,4 @@
 
 ## Checklist Reference
 
-See `review-process/references/checklist.md` for the full process checklist derived from software development fundamentals.
+See `src/review-process/references/checklist.md` for the full process checklist derived from software development fundamentals.

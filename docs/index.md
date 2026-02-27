@@ -51,20 +51,23 @@ When a domain is skipped, its weight redistributes proportionally across the rem
 
 ## Repository Structure
 
+All skills live under `src/`. Install scripts symlink each directory in `src/`.
+
 ```
-review-<domain>/
-  SKILL.md                # Skill definition (workflow + scoring rubric)
-  references/
-    checklist.md          # Detailed checklist items with source citations
-review-full/
-  SKILL.md                # Orchestrator skill
-review-jit-test-gen/
-  SKILL.md                # Test generator skill
+src/
+  review-<domain>/
+    SKILL.md                # Skill definition (workflow + scoring rubric)
+    references/
+      checklist.md          # Detailed checklist items with source citations
+  review-full/
+    SKILL.md                # Orchestrator skill
+  review-jit-test-gen/
+    SKILL.md                # Test generator skill
 tests/
-  trigger-tests.md        # Trigger phrase validation
-  functional-tests.md     # Expected behavior specs
+  trigger-tests.md          # Trigger phrase validation
+  functional-tests.md       # Expected behavior specs
 docs/
-  adrs/                   # Architecture Decision Records
+  adrs/                     # Architecture Decision Records
 ```
 
 ## Further Reading

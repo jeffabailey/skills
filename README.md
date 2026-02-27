@@ -38,9 +38,9 @@ Skills are installed automatically via [mcp-configure](https://github.com/jeffab
 ```bash
 git clone https://github.com/jeffabailey/skills.git ~/Projects/skills
 
-# Symlink all review skills
-for skill in review-architecture review-security review-reliability review-testing review-performance review-algorithms review-data review-accessibility review-process review-maintainability review-full review-jit-test-gen; do
-  ln -sf ~/Projects/skills/$skill ~/.claude/skills/$skill
+mkdir -p ~/.claude/skills
+for skill in ~/Projects/skills/src/*/; do
+  ln -sf "$(cd "$skill" && pwd)" ~/.claude/skills/$(basename "$skill")
 done
 ```
 
@@ -48,8 +48,10 @@ done
 
 ```bash
 git clone https://github.com/jeffabailey/skills.git ~/Projects/skills
-for skill in review-architecture review-security review-reliability review-testing review-performance review-algorithms review-data review-accessibility review-process review-maintainability review-full review-jit-test-gen; do
-  ln -sf ~/Projects/skills/$skill ~/.cursor/skills/$skill
+
+mkdir -p ~/.cursor/skills
+for skill in ~/Projects/skills/src/*/; do
+  ln -sf "$(cd "$skill" && pwd)" ~/.cursor/skills/$(basename "$skill")
 done
 ```
 
@@ -127,7 +129,7 @@ You can run the project fitness review (or any domain skill) in CI using [Claude
 
 ### 2. Check out the repo and install the skills
 
-Your workflow must check out the repository and install the skills from this repo so Claude Code can find them. Clone this repo (or your fork) and symlink each skill into the directory Claude Code uses:
+Your workflow must check out the repository and install the skills from this repo so Claude Code can find them. Clone this repo (or your fork) and symlink every directory under `src/` into the directory Claude Code uses:
 
 ```yaml
 - uses: actions/checkout@v4
@@ -138,8 +140,8 @@ Your workflow must check out the repository and install the skills from this rep
 - name: Install project fitness review skills
   run: |
     mkdir -p ~/.claude/skills
-    for skill in review-architecture review-security review-reliability review-testing review-performance review-algorithms review-data review-accessibility review-process review-maintainability review-full review-jit-test-gen; do
-      ln -sf "$GITHUB_WORKSPACE/skills/$skill" ~/.claude/skills/$skill
+    for skill in "$GITHUB_WORKSPACE/skills/src"/*/; do
+      ln -sf "$(cd "$skill" && pwd)" ~/.claude/skills/$(basename "$skill")
     done
 ```
 
@@ -151,8 +153,8 @@ If the workflow runs in the same repo that contains the skills (e.g. this repo),
 - name: Install project fitness review skills
   run: |
     mkdir -p ~/.claude/skills
-    for skill in review-architecture review-security review-reliability review-testing review-performance review-algorithms review-data review-accessibility review-process review-maintainability review-full review-jit-test-gen; do
-      ln -sf "$GITHUB_WORKSPACE/$skill" ~/.claude/skills/$skill
+    for skill in "$GITHUB_WORKSPACE/src"/*/; do
+      ln -sf "$(cd "$skill" && pwd)" ~/.claude/skills/$(basename "$skill")
     done
 ```
 
@@ -268,50 +270,21 @@ The skill should produce more findings, fewer false positives, consistent scorin
 
 ## Structure
 
+All skills live under `src/`. Install commands symlink each directory in `src/` (no hardcoded list). See `src/` for the current set of skills; each skill is described in its own `SKILL.md`.
+
 ```
-review-architecture/
-  SKILL.md                # Skill definition (workflow + scoring rubric)
-  references/
-    checklist.md          # Detailed checklist items with source citations
-review-security/
-  SKILL.md
-  references/
-    checklist.md
-review-reliability/
-  SKILL.md
-  references/
-    checklist.md
-review-testing/
-  SKILL.md
-  references/
-    checklist.md
-review-performance/
-  SKILL.md
-  references/
-    checklist.md
-review-algorithms/
-  SKILL.md
-  references/
-    checklist.md
-review-data/
-  SKILL.md
-  references/
-    checklist.md
-review-accessibility/
-  SKILL.md
-  references/
-    checklist.md
-review-process/
-  SKILL.md
-  references/
-    checklist.md
-review-full/
-  SKILL.md                # Orchestrator (no references needed)
-review-jit-test-gen/
-  SKILL.md                # Test generator (no references needed)
+src/
+  review-<domain>/          # one per domain (architecture, security, etc.)
+    SKILL.md                # Skill definition (workflow + scoring rubric)
+    references/
+      checklist.md          # Detailed checklist items with source citations
+  review-full/
+    SKILL.md                # Orchestrator (no references needed)
+  review-jit-test-gen/
+    SKILL.md                # Test generator (no references needed)
 tests/
-  trigger-tests.md        # What phrases should/shouldn't trigger each skill
-  functional-tests.md     # Expected behavior for each skill
+  trigger-tests.md          # What phrases should/shouldn't trigger each skill
+  functional-tests.md       # Expected behavior for each skill
 ```
 
 ## License

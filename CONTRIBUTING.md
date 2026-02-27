@@ -20,22 +20,22 @@ Thank you for your interest in contributing! This guide explains how to propose 
 
 ### Skill file structure
 
-Each skill lives in its own directory:
+Each skill lives in its own directory under `src/`:
 
 ```
-review-<domain>/
+src/review-<domain>/
   SKILL.md               # skill definition: triggers, workflow, scoring rubric
   references/
     checklist.md         # detailed checklist items
 ```
 
 - `SKILL.md` must include: a `## Triggers` section, a `## Workflow` section, and a `## Scoring` section.
-- Scoring weights in `review-full/SKILL.md` must stay consistent with the weights listed in `README.md`.
+- Scoring weights in `src/review-full/SKILL.md` must stay consistent with the weights listed in `README.md`.
 - Trigger phrases must be domain-specific. Avoid general phrases that overlap with other skills (see [ADR 0001](docs/adrs/0001-skill-based-review-architecture.md)).
 
 ### Naming
 
-- Skill directories: `review-<domain>` (all lowercase, hyphenated)
+- Skill directories: `src/review-<domain>` (all lowercase, hyphenated)
 - Report output files: `docs/<domain>-review.md`
 
 ### Scoring weights
@@ -55,7 +55,7 @@ The current domain weights (used by `review-full`) are:
 | Process | 8% |
 | Maintainability | 6% |
 
-If you propose adding or removing a domain, update both `review-full/SKILL.md` and `README.md` to keep them consistent.
+If you propose adding or removing a domain, update both `src/review-full/SKILL.md` and `README.md` to keep them consistent.
 
 ## Questions
 

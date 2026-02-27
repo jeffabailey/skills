@@ -1,22 +1,29 @@
 ---
 name: review-apply
-description: Pulls a fitness report issue from GitHub, addresses the action items by updating the codebase, and closes the issue when done. Use when the user says "apply review", "fix review issues", "address review feedback", "apply fitness report", or provides a GitHub issue URL containing a fitness report.
+description: Pulls a fitness report from a GitHub issue or from a local fitness report, addresses the action items by updating the codebase, and closes the issue when done. Use when the user says "apply review", "fix review issues", "address review feedback", "apply fitness report", or provides a GitHub issue URL containing a fitness report.
 ---
 
 # Apply Fitness Report
 
-Pull a fitness report from a GitHub issue, address each action item by modifying the codebase, and close the issue when complete.
+Pull a fitness report from a GitHub issue or a local file, address each action item by modifying the codebase, and close the issue when complete.
 
 Reference: https://jeffbailey.us/blog/2026/02/14/what-is-fitness-review/
 
 ## Workflow
 
-### Step 1: Fetch the Issue
+### Step 1: Locate the Report
 
-Use the `gh` CLI to retrieve the issue. Accept any of these as input:
-- A full GitHub issue URL (e.g., `https://github.com/owner/repo/issues/18`)
-- An issue number (resolves against the current repo)
-- No input — search for the most recent open issue with the `fitness-review` label
+Determine the report source from the user's input:
+
+| Input | Source type |
+|---|---|
+| Starts with `https://` or is a number | **GitHub issue** |
+| A file path (contains `/` or ends in `.md`) | **Local file** |
+| No input | **Auto-discover** — try GitHub first, fall back to local |
+
+#### GitHub issue
+
+Use the `gh` CLI to retrieve the issue:
 
 ```bash
 # Full URL
@@ -24,12 +31,27 @@ gh issue view <URL> --json title,body,state,labels,number
 
 # Issue number
 gh issue view <number> --json title,body,state,labels,number
-
-# Auto-discover
-gh issue list --label fitness-review --state open --limit 1 --json number,title
 ```
 
 If the issue is already closed, inform the user and stop.
+
+#### Local file
+
+Read `docs/fitness-report.md` (or the user-specified path) directly. If the file does not exist, inform the user and stop.
+
+#### Auto-discover (no input)
+
+1. Search for the most recent open issue with the `fitness-review` label:
+
+```bash
+gh issue list --label fitness-review --state open --limit 1 --json number,title
+```
+
+2. If an open issue is found, use it (GitHub issue path).
+3. If no open issue is found, fall back to reading `docs/fitness-report.md`.
+4. If neither source exists, inform the user and stop.
+
+Record which source type was used — this determines behavior in Step 6.
 
 ### Step 2: Parse Action Items
 
@@ -104,7 +126,9 @@ After addressing all actionable items, produce a summary:
 - Files modified: [count]
 ```
 
-### Step 6: Close the Issue
+### Step 6: Close the Report
+
+#### GitHub issue source
 
 Add a comment to the issue summarizing what was done, then close it:
 
@@ -120,6 +144,10 @@ EOF
 
 gh issue close <number> --reason completed
 ```
+
+#### Local file source
+
+Skip issue closing. Present the Step 5 summary directly to the user.
 
 ## What NOT to Change
 

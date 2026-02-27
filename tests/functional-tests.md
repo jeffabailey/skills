@@ -269,8 +269,25 @@ For each test scenario:
 
 ### Test: Closes the issue after completion
 
-**Given:** All actionable items have been addressed
+**Given:** All actionable items have been addressed from a GitHub issue source
 **When:** Changes are complete
 **Then:**
 - A comment is posted to the issue with a summary
 - The issue is closed with reason "completed"
+
+### Test: Falls back to local file when no open issue exists
+
+**Given:** No open GitHub issue with the `fitness-review` label, and `docs/fitness-report.md` exists with a valid fitness report
+**When:** Run `/review:review-apply` with no arguments
+**Then:**
+- The local file is read as the report source
+- Action items are extracted and triaged normally
+- After completion, the summary is presented directly (no issue comment or close)
+
+### Test: Reads a user-specified local file
+
+**Given:** A fitness report at a non-default path (e.g., `reports/review.md`)
+**When:** Run `/review:review-apply reports/review.md`
+**Then:**
+- The specified file is read as the report source
+- Action items are extracted and triaged normally

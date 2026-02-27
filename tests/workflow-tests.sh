@@ -2,13 +2,9 @@
 # Workflow validation tests using act (dry-run mode)
 # Tests that the fitness-review workflow is valid and properly configured.
 set -euo pipefail
+source "$(dirname "$0")/lib.sh"
 
-PASS=0
-FAIL=0
 PLATFORM_ARGS="-P ubuntu-slim=catthehacker/ubuntu:act-latest -P ubuntu-latest=catthehacker/ubuntu:act-latest"
-
-pass() { PASS=$((PASS + 1)); echo "  PASS: $1"; }
-fail() { FAIL=$((FAIL + 1)); echo "  FAIL: $1"; if [ -n "${2:-}" ]; then echo "        got: $2"; fi; }
 
 echo "=== Workflow Validation Tests ==="
 echo ""
@@ -192,9 +188,4 @@ else
 fi
 
 # ---- Summary ----
-echo ""
-echo "=== Results: $PASS passed, $FAIL failed ==="
-
-if [ "$FAIL" -gt 0 ]; then
-  exit 1
-fi
+summarize

@@ -10,6 +10,7 @@ import os
 import sys
 import tempfile
 import unittest
+from unittest.mock import patch
 
 # engine-config.py has a hyphen, so import via importlib
 _spec = importlib.util.spec_from_file_location(
@@ -71,12 +72,6 @@ class TestEnginesDict(unittest.TestCase):
             with self.subTest(engine=name):
                 self.assertEqual(set(cfg.keys()), self.REQUIRED_KEYS)
 
-    def test_no_extra_keys(self):
-        for name, cfg in ec.ENGINES.items():
-            with self.subTest(engine=name):
-                extra = set(cfg.keys()) - self.REQUIRED_KEYS
-                self.assertEqual(extra, set(), f"Unexpected keys: {extra}")
-
     def test_secret_names_known(self):
         for name, cfg in ec.ENGINES.items():
             with self.subTest(engine=name):
@@ -95,22 +90,30 @@ class TestEnginesDict(unittest.TestCase):
 class TestWriteOutputs(unittest.TestCase):
     """Tests for write_outputs() formatting."""
 
+    STUB_CONFIG = {
+        "secret_name": "S",
+        "install_cmd": "x",
+        "setup_node": "false",
+    }
+
     def _capture_stdout(self, engine_id, config):
         old_env = os.environ.pop("GITHUB_OUTPUT", None)
+        old_stdout = sys.stdout
         try:
             captured = io.StringIO()
-            old_stdout = sys.stdout
             sys.stdout = captured
             ec.write_outputs(engine_id, config)
-            sys.stdout = old_stdout
             return captured.getvalue()
         finally:
+            sys.stdout = old_stdout
             if old_env is not None:
                 os.environ["GITHUB_OUTPUT"] = old_env
 
     def test_key_value_format(self):
         """Short values use key=value format."""
-        output = self._capture_stdout("test", {"engine_name": "Test", "secret_name": "S", "install_cmd": "x", "setup_node": "false"})
+        output = self._capture_stdout(
+            "test", {**self.STUB_CONFIG, "engine_name": "Test"},
+        )
         self.assertIn("engine_name=Test", output)
 
     def test_derived_keys(self):
@@ -124,13 +127,17 @@ class TestWriteOutputs(unittest.TestCase):
     def test_heredoc_for_long_values(self):
         """Values over 200 chars use heredoc delimiter."""
         long_val = "x" * 201
-        output = self._capture_stdout("test", {"long_key": long_val, "secret_name": "S", "install_cmd": "x", "setup_node": "false"})
+        output = self._capture_stdout(
+            "test", {**self.STUB_CONFIG, "long_key": long_val},
+        )
         self.assertIn("long_key<<GH_AW_EOF", output)
         self.assertIn("GH_AW_EOF", output)
 
     def test_heredoc_for_multiline_values(self):
         """Multiline values use heredoc delimiter."""
-        output = self._capture_stdout("test", {"multi": "line1\nline2", "secret_name": "S", "install_cmd": "x", "setup_node": "false"})
+        output = self._capture_stdout(
+            "test", {**self.STUB_CONFIG, "multi": "line1\nline2"},
+        )
         self.assertIn("multi<<GH_AW_EOF", output)
 
     def test_github_output_file_mode(self):
@@ -175,44 +182,29 @@ class TestWriteOutputs(unittest.TestCase):
 class TestMain(unittest.TestCase):
     """Tests for CLI entry point."""
 
+    @patch.dict(os.environ, {}, clear=False)
     def test_valid_engines(self):
         """Each valid engine name succeeds."""
+        os.environ.pop("GITHUB_OUTPUT", None)
         for engine in ec.ENGINES:
             with self.subTest(engine=engine):
-                old_env = os.environ.pop("GITHUB_OUTPUT", None)
-                try:
-                    old_argv = sys.argv
-                    sys.argv = ["engine-config.py", "--engine", engine]
-                    old_stdout = sys.stdout
-                    sys.stdout = io.StringIO()
+                with patch("sys.argv", ["engine-config.py", "--engine", engine]), \
+                     patch("sys.stdout", io.StringIO()):
                     ec.main()
-                    sys.stdout = old_stdout
-                    sys.argv = old_argv
-                finally:
-                    if old_env is not None:
-                        os.environ["GITHUB_OUTPUT"] = old_env
 
     def test_invalid_engine_exits(self):
         """An invalid engine name raises SystemExit."""
-        old_argv = sys.argv
-        old_stderr = sys.stderr
-        sys.argv = ["engine-config.py", "--engine", "nonexistent"]
-        sys.stderr = io.StringIO()
-        with self.assertRaises(SystemExit):
-            ec.main()
-        sys.stderr = old_stderr
-        sys.argv = old_argv
+        with patch("sys.argv", ["engine-config.py", "--engine", "nonexistent"]), \
+             patch("sys.stderr", io.StringIO()):
+            with self.assertRaises(SystemExit):
+                ec.main()
 
     def test_missing_engine_exits(self):
         """Missing --engine flag raises SystemExit."""
-        old_argv = sys.argv
-        old_stderr = sys.stderr
-        sys.argv = ["engine-config.py"]
-        sys.stderr = io.StringIO()
-        with self.assertRaises(SystemExit):
-            ec.main()
-        sys.stderr = old_stderr
-        sys.argv = old_argv
+        with patch("sys.argv", ["engine-config.py"]), \
+             patch("sys.stderr", io.StringIO()):
+            with self.assertRaises(SystemExit):
+                ec.main()
 
 
 class TestSecurityCriticalValues(unittest.TestCase):

@@ -49,16 +49,17 @@ for skill in "${SKILLS[@]}"; do
   fi
 done
 
-# ---- Checklists: if a skill has references/, it must have references/checklist.md ----
+# ---- Checklists: domain skills (with Scoring Dimensions) must have references/checklist.md ----
 echo "--- Checklists ---"
 for skill in "${SKILLS[@]}"; do
-  ref_dir="$SKILLS_ROOT/$skill/references"
+  skill_md="$SKILLS_ROOT/$skill/SKILL.md"
   checklist="$SKILLS_ROOT/$skill/references/checklist.md"
-  if [ -d "$ref_dir" ]; then
+  # Only require checklist for domain review skills (those with scoring dimensions)
+  if grep -q "## Scoring Dimensions" "$skill_md"; then
     if [ -f "$checklist" ]; then
       pass "$skill/references/checklist.md exists"
     else
-      fail "$skill/references/ exists but references/checklist.md missing"
+      fail "$skill missing references/checklist.md (has Scoring Dimensions)"
     fi
   fi
 done
@@ -96,6 +97,33 @@ for skill in "${SKILLS[@]}"; do
     fail "$skill has non-standard Scoring header"
   fi
 done
+
+# ---- Wisdom references: skills with posts in skill-sources.json must have references/wisdom.md ----
+echo "--- Wisdom references ---"
+if command -v python3 &>/dev/null && [ -f "$ROOT/skill-sources.json" ]; then
+  while IFS= read -r skill; do
+    wisdom="$SKILLS_ROOT/$skill/references/wisdom.md"
+    if [ -f "$wisdom" ]; then
+      pass "$skill/references/wisdom.md exists"
+      if head -1 "$wisdom" | grep -q "^# Domain Knowledge Reference"; then
+        pass "$skill/references/wisdom.md has expected header"
+      else
+        fail "$skill/references/wisdom.md missing expected header"
+      fi
+    else
+      fail "$skill/references/wisdom.md missing (has posts in skill-sources.json)"
+    fi
+  done < <(python3 -c "
+import json, sys
+with open('$ROOT/skill-sources.json') as f:
+    data = json.load(f)
+for skill, cfg in data['skills'].items():
+    if cfg.get('posts'):
+        print(skill)
+")
+else
+  echo "SKIP: python3 or skill-sources.json not available"
+fi
 
 # ---- Summary ----
 summarize

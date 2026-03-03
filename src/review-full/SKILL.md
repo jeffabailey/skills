@@ -99,7 +99,7 @@ Status: 8-10 = Healthy, 5-7 = Needs Attention, 1-4 = Critical
 
 ## References
 
-Based on guidance from https://jeffbailey.us/categories/fundamentals/
+Based on guidance from [Fundamentals](https://jeffbailey.us/categories/fundamentals/). Each domain skill sources its scoring rubrics from dedicated blog posts — see `references/wisdom.md` in each skill directory.
 ```
 
 ### Scoring

@@ -1,0 +1,171 @@
+{
+  "baseUrl": "https://jeffbailey.us",
+  "skills": {
+    "review-accessibility": {
+      "posts": [
+        {
+          "slug": "fundamentals-of-software-accessibility",
+          "url": "/blog/2025/11/30/fundamentals-of-software-accessibility"
+        },
+        {
+          "slug": "fundamentals-of-software-usability",
+          "url": "/blog/2026/01/01/fundamentals-of-software-usability"
+        },
+        {
+          "slug": "fundamentals-of-color-and-contrast",
+          "url": "/blog/2025/12/05/fundamentals-of-color-and-contrast"
+        },
+        {
+          "slug": "fundamentals-of-typography",
+          "url": "/blog/2026/01/17/fundamentals-of-typography"
+        }
+      ]
+    },
+    "review-algorithms": {
+      "posts": [
+        {
+          "slug": "fundamentals-of-algorithms",
+          "url": "/blog/2025/12/04/fundamentals-of-algorithms"
+        },
+        {
+          "slug": "fundamental-algorithmic-patterns",
+          "url": "/blog/2025/12/12/fundamental-algorithmic-patterns"
+        },
+        {
+          "slug": "fundamental-data-structures",
+          "url": "/blog/2025/12/10/fundamental-data-structures"
+        }
+      ]
+    },
+    "review-apply": {
+      "posts": []
+    },
+    "review-architecture": {
+      "posts": [
+        {
+          "slug": "fundamentals-of-software-architecture",
+          "url": "/blog/2025/10/19/fundamentals-of-software-architecture"
+        },
+        {
+          "slug": "fundamentals-of-software-design",
+          "url": "/blog/2025/11/05/fundamentals-of-software-design"
+        },
+        {
+          "slug": "fundamentals-of-api-design-and-contracts",
+          "url": "/blog/2026/01/16/fundamentals-of-api-design-and-contracts"
+        }
+      ]
+    },
+    "review-data": {
+      "posts": [
+        {
+          "slug": "fundamentals-of-databases",
+          "url": "/blog/2025/09/24/fundamentals-of-databases"
+        },
+        {
+          "slug": "fundamentals-of-data-engineering",
+          "url": "/blog/2025/11/22/fundamentals-of-data-engineering"
+        },
+        {
+          "slug": "fundamentals-of-graph-databases",
+          "url": "/blog/2026/02/14/fundamentals-of-graph-databases"
+        }
+      ]
+    },
+    "review-full": {
+      "posts": []
+    },
+    "review-jit-test-gen": {
+      "posts": [
+        {
+          "slug": "what-is-just-in-time-catching-test-generation",
+          "url": "/blog/2026/02/14/what-is-just-in-time-catching-test-generation"
+        }
+      ]
+    },
+    "review-maintainability": {
+      "posts": [
+        {
+          "slug": "fundamentals-of-maintainability",
+          "url": "/blog/2026/02/22/fundamentals-of-maintainability"
+        }
+      ]
+    },
+    "review-performance": {
+      "posts": [
+        {
+          "slug": "fundamentals-of-software-performance",
+          "url": "/blog/2025/12/16/fundamentals-of-software-performance"
+        },
+        {
+          "slug": "fundamentals-of-software-scalability",
+          "url": "/blog/2025/12/22/fundamentals-of-software-scalability"
+        },
+        {
+          "slug": "fundamentals-of-software-caching",
+          "url": "/blog/2025/12/24/fundamentals-of-software-caching"
+        }
+      ]
+    },
+    "review-process": {
+      "posts": [
+        {
+          "slug": "fundamentals-of-software-development",
+          "url": "/blog/2025/10/02/fundamentals-of-software-development"
+        },
+        {
+          "slug": "fundamentals-of-agile-software-development",
+          "url": "/blog/2025/12/23/fundamentals-of-agile-software-development"
+        },
+        {
+          "slug": "fundamentals-of-software-project-management",
+          "url": "/blog/2026/01/12/fundamentals-of-software-project-management"
+        }
+      ]
+    },
+    "review-reliability": {
+      "posts": [
+        {
+          "slug": "fundamentals-of-reliability-engineering",
+          "url": "/blog/2025/11/17/fundamentals-of-reliability-engineering"
+        },
+        {
+          "slug": "fundamentals-of-monitoring-and-observability",
+          "url": "/blog/2025/11/16/fundamentals-of-monitoring-and-observability"
+        },
+        {
+          "slug": "fundamentals-of-software-availability",
+          "url": "/blog/2025/12/23/fundamentals-of-software-availability"
+        },
+        {
+          "slug": "fundamentals-of-timeouts",
+          "url": "/blog/2026/02/01/fundamentals-of-timeouts"
+        }
+      ]
+    },
+    "review-security": {
+      "posts": [
+        {
+          "slug": "fundamentals-of-software-security",
+          "url": "/blog/2025/12/02/fundamentals-of-software-security"
+        },
+        {
+          "slug": "fundamentals-of-privacy-and-compliance",
+          "url": "/blog/2025/12/19/fundamentals-of-privacy-and-compliance"
+        }
+      ]
+    },
+    "review-testing": {
+      "posts": [
+        {
+          "slug": "fundamentals-of-software-testing",
+          "url": "/blog/2025/11/30/fundamentals-of-software-testing"
+        },
+        {
+          "slug": "fundamentals-of-software-quality-assurance",
+          "url": "/blog/2025/12/16/fundamentals-of-software-quality-assurance"
+        }
+      ]
+    }
+  }
+}

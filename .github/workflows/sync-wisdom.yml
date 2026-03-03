@@ -1,0 +1,73 @@
+# Sync Wisdom from Blog
+#
+# Fetches LLM-optimized content from blog posts and updates
+# references/wisdom.md files in each skill directory.
+# Creates a PR if content has changed.
+
+name: "Sync Wisdom from Blog"
+
+on:
+  workflow_dispatch: {}
+
+  schedule:
+    - cron: "0 6 * * 1" # Monday at 6am UTC
+
+  repository_dispatch:
+    types: [blog-content-updated]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  sync:
+    name: Sync wisdom content
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Set up Python
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+        with:
+          python-version: "3.12"
+
+      - name: Sync wisdom content
+        run: python3 .github/scripts/sync-wisdom.py || true
+
+      - name: Check for changes
+        id: changes
+        run: |
+          if git diff --quiet; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Create PR
+        if: steps.changes.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          BRANCH="sync-wisdom/$(date +%Y%m%d-%H%M)"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -b "$BRANCH"
+          git add src/*/references/wisdom.md
+          git commit -m "sync: update wisdom content from blog posts"
+          git push origin "$BRANCH"
+          gh pr create \
+            --title "Sync wisdom content from blog posts" \
+            --body "$(cat <<'EOF'
+          ## Summary
+
+          Automated sync of domain knowledge from blog posts into skill reference files.
+
+          Each `references/wisdom.md` file is generated from the LLM-optimized output (`/llm.txt`) of the corresponding blog post(s) listed in `skill-sources.json`.
+
+          ## Review
+
+          - Verify the content looks correct (no fetch failures, no empty sections)
+          - Run `bash tests/skill-structure-tests.sh` locally if desired
+          EOF
+          )" \
+            --label "automation"

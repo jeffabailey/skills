@@ -1,7 +1,7 @@
 # Domain Knowledge Reference
 
 Auto-generated from blog posts. Do not edit manually.
-Last updated: 2026-03-03
+Last updated: 2026-04-14
 
 ---
 
@@ -28,7 +28,7 @@ In this article, I explain a mental model for performance: where latency comes f
 
 **Not a how-to:** I will show small examples, but I am not walking through a specific profiler or cloud vendor.
 
-**Prerequisites:** basic familiarity with shipping software and reading metrics and logs. If you want the adjacent foundation, start with [Fundamentals of monitoring and observability](/blog/2025/11/16/fundamentals-of-monitoring-and-observability/) and [Fundamentals of metrics](/blog/2025/11/09/fundamentals-of-metrics/).
+**Prerequisites:** basic familiarity with shipping software and reading metrics and logs. If you want the adjacent foundation, start with [Fundamentals of monitoring and observability](https://jeffbailey.us/blog/2025/11/16/fundamentals-of-monitoring-and-observability/) and [Fundamentals of metrics](https://jeffbailey.us/blog/2025/11/09/fundamentals-of-metrics/).
 
 ## TL;DR: software performance in one pass
 
@@ -261,7 +261,7 @@ Most performance fixes are these when stepping back.
 
 ### Add parallelism with care
 
-Parallelism can cut latency but also increase load and tail behavior.
+Parallelism can cut latency but also increase load and tail behavior. [Amdahl's Law](https://jeffbailey.us/what-is-amdahls-law/) sets the ceiling: serial work caps how much extra parallelism helps, even before coordination costs.
 
 If you add concurrency, verify you did not create:
 
@@ -281,8 +281,8 @@ Performance reflects reliability; if your system is “up” but unusable, users
 
 Two adjacent fundamentals matter most for end-to-end performance work:
 
-* [Fundamentals of monitoring and observability](/blog/2025/11/16/fundamentals-of-monitoring-and-observability/), for understanding production behavior.
-* [Fundamentals of reliability engineering](/blog/2025/11/17/fundamentals-of-reliability-engineering/), for the broader system view of risk and user trust.
+* [Fundamentals of monitoring and observability](https://jeffbailey.us/blog/2025/11/16/fundamentals-of-monitoring-and-observability/), for understanding production behavior.
+* [Fundamentals of reliability engineering](https://jeffbailey.us/blog/2025/11/17/fundamentals-of-reliability-engineering/), for the broader system view of risk and user trust.
 
 ## Common misconceptions I often see
 
@@ -304,10 +304,10 @@ Two adjacent fundamentals matter most for end-to-end performance work:
 
 If you want to go deeper on adjacent fundamentals:
 
-* [Fundamentals of monitoring and observability](/blog/2025/11/16/fundamentals-of-monitoring-and-observability/).
-* [Fundamentals of metrics](/blog/2025/11/09/fundamentals-of-metrics/).
-* [Fundamentals of distributed systems](/blog/2025/10/11/fundamentals-of-distributed-systems/).
-* If you specifically want load and stress testing fundamentals, read [Fundamentals of software performance testing](/blog/2025/12/01/fundamentals-of-software-performance-testing/).
+* [Fundamentals of monitoring and observability](https://jeffbailey.us/blog/2025/11/16/fundamentals-of-monitoring-and-observability/).
+* [Fundamentals of metrics](https://jeffbailey.us/blog/2025/11/09/fundamentals-of-metrics/).
+* [Fundamentals of distributed systems](https://jeffbailey.us/blog/2025/10/11/fundamentals-of-distributed-systems/).
+* If you specifically want load and stress testing fundamentals, read [Fundamentals of software performance testing](https://jeffbailey.us/blog/2025/12/01/fundamentals-of-software-performance-testing/).
 
 ## Glossary
 
@@ -766,7 +766,7 @@ Every system has a **scalability ceiling**, a point where adding resources provi
 
 * **Coordination overhead** - More components require more coordination (consensus, locking, synchronization), adding latency and reducing efficiency.
 * **Shared bottlenecks** - Some resources can't be scaled (single database, shared file system, external API rate limits).
-* **Amdahl's Law** - The non-parallelizable portion of work limits speedup. Even with infinite parallelization, sequential portions create limits.
+* **[Amdahl's Law](https://jeffbailey.us/what-is-amdahls-law/)** — The non-parallelizable portion of work limits speedup. Even with infinite parallelization, sequential portions create limits.
 * **Network effects** - More components mean more network communication, increasing latency and reducing throughput.
 
 **Recognizing the ceiling:**
@@ -967,9 +967,9 @@ Once this feels routine, you can apply more advanced patterns (such as sharding 
 
 **Learning path:**
 
-* Learn about /blog/2025/12/22/fundamentals-of-capacity-planning/ to understand how to plan for resource needs.
-* Study /blog/2025/12/16/fundamentals-of-software-performance/ to understand performance optimization that complements scalability.
-* Explore /blog/2025/10/11/fundamentals-of-distributed-systems/ to understand distributed system constraints that affect scalability.
+* Learn about https://jeffbailey.us/blog/2025/12/22/fundamentals-of-capacity-planning/ to understand how to plan for resource needs.
+* Study https://jeffbailey.us/blog/2025/12/16/fundamentals-of-software-performance/ to understand performance optimization that complements scalability.
+* Explore https://jeffbailey.us/blog/2025/10/11/fundamentals-of-distributed-systems/ to understand distributed system constraints that affect scalability.
 
 **Practice exercises:**
 
@@ -1233,7 +1233,7 @@ Two implications matter:
 * A cache with a “pretty good” hit rate can still lose if misses are catastrophically slow.
 * Improving hit rate is only valuable if it reduces the misses that matter.
 
-Caching work pairs well with [monitoring and observability](/blog/2025/11/16/fundamentals-of-monitoring-and-observability/). Track hit rate, hit latency, miss latency, and backend saturation together.
+Caching work pairs well with [monitoring and observability](https://jeffbailey.us/blog/2025/11/16/fundamentals-of-monitoring-and-observability/). Track hit rate, hit latency, miss latency, and backend saturation together.
 
 ## Section 2: Freshness and correctness – The price of a second reality
 
@@ -1259,7 +1259,7 @@ Some data does not:
 * Permissions.
 * Inventory at the last item.
 
-Caching sensitive data is possible, but the constraints are stricter. This is where [fundamentals of software security](/blog/2025/12/02/fundamentals-of-software-security/) and [fundamentals of privacy and compliance](/blog/2025/12/19/fundamentals-of-privacy-and-compliance/) apply directly to caching decisions.
+Caching sensitive data is possible, but the constraints are stricter. This is where [fundamentals of software security](https://jeffbailey.us/blog/2025/12/02/fundamentals-of-software-security/) and [fundamentals of privacy and compliance](https://jeffbailey.us/blog/2025/12/19/fundamentals-of-privacy-and-compliance/) apply directly to caching decisions.
 
 ### Time-to-live is an opinion in seconds
 
@@ -1392,7 +1392,7 @@ When caching rules can be expressed in HTTP (Cache-Control, Entity Tag (ETag), I
 
 ## Section 4: Cache failure modes – Why they hurt
 
-Caching is a performance feature that changes failure behavior. That’s why it belongs in the same mental bucket as [fundamentals of software availability](/blog/2025/12/23/fundamentals-of-software-availability/).
+Caching is a performance feature that changes failure behavior. That’s why it belongs in the same mental bucket as [fundamentals of software availability](https://jeffbailey.us/blog/2025/12/23/fundamentals-of-software-availability/).
 
 ### Cold start and cache warmup
 
@@ -1485,7 +1485,7 @@ Here are common situations to avoid or postpone:
 * **The main issue is slow code, not repeated work** (a cache hides a bottleneck instead of fixing it).
 * **You cannot observe it** (no hit/miss metrics, no per-key visibility, no alerting).
 
-If the problem is latency, start with [fundamentals of software performance testing](/blog/2025/12/01/fundamentals-of-software-performance-testing/). A cache can help, but only after understanding the baseline and the bottleneck.
+If the problem is latency, start with [fundamentals of software performance testing](https://jeffbailey.us/blog/2025/12/01/fundamentals-of-software-performance-testing/). A cache can help, but only after understanding the baseline and the bottleneck.
 
 ## Section 6: Common caching misconceptions
 
@@ -1535,7 +1535,7 @@ Caching sits at the intersection of a few fundamentals:
 * **Availability:** degraded operation during backend incidents (if you design for it).
 * **Correctness:** defined staleness rules, safe keying, and safe invalidation.
 
-If you’re thinking about growth, pair this with [fundamentals of software scalability](/blog/2025/12/22/fundamentals-of-software-scalability/) and [fundamentals of reliability engineering](/blog/2025/11/17/fundamentals-of-reliability-engineering/).
+If you’re thinking about growth, pair this with [fundamentals of software scalability](https://jeffbailey.us/blog/2025/12/22/fundamentals-of-software-scalability/) and [fundamentals of reliability engineering](https://jeffbailey.us/blog/2025/11/17/fundamentals-of-reliability-engineering/).
 
 ### Questions to answer next
 

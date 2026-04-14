@@ -1,7 +1,7 @@
 # Domain Knowledge Reference
 
 Auto-generated from blog posts. Do not edit manually.
-Last updated: 2026-03-03
+Last updated: 2026-04-14
 
 ---
 
@@ -122,7 +122,7 @@ Common SLIs include:
 * **Error rate** - Percentage of requests that fail.
 * **Throughput** - Requests processed per second.
 
-SLIs measure user experience, not internal metrics. Users notice latency, not CPU use. Latency SLIs track slow responses affecting users. See [Fundamentals of Monitoring and Observability](/blog/2025/11/16/fundamentals-of-monitoring-and-observability/) for more on user-focused metrics.
+SLIs measure user experience, not internal metrics. Users notice latency, not CPU use. Latency SLIs track slow responses affecting users. See [Fundamentals of Monitoring and Observability](https://jeffbailey.us/blog/2025/11/16/fundamentals-of-monitoring-and-observability/) for more on user-focused metrics.
 
 **Example:** For an API, availability SLI measures the percentage of successful requests. A 99.9% availability means 999 out of 1000 requests succeed.
 
@@ -205,7 +205,7 @@ Error budgets provide a framework for reliability decisions.
 
 **When at budget,** you've used acceptable unreliability. Focus on stability, avoid risky changes, and prioritize reliability. Being on a budget means you must be cautious.
 
-**When over budget,** you've exceeded acceptable unreliability. Stop new deployments, focus on fixing problems first, then add features. Prioritize reliability, applying the [Fundamentals of Incident Management](/blog/2025/11/16/fundamentals-of-incident-management/) systematically.
+**When over budget,** you've exceeded acceptable unreliability. Stop new deployments, focus on fixing problems first, then add features. Prioritize reliability, applying the [Fundamentals of Incident Management](https://jeffbailey.us/blog/2025/11/16/fundamentals-of-incident-management/) systematically.
 
 **Example:** Your team has 20 minutes of error budget left this month. A risky deployment could cause 15 minutes of downtime. You can deploy since you're under budget, but you're close to the limit. If over budget, you'd delay until reliability improves.
 
@@ -267,7 +267,7 @@ Design principles that enhance reliability:
 
 **Design for recovery:** Systems should automatically recover from failures using health checks, automatic restarts, and self-healing, reducing manual intervention.
 
-**Monitor everything:** You can't improve what you don't measure—design systems with observability in mind. See [Fundamentals of Monitoring and Observability](/blog/2025/11/16/fundamentals-of-monitoring-and-observability/) for detailed guidance.
+**Monitor everything:** You can't improve what you don't measure—design systems with observability in mind. See [Fundamentals of Monitoring and Observability](https://jeffbailey.us/blog/2025/11/16/fundamentals-of-monitoring-and-observability/) for detailed guidance.
 
 **Test failure modes:** Design systems to handle failures, testing dependency crashes, network splits, or resource exhaustion.
 
@@ -407,7 +407,7 @@ Alert when SLOs are violated or error budgets are at risk.
 
 **Alert on symptoms:** Alert on user experience, not internal metrics. SLO alerts focus on outcomes that matter to users.
 
-See [Fundamentals of Monitoring and Observability](/blog/2025/11/16/fundamentals-of-monitoring-and-observability/) for detailed guidance on building effective monitoring and alerting systems.
+See [Fundamentals of Monitoring and Observability](https://jeffbailey.us/blog/2025/11/16/fundamentals-of-monitoring-and-observability/) for detailed guidance on building effective monitoring and alerting systems.
 
 ### Reliability Dashboards
 
@@ -588,9 +588,9 @@ Begin building reliability engineering fundamentals today. Choose one area to im
 **Recommended Reading Sequence:**
 
 1. This article (Foundations: SLOs, error budgets, reliability design)
-2. [Fundamentals of Monitoring and Observability](/blog/2025/11/16/fundamentals-of-monitoring-and-observability/) (measuring system behavior and detecting problems)
-3. [Fundamentals of Incident Management](/blog/2025/11/16/fundamentals-of-incident-management/) (responding when reliability targets aren't met)
-4. [Fundamentals of Metrics](/blog/2025/11/09/fundamentals-of-metrics/) (choosing and using metrics effectively)
+2. [Fundamentals of Monitoring and Observability](https://jeffbailey.us/blog/2025/11/16/fundamentals-of-monitoring-and-observability/) (measuring system behavior and detecting problems)
+3. [Fundamentals of Incident Management](https://jeffbailey.us/blog/2025/11/16/fundamentals-of-incident-management/) (responding when reliability targets aren't met)
+4. [Fundamentals of Metrics](https://jeffbailey.us/blog/2025/11/09/fundamentals-of-metrics/) (choosing and using metrics effectively)
 
 * See the [References](#references) section below for books, frameworks, and tools.
 
@@ -647,9 +647,9 @@ Test your understanding of reliability engineering fundamentals and revisit your
 
 *Related fundamentals articles:*
 
-**Production Systems:** [Fundamentals of Monitoring and Observability](/blog/2025/11/16/fundamentals-of-monitoring-and-observability/) helps you understand how to measure system behavior and detect reliability problems. [Fundamentals of Incident Management](/blog/2025/11/16/fundamentals-of-incident-management/) shows how to respond when reliability targets aren't met. [Fundamentals of Metrics](/blog/2025/11/09/fundamentals-of-metrics/) teaches you how to choose and use metrics to measure reliability effectively.
+**Production Systems:** [Fundamentals of Monitoring and Observability](https://jeffbailey.us/blog/2025/11/16/fundamentals-of-monitoring-and-observability/) helps you understand how to measure system behavior and detect reliability problems. [Fundamentals of Incident Management](https://jeffbailey.us/blog/2025/11/16/fundamentals-of-incident-management/) shows how to respond when reliability targets aren't met. [Fundamentals of Metrics](https://jeffbailey.us/blog/2025/11/09/fundamentals-of-metrics/) teaches you how to choose and use metrics to measure reliability effectively.
 
-**Software Engineering:** [Fundamentals of Software Architecture](/blog/2025/10/19/fundamentals-of-software-architecture/) helps you understand how architectural decisions affect system reliability. [Fundamentals of Software Testing](/blog/2025/11/30/fundamentals-of-software-testing/) shows how testing contributes to system reliability and helps you set quality targets.
+**Software Engineering:** [Fundamentals of Software Architecture](https://jeffbailey.us/blog/2025/10/19/fundamentals-of-software-architecture/) helps you understand how architectural decisions affect system reliability. [Fundamentals of Software Testing](https://jeffbailey.us/blog/2025/11/30/fundamentals-of-software-testing/) shows how testing contributes to system reliability and helps you set quality targets.
 
 ### Industry/Frameworks
 
@@ -1493,9 +1493,9 @@ Master these fundamentals to build understandable systems, debug quickly, preven
 
 *Related fundamentals articles:*
 
-**Production Systems:** [Fundamentals of Metrics](/blog/2025/11/09/fundamentals-of-metrics/) helps you understand how to choose and use metrics effectively. [Fundamentals of Reliability Engineering](/blog/2025/11/17/fundamentals-of-reliability-engineering/) shows how monitoring and observability contribute to system reliability. [Fundamentals of Incident Management](/blog/2025/11/16/fundamentals-of-incident-management/) explains how observability helps you detect and respond to incidents.
+**Production Systems:** [Fundamentals of Metrics](https://jeffbailey.us/blog/2025/11/09/fundamentals-of-metrics/) helps you understand how to choose and use metrics effectively. [Fundamentals of Reliability Engineering](https://jeffbailey.us/blog/2025/11/17/fundamentals-of-reliability-engineering/) shows how monitoring and observability contribute to system reliability. [Fundamentals of Incident Management](https://jeffbailey.us/blog/2025/11/16/fundamentals-of-incident-management/) explains how observability helps you detect and respond to incidents.
 
-**Software Engineering:** [Fundamentals of Software Design](/blog/2025/11/05/fundamentals-of-software-design/) helps you understand how design decisions affect observability. [Fundamentals of Software Architecture](/blog/2025/10/19/fundamentals-of-software-architecture/) shows how architectural patterns influence what you can observe in your systems.
+**Software Engineering:** [Fundamentals of Software Design](https://jeffbailey.us/blog/2025/11/05/fundamentals-of-software-design/) helps you understand how design decisions affect observability. [Fundamentals of Software Architecture](https://jeffbailey.us/blog/2025/10/19/fundamentals-of-software-architecture/) shows how architectural patterns influence what you can observe in your systems.
 
 ### Practice Scenarios
 
@@ -1533,10 +1533,10 @@ Begin building the fundamentals of monitoring and observability today. Select an
 **Recommended Reading Sequence:**
 
 1. This article (Foundations: monitoring vs observability, three pillars)
-2. [Fundamentals of Metrics](/blog/2025/11/09/fundamentals-of-metrics/) (choosing and using metrics effectively)
-3. [Fundamentals of Incident Management](/blog/2025/11/16/fundamentals-of-incident-management/) (using observability during incidents)
-4. [Fundamentals of Distributed Systems](/blog/2025/10/11/fundamentals-of-distributed-systems/) (understanding systems that need observability)
-5. [Fundamentals of Reliability Engineering](/blog/2025/11/17/fundamentals-of-reliability-engineering/) (setting reliability targets and using error budgets)
+2. [Fundamentals of Metrics](https://jeffbailey.us/blog/2025/11/09/fundamentals-of-metrics/) (choosing and using metrics effectively)
+3. [Fundamentals of Incident Management](https://jeffbailey.us/blog/2025/11/16/fundamentals-of-incident-management/) (using observability during incidents)
+4. [Fundamentals of Distributed Systems](https://jeffbailey.us/blog/2025/10/11/fundamentals-of-distributed-systems/) (understanding systems that need observability)
+5. [Fundamentals of Reliability Engineering](https://jeffbailey.us/blog/2025/11/17/fundamentals-of-reliability-engineering/) (setting reliability targets and using error budgets)
 
 * **Books:** [Observability Engineering](https://www.oreilly.com/library/view/observability-engineering/9781492076438/) by Charity Majors, [Distributed Systems Observability](https://www.oreilly.com/library/view/distributed-systems-observability/9781492033431/) by Cindy Sridharan.
 
@@ -1792,7 +1792,7 @@ These terms get thrown around interchangeably, but they mean different things.
 
 **Service Level Agreement (SLA):** Your external contract with consequences. "The SLA guarantees 99.5% availability, or customers get a refund."
 
-To measure SLIs and detect when you're violating SLOs, you need effective [monitoring and observability](/blog/2025/11/16/fundamentals-of-monitoring-and-observability/). Metrics provide the data for SLIs, while alerting helps you know when SLOs are at risk.
+To measure SLIs and detect when you're violating SLOs, you need effective [monitoring and observability](https://jeffbailey.us/blog/2025/11/16/fundamentals-of-monitoring-and-observability/). Metrics provide the data for SLIs, while alerting helps you know when SLOs are at risk.
 
 Your SLA should be below your SLO. If you promise 99.9% to customers, aim for 99.95% internally to give yourself an error budget.
 
@@ -2884,10 +2884,10 @@ URL: https://jeffbailey.us/blog/2026/02/01/fundamentals-of-timeouts
 [tail-at-scale]: https://research.google/pubs/pub40801/
 [sre-book]: https://sre.google/sre-book/table-of-contents/
 [sre-cascading]: https://sre.google/sre-book/addressing-cascading-failures/
-[availability]: /blog/2025/12/23/fundamentals-of-software-availability/
-[distributed-systems]: /blog/2025/10/11/fundamentals-of-distributed-systems/
-[backoff]: /blog/2026/02/01/what-is-the-exponential-backoff-pattern/
-[jitter]: /blog/2025/12/17/what-is-jitter/
+[availability]: https://jeffbailey.us/blog/2025/12/23/fundamentals-of-software-availability/
+[distributed-systems]: https://jeffbailey.us/blog/2025/10/11/fundamentals-of-distributed-systems/
+[backoff]: https://jeffbailey.us/blog/2026/02/01/what-is-the-exponential-backoff-pattern/
+[jitter]: https://jeffbailey.us/blog/2025/12/17/what-is-jitter/
 [cascading]: #section-4-timeouts-in-distributed-systems
 
 Why do some services hang until clients give up, while others fail fast and recover?

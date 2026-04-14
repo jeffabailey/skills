@@ -1,7 +1,7 @@
 # Domain Knowledge Reference
 
 Auto-generated from blog posts. Do not edit manually.
-Last updated: 2026-03-03
+Last updated: 2026-04-14
 
 ---
 
@@ -512,6 +512,6 @@ Maintainability standards and tooling evolve. Verify current ISO revisions and t
 [codeclimate-maintainability]: https://docs.qlty.sh/cloud/maintainability/metrics
 [maintainability-skill]: https://github.com/jeffabailey/skills/tree/main/src/review-maintainability
 [skills-repo]: https://github.com/jeffabailey/skills
-[fundamental-skills]: /blog/2026/02/21/fundamental-skills/
-[naming]: /blog/2025/12/31/fundamentals-of-naming/
-[software-design]: /blog/2025/11/05/fundamentals-of-software-design/
+[fundamental-skills]: https://jeffbailey.us/blog/2026/02/21/fundamental-skills/
+[naming]: https://jeffbailey.us/blog/2025/12/31/fundamentals-of-naming/
+[software-design]: https://jeffbailey.us/blog/2025/11/05/fundamentals-of-software-design/

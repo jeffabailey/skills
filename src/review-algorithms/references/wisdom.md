@@ -1,7 +1,7 @@
 # Domain Knowledge Reference
 
 Auto-generated from blog posts. Do not edit manually.
-Last updated: 2026-03-03
+Last updated: 2026-04-20
 
 ---
 
@@ -265,7 +265,7 @@ Sorting algorithms reorder elements so that the key increases or decreases monot
 
 When a product feature needs to be sorted, maintain a single, clear place for the ordering. Otherwise, small ad hoc sorts creep into many call sites, making it harder to reason about total cost.
 
-See [Fundamentals of Databases](/blog/2025/09/24/fundamentals-of-databases/).
+See [Fundamentals of Databases](https://jeffbailey.us/blog/2025/09/24/fundamentals-of-databases/).
 
 ### Hash based lookup
 
@@ -323,7 +323,7 @@ When debugging an algorithm-related production incident, follow this four-step l
 
 These questions turn an incident from a mysterious outage into an algorithmic analysis, often leading to fixes such as restructuring loops, reorganizing layers, or adding limits.
 
-See [Fundamentals of Incident Management](/blog/2025/11/16/fundamentals-of-incident-management/).
+See [Fundamentals of Incident Management](https://jeffbailey.us/blog/2025/11/16/fundamentals-of-incident-management/).
 
 ## Section 5: Building Algorithm Intuition
 
@@ -367,7 +367,7 @@ They connect to data structures, architecture, testing, and observability.
 
 Good observability and logging turn poor algorithm behavior into precise diagnoses. Well-designed data structures simplify algorithms and make them more reliable. Aligning architecture with domain boundaries ensures each service encapsulates a few algorithms, avoiding complexity. Algorithms are a vital part of the system, not just abstract exercises. As requirements evolve, revisit core algorithms to ensure they still align with key operations and constraints.
 
-See [Fundamentals of Software Architecture](/blog/2025/10/19/fundamentals-of-software-architecture/), [Fundamentals of Monitoring and Observability](/blog/2025/11/16/fundamentals-of-monitoring-and-observability/), and [Fundamentals of Software Design](/blog/2025/11/05/fundamentals-of-software-design/).
+See [Fundamentals of Software Architecture](https://jeffbailey.us/blog/2025/10/19/fundamentals-of-software-architecture/), [Fundamentals of Monitoring and Observability](https://jeffbailey.us/blog/2025/11/16/fundamentals-of-monitoring-and-observability/), and [Fundamentals of Software Design](https://jeffbailey.us/blog/2025/11/05/fundamentals-of-software-design/).
 
 ### Evaluating Algorithm Behavior in Production
 
@@ -383,7 +383,7 @@ This closes the loop between theory and real-world performance.
 
 New areas like vector search, approximate nearest neighbor algorithms, and machine learning ranking are increasingly common in production. They rely on core principles: balancing accuracy and speed, matching data structures to data shapes, and managing growth to support fast queries. When learning a new algorithm, identify familiar patterns: data shape, growth, and trade-offs.
 
-See [Fundamentals of Machine Learning](/blog/2025/11/20/fundamentals-of-machine-learning/).
+See [Fundamentals of Machine Learning](https://jeffbailey.us/blog/2025/11/20/fundamentals-of-machine-learning/).
 
 ## Examples: What This Looks Like in Practice
 
@@ -559,7 +559,7 @@ For deeper coverage of specific algorithm topics:
 
 **Data Structures:**
 
-* [Fundamentals of Databases](/blog/2025/09/24/fundamentals-of-databases/) - How databases use algorithms and indexes for efficient queries.
+* [Fundamentals of Databases](https://jeffbailey.us/blog/2025/09/24/fundamentals-of-databases/) - How databases use algorithms and indexes for efficient queries.
 * Standard library documentation for your programming language's data structures.
 
 **Algorithm Implementation:**
@@ -618,11 +618,11 @@ The best way to learn algorithm fundamentals is to practice them. Start thinking
 
 *Related fundamentals articles:*
 
-**Software Engineering:** [Fundamentals of Software Development](/blog/2025/10/02/fundamentals-of-software-development/) shows how algorithms fit into the broader software development process. [Fundamentals of Software Architecture](/blog/2025/10/19/fundamentals-of-software-architecture/) teaches you how architectural decisions affect algorithm choices. [Fundamentals of Software Design](/blog/2025/11/05/fundamentals-of-software-design/) helps you understand how design principles inform algorithm selection.
+**Software Engineering:** [Fundamentals of Software Development](https://jeffbailey.us/blog/2025/10/02/fundamentals-of-software-development/) shows how algorithms fit into the broader software development process. [Fundamentals of Software Architecture](https://jeffbailey.us/blog/2025/10/19/fundamentals-of-software-architecture/) teaches you how architectural decisions affect algorithm choices. [Fundamentals of Software Design](https://jeffbailey.us/blog/2025/11/05/fundamentals-of-software-design/) helps you understand how design principles inform algorithm selection.
 
-**Data and Infrastructure:** [Fundamentals of Databases](/blog/2025/09/24/fundamentals-of-databases/) explains how databases use algorithms and indexes to provide efficient data access. [Fundamentals of Distributed Systems](/blog/2025/10/11/fundamentals-of-distributed-systems/) helps you understand how algorithms work in distributed environments.
+**Data and Infrastructure:** [Fundamentals of Databases](https://jeffbailey.us/blog/2025/09/24/fundamentals-of-databases/) explains how databases use algorithms and indexes to provide efficient data access. [Fundamentals of Distributed Systems](https://jeffbailey.us/blog/2025/10/11/fundamentals-of-distributed-systems/) helps you understand how algorithms work in distributed environments.
 
-**Production Systems:** [Fundamentals of Reliability Engineering](/blog/2025/11/17/fundamentals-of-reliability-engineering/) helps you understand how algorithm choices affect system reliability. [Fundamentals of Monitoring and Observability](/blog/2025/11/16/fundamentals-of-monitoring-and-observability/) explains how to detect algorithm-related performance issues.
+**Production Systems:** [Fundamentals of Reliability Engineering](https://jeffbailey.us/blog/2025/11/17/fundamentals-of-reliability-engineering/) helps you understand how algorithm choices affect system reliability. [Fundamentals of Monitoring and Observability](https://jeffbailey.us/blog/2025/11/16/fundamentals-of-monitoring-and-observability/) explains how to detect algorithm-related performance issues.
 
 ## Glossary
 
@@ -697,13 +697,13 @@ Before exploring algorithmic patterns, you should be comfortable with these basi
 
 You don't need to memorize every algorithm. This article focuses on pattern recognition and application over implementation details.
 
-See [Fundamentals of Algorithms](/blog/2025/12/04/fundamentals-of-algorithms/) for core algorithmic concepts and [Fundamentals of Data Structures](/blog/2025/12/06/fundamentals-of-data-structures/) for data structure fundamentals.
+See [Fundamentals of Algorithms](https://jeffbailey.us/blog/2025/12/04/fundamentals-of-algorithms/) for core algorithmic concepts and [Fundamentals of Data Structures](https://jeffbailey.us/blog/2025/12/06/fundamentals-of-data-structures/) for data structure fundamentals.
 
 If you are rusty on the basics, skim these first:
 
-* [Fundamentals of Algorithms](/blog/2025/12/04/fundamentals-of-algorithms/).
-* [Fundamentals of Data Structures](/blog/2025/12/06/fundamentals-of-data-structures/).
-* [Fundamentals of Computer Processing](/blog/2025/12/11/fundamentals-of-computer-processing/).
+* [Fundamentals of Algorithms](https://jeffbailey.us/blog/2025/12/04/fundamentals-of-algorithms/).
+* [Fundamentals of Data Structures](https://jeffbailey.us/blog/2025/12/06/fundamentals-of-data-structures/).
+* [Fundamentals of Computer Processing](https://jeffbailey.us/blog/2025/12/11/fundamentals-of-computer-processing/).
 
 ## How to Use This Page
 
@@ -1357,7 +1357,7 @@ def binary_search(arr, target):
     return -1
 ```
 
-See [Fundamentals of Algorithms](/blog/2025/12/04/fundamentals-of-algorithms/) for more on binary search and search algorithms.
+See [Fundamentals of Algorithms](https://jeffbailey.us/blog/2025/12/04/fundamentals-of-algorithms/) for more on binary search and search algorithms.
 
 ## Divide and Conquer Patterns
 
@@ -1405,7 +1405,7 @@ def divide_and_conquer(arr, left, right):
     return combined
 ```
 
-See [Fundamentals of Algorithms](/blog/2025/12/04/fundamentals-of-algorithms/) for more on divide and conquer.
+See [Fundamentals of Algorithms](https://jeffbailey.us/blog/2025/12/04/fundamentals-of-algorithms/) for more on divide and conquer.
 
 ## Greedy and Optimization Patterns
 
@@ -1444,7 +1444,7 @@ See [Fundamentals of Algorithms](/blog/2025/12/04/fundamentals-of-algorithms/) f
 * Many problems that feel greedy actually require dynamic programming.
 * Validate with a counterexample before you commit to greedy.
 
-See [Fundamentals of Algorithms](/blog/2025/12/04/fundamentals-of-algorithms/) for more on greedy algorithms.
+See [Fundamentals of Algorithms](https://jeffbailey.us/blog/2025/12/04/fundamentals-of-algorithms/) for more on greedy algorithms.
 
 ## Dynamic Programming Patterns
 
@@ -1500,7 +1500,7 @@ def dp_1d(n):
     return dp[n]
 ```
 
-See [Fundamentals of Algorithms](/blog/2025/12/04/fundamentals-of-algorithms/) for more on dynamic programming.
+See [Fundamentals of Algorithms](https://jeffbailey.us/blog/2025/12/04/fundamentals-of-algorithms/) for more on dynamic programming.
 
 ## Backtracking Patterns
 
@@ -1614,7 +1614,7 @@ def bfs(graph, start):
                 q.append(neighbor)
 ```
 
-See [Fundamentals of Algorithms](/blog/2025/12/04/fundamentals-of-algorithms/) for more on graph traversals.
+See [Fundamentals of Algorithms](https://jeffbailey.us/blog/2025/12/04/fundamentals-of-algorithms/) for more on graph traversals.
 
 ### Topological Sort
 
@@ -2579,9 +2579,9 @@ Use this section when you already recognize the data shape and want a fast mappi
 
 *Related fundamentals articles:*
 
-**Algorithm Fundamentals:** [Fundamentals of Algorithms](/blog/2025/12/04/fundamentals-of-algorithms/) explains core algorithmic principles and how algorithms work in production systems. [Fundamentals of Data Structures](/blog/2025/12/06/fundamentals-of-data-structures/) teaches you how data structure choices affect algorithm performance.
+**Algorithm Fundamentals:** [Fundamentals of Algorithms](https://jeffbailey.us/blog/2025/12/04/fundamentals-of-algorithms/) explains core algorithmic principles and how algorithms work in production systems. [Fundamentals of Data Structures](https://jeffbailey.us/blog/2025/12/06/fundamentals-of-data-structures/) teaches you how data structure choices affect algorithm performance.
 
-**Software Engineering:** [Fundamentals of Software Development](/blog/2025/10/02/fundamentals-of-software-development/) shows how algorithmic patterns fit into the broader software development process. [Fundamentals of Software Design](/blog/2025/11/05/fundamentals-of-software-design/) helps you understand how design principles inform pattern selection.
+**Software Engineering:** [Fundamentals of Software Development](https://jeffbailey.us/blog/2025/10/02/fundamentals-of-software-development/) shows how algorithmic patterns fit into the broader software development process. [Fundamentals of Software Design](https://jeffbailey.us/blog/2025/11/05/fundamentals-of-software-design/) helps you understand how design principles inform pattern selection.
 
 ## Glossary
 
@@ -2626,7 +2626,7 @@ This catalog exists to help you build a **cross-language mental model** of those
 * **Where** it appears across popular languages
 * **When** its properties make it the right choice
 
-**What this isn't:** a deep dive on performance tuning and system design. For that, see [Fundamentals of Data Structures](/blog/2025/12/06/fundamentals-of-data-structures/), which focuses on using these structure types effectively in real systems.
+**What this isn't:** a deep dive on performance tuning and system design. For that, see [Fundamentals of Data Structures](https://jeffbailey.us/blog/2025/12/06/fundamentals-of-data-structures/), which focuses on using these structure types effectively in real systems.
 
 **Why this catalog matters:**
 
@@ -2658,7 +2658,7 @@ Before exploring this catalog, you should be comfortable with these basics:
 
 You don't need to *master* Big O notation or do formal proofs. This article emphasizes structure properties and language appearances, using light complexity labels to aid comparisons.
 
-See [Fundamentals of Data Structures](/blog/2025/12/06/fundamentals-of-data-structures/) for effective data structure use in software—performance, reliability, system design. See Learn Asymptotic Notations for learning asymptotic notations. <!-- Draft-only link removed: learn-asymptotic-notations -->
+See [Fundamentals of Data Structures](https://jeffbailey.us/blog/2025/12/06/fundamentals-of-data-structures/) for effective data structure use in software—performance, reliability, system design. See Learn Asymptotic Notations for learning asymptotic notations. <!-- Draft-only link removed: learn-asymptotic-notations -->
 
 ## What You Will Learn
 
@@ -2672,7 +2672,7 @@ By the end of this article, you will understand:
 
 **Use this article when:** You need to understand data structure types, recognize them across languages, learn their purposes, or choose the proper structure for a problem. It serves as a catalog focused on recognition, language mapping, and use cases.
 
-**Use [Fundamentals of Data Structures](/blog/2025/12/06/fundamentals-of-data-structures/) when:** You need to understand how to use data structures effectively in software—performance optimization, reliability patterns, system design implications, and real-world usage patterns.
+**Use [Fundamentals of Data Structures](https://jeffbailey.us/blog/2025/12/06/fundamentals-of-data-structures/) when:** You need to understand how to use data structures effectively in software—performance optimization, reliability patterns, system design implications, and real-world usage patterns.
 
 **How to use this guide:**
 
@@ -4287,7 +4287,7 @@ Recognize these structure types in code you read and write. Frequent exposure bu
 
 **Longer term:**
 
-* Pair this catalog with [Fundamentals of Data Structures](/blog/2025/12/06/fundamentals-of-data-structures/) to connect structure types with effective usage in software.
+* Pair this catalog with [Fundamentals of Data Structures](https://jeffbailey.us/blog/2025/12/06/fundamentals-of-data-structures/) to connect structure types with effective usage in software.
 * Study language documentation to learn how your languages implement these structure types.
 * Build small projects using different structure types to solve problems.
 
@@ -4297,13 +4297,13 @@ Recognize fundamental structure types in daily coding to build intuition.
 
 *Related fundamentals articles:*
 
-**Data Structures:** [Fundamentals of Data Structures](/blog/2025/12/06/fundamentals-of-data-structures/) covers how to use data structures effectively in software—performance, reliability, and system design. 
+**Data Structures:** [Fundamentals of Data Structures](https://jeffbailey.us/blog/2025/12/06/fundamentals-of-data-structures/) covers how to use data structures effectively in software—performance, reliability, and system design. 
 
 <!-- [Fundamental Algorithmic Patterns]({{ "{{" }}< ref "fundamental-algorithmic-patterns" >{{ "}}" }}) shows how algorithms use data structures to solve problems. -->
 
-**Algorithms:** [Fundamentals of Algorithms](/blog/2025/12/04/fundamentals-of-algorithms/) explains how algorithms work with data structures to process information efficiently.
+**Algorithms:** [Fundamentals of Algorithms](https://jeffbailey.us/blog/2025/12/04/fundamentals-of-algorithms/) explains how algorithms work with data structures to process information efficiently.
 
-**Software Engineering:** [Fundamentals of Software Design](/blog/2025/11/05/fundamentals-of-software-design/) helps you understand how design principles inform structure selection.
+**Software Engineering:** [Fundamentals of Software Design](https://jeffbailey.us/blog/2025/11/05/fundamentals-of-software-design/) helps you understand how design principles inform structure selection.
 
 ## Glossary
 

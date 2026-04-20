@@ -1,7 +1,7 @@
 # Domain Knowledge Reference
 
 Auto-generated from blog posts. Do not edit manually.
-Last updated: 2026-03-03
+Last updated: 2026-04-20
 
 ---
 
@@ -295,13 +295,13 @@ The best way to learn software architecture is to practice it. Start thinking ar
 
 *Related fundamentals articles:*
 
-**Software Engineering:** [Fundamentals of Software Development](/blog/2025/10/02/fundamentals-of-software-development/) shows how architecture fits into the broader software development process. [Fundamentals of Software Design](/blog/2025/11/05/fundamentals-of-software-design/) teaches you the design principles that inform architectural decisions. [Fundamentals of Software Testing](/blog/2025/11/30/fundamentals-of-software-testing/) helps you understand how architectural decisions affect testing strategies.
+**Software Engineering:** [Fundamentals of Software Development](https://jeffbailey.us/blog/2025/10/02/fundamentals-of-software-development/) shows how architecture fits into the broader software development process. [Fundamentals of Software Design](https://jeffbailey.us/blog/2025/11/05/fundamentals-of-software-design/) teaches you the design principles that inform architectural decisions. [Fundamentals of Software Testing](https://jeffbailey.us/blog/2025/11/30/fundamentals-of-software-testing/) helps you understand how architectural decisions affect testing strategies.
 
-**Engineering Practices:** [Fundamentals of Backend Engineering](/blog/2025/10/14/fundamentals-of-backend-engineering/) shows how to architect backend systems and APIs. [Fundamentals of Frontend Engineering](/blog/2025/11/26/fundamentals-of-frontend-engineering/) teaches you how to structure frontend applications and user interfaces.
+**Engineering Practices:** [Fundamentals of Backend Engineering](https://jeffbailey.us/blog/2025/10/14/fundamentals-of-backend-engineering/) shows how to architect backend systems and APIs. [Fundamentals of Frontend Engineering](https://jeffbailey.us/blog/2025/11/26/fundamentals-of-frontend-engineering/) teaches you how to structure frontend applications and user interfaces.
 
-**Infrastructure:** [Fundamentals of Distributed Systems](/blog/2025/10/11/fundamentals-of-distributed-systems/) helps you understand how to architect systems that span multiple machines and handle scale. [Fundamentals of Databases](/blog/2025/09/24/fundamentals-of-databases/) shows how database architecture affects system design.
+**Infrastructure:** [Fundamentals of Distributed Systems](https://jeffbailey.us/blog/2025/10/11/fundamentals-of-distributed-systems/) helps you understand how to architect systems that span multiple machines and handle scale. [Fundamentals of Databases](https://jeffbailey.us/blog/2025/09/24/fundamentals-of-databases/) shows how database architecture affects system design.
 
-**Production Systems:** [Fundamentals of Reliability Engineering](/blog/2025/11/17/fundamentals-of-reliability-engineering/) helps you understand how architectural decisions affect system reliability and how to set quality targets. [Fundamentals of Monitoring and Observability](/blog/2025/11/16/fundamentals-of-monitoring-and-observability/) explains how architecture affects your observability strategy.
+**Production Systems:** [Fundamentals of Reliability Engineering](https://jeffbailey.us/blog/2025/11/17/fundamentals-of-reliability-engineering/) helps you understand how architectural decisions affect system reliability and how to set quality targets. [Fundamentals of Monitoring and Observability](https://jeffbailey.us/blog/2025/11/16/fundamentals-of-monitoring-and-observability/) explains how architecture affects your observability strategy.
 
 ## Glossary
 
@@ -384,7 +384,7 @@ Software design operates at different levels of abstraction:
 
 **Component-level design** - How modules and packages interact. This includes APIs, interfaces, and component dependencies.
 
-**System-level design** - How entire systems are architected. This includes [software architecture](/blog/2025/10/19/fundamentals-of-software-architecture/) patterns, deployment strategies, and integration approaches.
+**System-level design** - How entire systems are architected. This includes [software architecture](https://jeffbailey.us/blog/2025/10/19/fundamentals-of-software-architecture/) patterns, deployment strategies, and integration approaches.
 
 Each level has its own design concerns, but they all follow the same fundamental principles. A well-designed function is easy to understand. A well-designed component is easy to use. A well-designed system is easy to evolve.
 
@@ -647,19 +647,19 @@ Software design connects to other fundamental areas. Understanding these connect
 
 ### Design and Architecture
 
-[Software architecture](/blog/2025/10/19/fundamentals-of-software-architecture/) defines the high-level structure of systems. Design implements that structure. Good architecture enables good design by providing clear boundaries and responsibilities.
+[Software architecture](https://jeffbailey.us/blog/2025/10/19/fundamentals-of-software-architecture/) defines the high-level structure of systems. Design implements that structure. Good architecture enables good design by providing clear boundaries and responsibilities.
 
 ### Design and Development Practices
 
-[Software development](/blog/2025/10/02/fundamentals-of-software-development/) practices influence design. Test-driven development encourages testable designs. Continuous refactoring improves design over time.
+[Software development](https://jeffbailey.us/blog/2025/10/02/fundamentals-of-software-development/) practices influence design. Test-driven development encourages testable designs. Continuous refactoring improves design over time.
 
 ### Design and Databases
 
-[Database design](/blog/2025/09/24/fundamentals-of-databases/) affects application design. Data models shape how applications organize and access information. Understanding database fundamentals helps you design applications that work well with data.
+[Database design](https://jeffbailey.us/blog/2025/09/24/fundamentals-of-databases/) affects application design. Data models shape how applications organize and access information. Understanding database fundamentals helps you design applications that work well with data.
 
 ### Design and Distributed Systems
 
-[Distributed systems](/blog/2025/10/11/fundamentals-of-distributed-systems/) design requires considerations different from single-machine applications. Understanding the fundamentals of distributed systems helps you design applications that work across networks.
+[Distributed systems](https://jeffbailey.us/blog/2025/10/11/fundamentals-of-distributed-systems/) design requires considerations different from single-machine applications. Understanding the fundamentals of distributed systems helps you design applications that work across networks.
 
 ## Conclusion
 
@@ -692,13 +692,13 @@ Start improving your design skills today. Choose one area where you feel design 
 
 *Related fundamentals articles:*
 
-**Software Engineering:** [Fundamentals of Software Development](/blog/2025/10/02/fundamentals-of-software-development/) shows how design fits into the broader software development process. [Fundamentals of Software Architecture](/blog/2025/10/19/fundamentals-of-software-architecture/) helps you understand how design decisions scale to architectural patterns. [Fundamentals of Software Testing](/blog/2025/11/30/fundamentals-of-software-testing/) teaches you how to design code that's testable and maintainable.
+**Software Engineering:** [Fundamentals of Software Development](https://jeffbailey.us/blog/2025/10/02/fundamentals-of-software-development/) shows how design fits into the broader software development process. [Fundamentals of Software Architecture](https://jeffbailey.us/blog/2025/10/19/fundamentals-of-software-architecture/) helps you understand how design decisions scale to architectural patterns. [Fundamentals of Software Testing](https://jeffbailey.us/blog/2025/11/30/fundamentals-of-software-testing/) teaches you how to design code that's testable and maintainable.
 
-**Engineering Practices:** [Fundamentals of Backend Engineering](/blog/2025/10/14/fundamentals-of-backend-engineering/) shows how to apply design principles to backend systems and APIs. [Fundamentals of Frontend Engineering](/blog/2025/11/26/fundamentals-of-frontend-engineering/) teaches you how to design user interfaces and frontend components.
+**Engineering Practices:** [Fundamentals of Backend Engineering](https://jeffbailey.us/blog/2025/10/14/fundamentals-of-backend-engineering/) shows how to apply design principles to backend systems and APIs. [Fundamentals of Frontend Engineering](https://jeffbailey.us/blog/2025/11/26/fundamentals-of-frontend-engineering/) teaches you how to design user interfaces and frontend components.
 
-**Infrastructure:** [Fundamentals of Databases](/blog/2025/09/24/fundamentals-of-databases/) helps you understand how database design affects application design. [Fundamentals of Distributed Systems](/blog/2025/10/11/fundamentals-of-distributed-systems/) shows how design principles apply to systems that span multiple machines.
+**Infrastructure:** [Fundamentals of Databases](https://jeffbailey.us/blog/2025/09/24/fundamentals-of-databases/) helps you understand how database design affects application design. [Fundamentals of Distributed Systems](https://jeffbailey.us/blog/2025/10/11/fundamentals-of-distributed-systems/) shows how design principles apply to systems that span multiple machines.
 
-**Production Systems:** [Fundamentals of Metrics](/blog/2025/11/09/fundamentals-of-metrics/) teaches you how design decisions affect the metrics you'll track and measure.
+**Production Systems:** [Fundamentals of Metrics](https://jeffbailey.us/blog/2025/11/09/fundamentals-of-metrics/) teaches you how design decisions affect the metrics you'll track and measure.
 
 ## Glossary
 
@@ -1155,9 +1155,9 @@ Contracts define promises between provider and consumer, with representation and
 
 **Learning path:**
 
-* Read [Fundamentals of Technical Writing](/blog/2025/10/12/fundamentals-of-technical-writing/) to improve my API documentation structure.
-* Explore [Fundamentals of Software Architecture](/blog/2025/10/19/fundamentals-of-software-architecture/) for broader system boundaries.
-* Study [Fundamentals of Centralized Software Systems](/blog/2026/01/19/fundamentals-of-centralized-software-systems/) to understand when centralized architectures work well and when API contracts become critical for distributed systems.
+* Read [Fundamentals of Technical Writing](https://jeffbailey.us/blog/2025/10/12/fundamentals-of-technical-writing/) to improve my API documentation structure.
+* Explore [Fundamentals of Software Architecture](https://jeffbailey.us/blog/2025/10/19/fundamentals-of-software-architecture/) for broader system boundaries.
+* Study [Fundamentals of Centralized Software Systems](https://jeffbailey.us/blog/2026/01/19/fundamentals-of-centralized-software-systems/) to understand when centralized architectures work well and when API contracts become critical for distributed systems.
 
 **Questions for reflection:**
 

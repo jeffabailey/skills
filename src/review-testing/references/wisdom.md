@@ -1,7 +1,7 @@
 # Domain Knowledge Reference
 
 Auto-generated from blog posts. Do not edit manually.
-Last updated: 2026-03-03
+Last updated: 2026-04-20
 
 ---
 
@@ -1146,13 +1146,13 @@ The best way to learn software testing is to practice it. Start thinking systema
 
 Use these related fundamentals articles to deepen specific aspects of testing, design, and production systems:
 
-**Software Engineering:** [Fundamentals of Software Development](/blog/2025/10/02/fundamentals-of-software-development/) shows how testing fits into the broader software development process. [Fundamentals of Software Design](/blog/2025/11/05/fundamentals-of-software-design/) teaches you how to design code that's testable and maintainable. [Fundamentals of Software Architecture](/blog/2025/10/19/fundamentals-of-software-architecture/) helps you understand how architectural decisions affect testing strategies.
+**Software Engineering:** [Fundamentals of Software Development](https://jeffbailey.us/blog/2025/10/02/fundamentals-of-software-development/) shows how testing fits into the broader software development process. [Fundamentals of Software Design](https://jeffbailey.us/blog/2025/11/05/fundamentals-of-software-design/) teaches you how to design code that's testable and maintainable. [Fundamentals of Software Architecture](https://jeffbailey.us/blog/2025/10/19/fundamentals-of-software-architecture/) helps you understand how architectural decisions affect testing strategies.
 
-**Engineering Practices:** [Fundamentals of Backend Engineering](/blog/2025/10/14/fundamentals-of-backend-engineering/) shows how to test backend services and APIs. [Fundamentals of Frontend Engineering](/blog/2025/11/26/fundamentals-of-frontend-engineering/) teaches you how to test user interfaces and frontend components.
+**Engineering Practices:** [Fundamentals of Backend Engineering](https://jeffbailey.us/blog/2025/10/14/fundamentals-of-backend-engineering/) shows how to test backend services and APIs. [Fundamentals of Frontend Engineering](https://jeffbailey.us/blog/2025/11/26/fundamentals-of-frontend-engineering/) teaches you how to test user interfaces and frontend components.
 
-**Production Systems:** [Fundamentals of Reliability Engineering](/blog/2025/11/17/fundamentals-of-reliability-engineering/) helps you understand how testing contributes to system reliability and how to set quality targets. [Fundamentals of Monitoring and Observability](/blog/2025/11/16/fundamentals-of-monitoring-and-observability/) explains how test results fit into your observability strategy. [Fundamentals of Metrics](/blog/2025/11/09/fundamentals-of-metrics/) teaches you how to measure test effectiveness and connect testing metrics to business outcomes.
+**Production Systems:** [Fundamentals of Reliability Engineering](https://jeffbailey.us/blog/2025/11/17/fundamentals-of-reliability-engineering/) helps you understand how testing contributes to system reliability and how to set quality targets. [Fundamentals of Monitoring and Observability](https://jeffbailey.us/blog/2025/11/16/fundamentals-of-monitoring-and-observability/) explains how test results fit into your observability strategy. [Fundamentals of Metrics](https://jeffbailey.us/blog/2025/11/09/fundamentals-of-metrics/) teaches you how to measure test effectiveness and connect testing metrics to business outcomes.
 
-**Product Development:** [Fundamentals of Software Product Development](/blog/2025/11/28/fundamentals-of-software-product-development/) shows how testing fits into building products that solve user problems. [Fundamentals of Technical Writing](/blog/2025/10/12/fundamentals-of-technical-writing/) helps you write test code that serves as executable documentation.
+**Product Development:** [Fundamentals of Software Product Development](https://jeffbailey.us/blog/2025/11/28/fundamentals-of-software-product-development/) shows how testing fits into building products that solve user problems. [Fundamentals of Technical Writing](https://jeffbailey.us/blog/2025/10/12/fundamentals-of-technical-writing/) helps you write test code that serves as executable documentation.
 
 ## Glossary
 
@@ -1307,7 +1307,7 @@ Examples include:
 * Exploratory testing.
 * Release checks and acceptance criteria.
 
-Software testing is a standard quality control method. It improves when quality assurance minimizes changes, provides quick feedback, and clarifies expectations. For a deeper understanding, see  [Fundamentals of software testing](/blog/2025/11/30/fundamentals-of-software-testing/).
+Software testing is a standard quality control method. It improves when quality assurance minimizes changes, provides quick feedback, and clarifies expectations. For a deeper understanding, see  [Fundamentals of software testing](https://jeffbailey.us/blog/2025/11/30/fundamentals-of-software-testing/).
 
 Quality assurance and control rely on each other. Prevention alone is futile; detection alone is costly.
 
@@ -1381,8 +1381,8 @@ If monitoring says “users are failing checkout,” and the team argues that �
 
 This links directly to:
 
-* [Fundamentals of monitoring and observability](/blog/2025/11/16/fundamentals-of-monitoring-and-observability/).
-* [Fundamentals of metrics](/blog/2025/11/09/fundamentals-of-metrics/).
+* [Fundamentals of monitoring and observability](https://jeffbailey.us/blog/2025/11/16/fundamentals-of-monitoring-and-observability/).
+* [Fundamentals of metrics](https://jeffbailey.us/blog/2025/11/09/fundamentals-of-metrics/).
 
 ## Trade-offs and failure modes
 
@@ -1455,12 +1455,12 @@ Quality assurance is a feedback system that prevents defects, detects ongoing on
 
 If you want to go deeper on adjacent fundamentals:
 
-* [Fundamentals of software testing](/blog/2025/11/30/fundamentals-of-software-testing/).
-* [Fundamentals of software performance](/blog/2025/12/16/fundamentals-of-software-performance/).
-* [Fundamentals of software security](/blog/2025/12/02/fundamentals-of-software-security/).
-* [Fundamentals of reliability engineering](/blog/2025/11/17/fundamentals-of-reliability-engineering/).
-* [Fundamentals of incident management](/blog/2025/11/16/fundamentals-of-incident-management/).
-* [Fundamentals of technical writing](/blog/2025/10/12/fundamentals-of-technical-writing/).
+* [Fundamentals of software testing](https://jeffbailey.us/blog/2025/11/30/fundamentals-of-software-testing/).
+* [Fundamentals of software performance](https://jeffbailey.us/blog/2025/12/16/fundamentals-of-software-performance/).
+* [Fundamentals of software security](https://jeffbailey.us/blog/2025/12/02/fundamentals-of-software-security/).
+* [Fundamentals of reliability engineering](https://jeffbailey.us/blog/2025/11/17/fundamentals-of-reliability-engineering/).
+* [Fundamentals of incident management](https://jeffbailey.us/blog/2025/11/16/fundamentals-of-incident-management/).
+* [Fundamentals of technical writing](https://jeffbailey.us/blog/2025/10/12/fundamentals-of-technical-writing/).
 
 ## Glossary
 

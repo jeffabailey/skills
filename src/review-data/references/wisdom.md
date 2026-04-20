@@ -1,7 +1,7 @@
 # Domain Knowledge Reference
 
 Auto-generated from blog posts. Do not edit manually.
-Last updated: 2026-03-03
+Last updated: 2026-04-20
 
 ---
 
@@ -17,7 +17,7 @@ A **database** is an organized collection of data stored electronically in a com
 
 The history of databases dates back to the 1960s, when businesses sought more effective ways to manage data. Early **DBMS** were hierarchical and network models. In the 1970s, **relational databases** transformed data storage with a table-based structure. Later, **NoSQL databases** such as MongoDB and Redis emerged for handling unstructured and semi-structured data.
 
-Today, databases power everything from smartphone apps to financial systems. Understanding database fundamentals is crucial for developers, data analysts, business professionals, and IT workers. These concepts build upon [fundamentals of software development](/blog/2025/10/02/fundamentals-of-software-development/) and complement [fundamental software concepts](/blog/2025/10/11/fundamental-software-concepts/).
+Today, databases power everything from smartphone apps to financial systems. Understanding database fundamentals is crucial for developers, data analysts, business professionals, and IT workers. These concepts build upon [fundamentals of software development](https://jeffbailey.us/blog/2025/10/02/fundamentals-of-software-development/) and complement [fundamental software concepts](https://jeffbailey.us/blog/2025/10/11/fundamental-software-concepts/).
 
 ![Cover: conceptual diagram showing database fundamentals](fundamentals-of-databases.png)
 
@@ -116,7 +116,7 @@ Not all databases are equal; different types serve different needs.
 
 #### NewSQL Databases
 
-**NewSQL databases** combine the benefits of SQL and NoSQL, offering **ACID compliance** with improved **scalability** through distributed consensus protocols (Raft, Paxos) and sharding techniques. For comprehensive coverage of distributed systems concepts, see [fundamentals of distributed systems](/blog/2025/10/11/fundamentals-of-distributed-systems/).
+**NewSQL databases** combine the benefits of SQL and NoSQL, offering **ACID compliance** with improved **scalability** through distributed consensus protocols (Raft, Paxos) and sharding techniques. For comprehensive coverage of distributed systems concepts, see [fundamentals of distributed systems](https://jeffbailey.us/blog/2025/10/11/fundamentals-of-distributed-systems/).
 
 **Examples:**
 
@@ -547,7 +547,7 @@ Following established **best practices** prevents common pitfalls and ensures da
 
 Mastering database concepts, selecting the right technology, and adhering to best practices help build reliable, scalable, and secure applications. Whether you're a developer or architect, database knowledge is essential.
 
-The database landscape evolves with new tech like cloud databases, multi-model systems, and edge computing. Staying updated and learning helps you leverage these innovations for better applications and tackling complex data issues. Consider contributing to [open source database projects](/blog/2025/03/06/fundamentals-of-open-source/) to see these concepts applied in real-world systems.
+The database landscape evolves with new tech like cloud databases, multi-model systems, and edge computing. Staying updated and learning helps you leverage these innovations for better applications and tackling complex data issues. Consider contributing to [open source database projects](https://jeffbailey.us/blog/2025/03/06/fundamentals-of-open-source/) to see these concepts applied in real-world systems.
 
 ### Call to Action
 
@@ -563,13 +563,13 @@ Ready to explore databases? Set up a local environment, practice with real data,
 
 *Related fundamentals articles:*
 
-**Data and Analytics:** [Fundamentals of Data Engineering](/blog/2025/11/22/fundamentals-of-data-engineering/) shows how databases fit into data pipelines and how to efficiently store and retrieve data. [Fundamentals of Data Analysis](/blog/2025/10/19/fundamentals-of-data-analysis/) helps you understand how to query and analyze data stored in databases. [Fundamentals of Machine Learning](/blog/2025/11/20/fundamentals-of-machine-learning/) teaches you how databases store the data that feeds ML models.
+**Data and Analytics:** [Fundamentals of Data Engineering](https://jeffbailey.us/blog/2025/11/22/fundamentals-of-data-engineering/) shows how databases fit into data pipelines and how to efficiently store and retrieve data. [Fundamentals of Data Analysis](https://jeffbailey.us/blog/2025/10/19/fundamentals-of-data-analysis/) helps you understand how to query and analyze data stored in databases. [Fundamentals of Machine Learning](https://jeffbailey.us/blog/2025/11/20/fundamentals-of-machine-learning/) teaches you how databases store the data that feeds ML models.
 
-**Software Engineering:** [Fundamentals of Software Development](/blog/2025/10/02/fundamentals-of-software-development/) shows how databases fit into the broader software development process. [Fundamentals of Backend Engineering](/blog/2025/10/14/fundamentals-of-backend-engineering/) teaches you how to integrate databases into backend systems and APIs. [Fundamentals of Software Design](/blog/2025/11/05/fundamentals-of-software-design/) helps you understand how database design affects application design.
+**Software Engineering:** [Fundamentals of Software Development](https://jeffbailey.us/blog/2025/10/02/fundamentals-of-software-development/) shows how databases fit into the broader software development process. [Fundamentals of Backend Engineering](https://jeffbailey.us/blog/2025/10/14/fundamentals-of-backend-engineering/) teaches you how to integrate databases into backend systems and APIs. [Fundamentals of Software Design](https://jeffbailey.us/blog/2025/11/05/fundamentals-of-software-design/) helps you understand how database design affects application design.
 
-**Infrastructure:** [Fundamentals of Distributed Systems](/blog/2025/10/11/fundamentals-of-distributed-systems/) helps you understand how to scale databases across multiple machines and handle distributed data.
+**Infrastructure:** [Fundamentals of Distributed Systems](https://jeffbailey.us/blog/2025/10/11/fundamentals-of-distributed-systems/) helps you understand how to scale databases across multiple machines and handle distributed data.
 
-**Production Systems:** [Fundamentals of Reliability Engineering](/blog/2025/11/17/fundamentals-of-reliability-engineering/) helps you understand how to build reliable database systems and set quality targets. [Fundamentals of Monitoring and Observability](/blog/2025/11/16/fundamentals-of-monitoring-and-observability/) explains how to monitor database performance and detect issues.
+**Production Systems:** [Fundamentals of Reliability Engineering](https://jeffbailey.us/blog/2025/11/17/fundamentals-of-reliability-engineering/) helps you understand how to build reliable database systems and set quality targets. [Fundamentals of Monitoring and Observability](https://jeffbailey.us/blog/2025/11/16/fundamentals-of-monitoring-and-observability/) explains how to monitor database performance and detect issues.
 
 ## Glossary
 
@@ -636,7 +636,7 @@ Mastering data engineering basics shifts you from collecting data randomly to bu
 > Type: **Explanation** (understanding-oriented).  
 > Primary audience: **beginner to intermediate** engineers learning to build reliable data pipelines
 
-**Prerequisites:** Basic understanding of databases and some programming experience. If you're new to data analysis, consider starting with [Fundamentals of Data Analysis](/blog/2025/10/19/fundamentals-of-data-analysis/) first. Understanding [Fundamentals of Databases](/blog/2025/09/24/fundamentals-of-databases/) helps with storage concepts.
+**Prerequisites:** Basic understanding of databases and some programming experience. If you're new to data analysis, consider starting with [Fundamentals of Data Analysis](https://jeffbailey.us/blog/2025/10/19/fundamentals-of-data-analysis/) first. Understanding [Fundamentals of Databases](https://jeffbailey.us/blog/2025/09/24/fundamentals-of-databases/) helps with storage concepts.
 
 **Primary audience:** Beginner–Intermediate engineers learning to build reliable data pipelines, providing enough depth for experienced developers to align on foundational concepts.
 
@@ -1346,9 +1346,9 @@ Start building data engineering fundamentals today. Focus on one area to improve
 **Recommended Reading Sequence:**
 
 1. This article (Foundations: data engineering workflow, processing patterns, pipeline design)
-2. [Fundamentals of Databases](/blog/2025/09/24/fundamentals-of-databases/) (understanding data storage and retrieval)
-3. [Fundamentals of Data Analysis](/blog/2025/10/19/fundamentals-of-data-analysis/) (understanding how to use data after engineering)
-4. [Fundamentals of Machine Learning](/blog/2025/11/20/fundamentals-of-machine-learning/) (understanding how engineered data feeds models)
+2. [Fundamentals of Databases](https://jeffbailey.us/blog/2025/09/24/fundamentals-of-databases/) (understanding data storage and retrieval)
+3. [Fundamentals of Data Analysis](https://jeffbailey.us/blog/2025/10/19/fundamentals-of-data-analysis/) (understanding how to use data after engineering)
+4. [Fundamentals of Machine Learning](https://jeffbailey.us/blog/2025/11/20/fundamentals-of-machine-learning/) (understanding how engineered data feeds models)
 
 * See the [References](#references) section below for books, frameworks, and tools.
 
@@ -1414,15 +1414,15 @@ Test your understanding of data engineering fundamentals.
 
 *Related fundamentals articles:* 
 
-**Data and Storage:** [Fundamentals of Data Analysis](/blog/2025/10/19/fundamentals-of-data-analysis/) helps you understand how engineered data is used for analysis. [Fundamentals of Databases](/blog/2025/09/24/fundamentals-of-databases/) teaches you how to efficiently store and retrieve data in data engineering systems. [Fundamentals of Statistics](/blog/2025/10/19/fundamentals-of-statistics/) provides the mathematical foundation for understanding data quality metrics and validation.
+**Data and Storage:** [Fundamentals of Data Analysis](https://jeffbailey.us/blog/2025/10/19/fundamentals-of-data-analysis/) helps you understand how engineered data is used for analysis. [Fundamentals of Databases](https://jeffbailey.us/blog/2025/09/24/fundamentals-of-databases/) teaches you how to efficiently store and retrieve data in data engineering systems. [Fundamentals of Statistics](https://jeffbailey.us/blog/2025/10/19/fundamentals-of-statistics/) provides the mathematical foundation for understanding data quality metrics and validation.
 
-**Infrastructure:** [Fundamentals of Backend Engineering](/blog/2025/10/14/fundamentals-of-backend-engineering/) shows how to deploy data pipelines as backend services with proper APIs and scaling. [Fundamentals of Distributed Systems](/blog/2025/10/11/fundamentals-of-distributed-systems/) helps you understand how large-scale data processing distributes workloads across multiple machines.
+**Infrastructure:** [Fundamentals of Backend Engineering](https://jeffbailey.us/blog/2025/10/14/fundamentals-of-backend-engineering/) shows how to deploy data pipelines as backend services with proper APIs and scaling. [Fundamentals of Distributed Systems](https://jeffbailey.us/blog/2025/10/11/fundamentals-of-distributed-systems/) helps you understand how large-scale data processing distributes workloads across multiple machines.
 
-**Production Systems:** [Fundamentals of Metrics](/blog/2025/11/09/fundamentals-of-metrics/) teaches you how to measure pipeline performance and connect technical metrics to business outcomes. [Fundamentals of Monitoring and Observability](/blog/2025/11/16/fundamentals-of-monitoring-and-observability/) is essential for detecting pipeline failures, debugging data quality issues, and understanding why pipelines behave differently over time. [Fundamentals of Reliability Engineering](/blog/2025/11/17/fundamentals-of-reliability-engineering/) helps you set SLOs and error budgets for data pipelines in production.
+**Production Systems:** [Fundamentals of Metrics](https://jeffbailey.us/blog/2025/11/09/fundamentals-of-metrics/) teaches you how to measure pipeline performance and connect technical metrics to business outcomes. [Fundamentals of Monitoring and Observability](https://jeffbailey.us/blog/2025/11/16/fundamentals-of-monitoring-and-observability/) is essential for detecting pipeline failures, debugging data quality issues, and understanding why pipelines behave differently over time. [Fundamentals of Reliability Engineering](https://jeffbailey.us/blog/2025/11/17/fundamentals-of-reliability-engineering/) helps you set SLOs and error budgets for data pipelines in production.
 
-**Software Engineering:** [Fundamentals of Software Architecture](/blog/2025/10/19/fundamentals-of-software-architecture/) shows how to design systems that incorporate data pipelines. [Fundamentals of Software Design](/blog/2025/11/05/fundamentals-of-software-design/) helps you build maintainable pipeline code that remains understandable as requirements evolve.
+**Software Engineering:** [Fundamentals of Software Architecture](https://jeffbailey.us/blog/2025/10/19/fundamentals-of-software-architecture/) shows how to design systems that incorporate data pipelines. [Fundamentals of Software Design](https://jeffbailey.us/blog/2025/11/05/fundamentals-of-software-design/) helps you build maintainable pipeline code that remains understandable as requirements evolve.
 
-**Machine Learning:** [Fundamentals of Machine Learning](/blog/2025/11/20/fundamentals-of-machine-learning/) shows how engineered data feeds ML models and why data quality matters for model performance.
+**Machine Learning:** [Fundamentals of Machine Learning](https://jeffbailey.us/blog/2025/11/20/fundamentals-of-machine-learning/) shows how engineered data feeds ML models and why data quality matters for model performance.
 
 ### Academic Sources
 
@@ -1718,6 +1718,6 @@ If you want to go deeper, start with the [Neo4j Cypher Manual][neo4j-cypher] for
 [graph-db-book]: https://graphdatabases.com/
 [gql-iso]: https://www.gqlstandards.org/
 [w3c-rdf]: https://www.w3.org/RDF/
-[databases-ref]: /blog/2025/09/24/fundamentals-of-databases/
-[backend-ref]: /blog/2025/10/14/fundamentals-of-backend-engineering/
-[data-eng-ref]: /blog/2025/11/22/fundamentals-of-data-engineering/
+[databases-ref]: https://jeffbailey.us/blog/2025/09/24/fundamentals-of-databases/
+[backend-ref]: https://jeffbailey.us/blog/2025/10/14/fundamentals-of-backend-engineering/
+[data-eng-ref]: https://jeffbailey.us/blog/2025/11/22/fundamentals-of-data-engineering/

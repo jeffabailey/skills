@@ -1,7 +1,7 @@
 # Domain Knowledge Reference
 
 Auto-generated from blog posts. Do not edit manually.
-Last updated: 2026-03-03
+Last updated: 2026-04-20
 
 ---
 
@@ -15,7 +15,7 @@ Why do some apps protect user data while others leak sensitive info? The key is 
 
 Software security protects systems by safeguarding data and users from attacks, preventing breaches, and maintaining trust. Poor security causes data leaks and financial and reputational losses.
 
-Most developers understand security but lack fundamentals, leading to systems that work in development but fail under attack. This article explains how security works and why it matters, complementing [software development fundamentals](/blog/2025/10/02/fundamentals-of-software-development/).
+Most developers understand security but lack fundamentals, leading to systems that work in development but fail under attack. This article explains how security works and why it matters, complementing [software development fundamentals](https://jeffbailey.us/blog/2025/10/02/fundamentals-of-software-development/).
 
 This article explains core mental models like the CIA triad and TFDM loop, helping you understand security, attack, defense, or failure modes.
 
@@ -44,7 +44,7 @@ This article outlines a basic workflow for every project:
 
 ### Prerequisites & Audience
 
-**Prerequisites:** You should be familiar with basic software development concepts and system architecture. Familiarity with [software development fundamentals](/blog/2025/10/02/fundamentals-of-software-development/) is helpful but not required. No prior security experience is needed.
+**Prerequisites:** You should be familiar with basic software development concepts and system architecture. Familiarity with [software development fundamentals](https://jeffbailey.us/blog/2025/10/02/fundamentals-of-software-development/) is helpful but not required. No prior security experience is needed.
 
 **Primary audience:** Beginner to intermediate developers seeking a stronger foundation in software security.
 
@@ -982,35 +982,35 @@ Use these related fundamentals articles to deepen specific aspects of security, 
 
 ### Software Engineering
 
-* **[Fundamentals of Software Development](/blog/2025/10/02/fundamentals-of-software-development/)** - Core software development practices that integrate security into the development lifecycle, showing how security fits into the broader development process.
+* **[Fundamentals of Software Development](https://jeffbailey.us/blog/2025/10/02/fundamentals-of-software-development/)** - Core software development practices that integrate security into the development lifecycle, showing how security fits into the broader development process.
 
-* **[Fundamentals of Software Design](/blog/2025/11/05/fundamentals-of-software-design/)** - Design principles that guide you in building secure systems from the beginning, including how to design for security and avoid common design flaws.
+* **[Fundamentals of Software Design](https://jeffbailey.us/blog/2025/11/05/fundamentals-of-software-design/)** - Design principles that guide you in building secure systems from the beginning, including how to design for security and avoid common design flaws.
 
-* **[Fundamentals of Software Architecture](/blog/2025/10/19/fundamentals-of-software-architecture/)** - Architectural decisions impacting system security, including designing secure architectures and understanding security trade-offs.
+* **[Fundamentals of Software Architecture](https://jeffbailey.us/blog/2025/10/19/fundamentals-of-software-architecture/)** - Architectural decisions impacting system security, including designing secure architectures and understanding security trade-offs.
 
 ### Engineering Practices
 
-* **[Fundamentals of Backend Engineering](/blog/2025/10/14/fundamentals-of-backend-engineering/)** - Backend security practices like API, database, and server controls protect systems.
+* **[Fundamentals of Backend Engineering](https://jeffbailey.us/blog/2025/10/14/fundamentals-of-backend-engineering/)** - Backend security practices like API, database, and server controls protect systems.
 
-* **[Fundamentals of Frontend Engineering](/blog/2025/11/26/fundamentals-of-frontend-engineering/)** - Frontend security considerations include client-side security, secure UIs, and vulnerability protection.
+* **[Fundamentals of Frontend Engineering](https://jeffbailey.us/blog/2025/11/26/fundamentals-of-frontend-engineering/)** - Frontend security considerations include client-side security, secure UIs, and vulnerability protection.
 
-* **[Fundamentals of Software Testing](/blog/2025/11/30/fundamentals-of-software-testing/)** - Security testing approaches include testing for vulnerabilities, validating security controls, and integrating security testing into your test strategy.
+* **[Fundamentals of Software Testing](https://jeffbailey.us/blog/2025/11/30/fundamentals-of-software-testing/)** - Security testing approaches include testing for vulnerabilities, validating security controls, and integrating security testing into your test strategy.
 
 ### Production Systems
 
-* **[Fundamentals of Monitoring and Observability](/blog/2025/11/16/fundamentals-of-monitoring-and-observability/)** - Security practices for monitoring attacks, tracking events, and responding to incidents.
+* **[Fundamentals of Monitoring and Observability](https://jeffbailey.us/blog/2025/11/16/fundamentals-of-monitoring-and-observability/)** - Security practices for monitoring attacks, tracking events, and responding to incidents.
 
-* **[Fundamentals of Reliability Engineering](/blog/2025/11/17/fundamentals-of-reliability-engineering/)** - Explains how security enhances system reliability and how to build secure, reliable systems, highlighting the link between security and availability.
+* **[Fundamentals of Reliability Engineering](https://jeffbailey.us/blog/2025/11/17/fundamentals-of-reliability-engineering/)** - Explains how security enhances system reliability and how to build secure, reliable systems, highlighting the link between security and availability.
 
-* **[Fundamentals of Incident Management](/blog/2025/11/16/fundamentals-of-incident-management/)** - Security incident response includes detecting, responding to, and recovering from security incidents using incident management principles.
+* **[Fundamentals of Incident Management](https://jeffbailey.us/blog/2025/11/16/fundamentals-of-incident-management/)** - Security incident response includes detecting, responding to, and recovering from security incidents using incident management principles.
 
-* **[Fundamentals of Metrics](/blog/2025/11/09/fundamentals-of-metrics/)** - Security metrics and measurement practices help track security posture, measure effectiveness, and support data-driven decisions.
+* **[Fundamentals of Metrics](https://jeffbailey.us/blog/2025/11/09/fundamentals-of-metrics/)** - Security metrics and measurement practices help track security posture, measure effectiveness, and support data-driven decisions.
 
 ### Data and Infrastructure
 
-* **[Fundamentals of Databases](/blog/2025/09/24/fundamentals-of-databases/)** - Database security includes access control, encryption, and data at rest, focusing on protecting sensitive data in systems.
+* **[Fundamentals of Databases](https://jeffbailey.us/blog/2025/09/24/fundamentals-of-databases/)** - Database security includes access control, encryption, and data at rest, focusing on protecting sensitive data in systems.
 
-* **[Fundamentals of Distributed Systems](/blog/2025/10/11/fundamentals-of-distributed-systems/)** - Security challenges in distributed systems include secure communication, trust boundaries, and protecting architectures from attacks.
+* **[Fundamentals of Distributed Systems](https://jeffbailey.us/blog/2025/10/11/fundamentals-of-distributed-systems/)** - Security challenges in distributed systems include secure communication, trust boundaries, and protecting architectures from attacks.
 
 ## References
 
@@ -1076,7 +1076,7 @@ Privacy and compliance exist because software systems collect personal data at s
 
 By the end, this should support a concrete sketch of a system’s personal data lifecycle (collect, store, use, share, retain, delete) and an explicit mapping between privacy goals, security controls, and compliance evidence.
 
-For security foundations, read [Fundamentals of Software Security](/blog/2025/12/02/fundamentals-of-software-security/). Privacy and compliance overlap heavily with security, but they are not the same thing.
+For security foundations, read [Fundamentals of Software Security](https://jeffbailey.us/blog/2025/12/02/fundamentals-of-software-security/). Privacy and compliance overlap heavily with security, but they are not the same thing.
 
 ## Prerequisites & audience
 
@@ -1208,7 +1208,7 @@ What tends to work:
 * **Set log retention intentionally:** Keep only what is needed for debugging and security monitoring.
 * **Restrict access:** Broad access to production logs is a common path to a privacy incident.
 
-This is a trade-off. Logs need enough detail to debug incidents (see [Fundamentals of Incident Management](/blog/2025/11/16/fundamentals-of-incident-management/)), but not so much that logs become a shadow database of personal data.
+This is a trade-off. Logs need enough detail to debug incidents (see [Fundamentals of Incident Management](https://jeffbailey.us/blog/2025/11/16/fundamentals-of-incident-management/)), but not so much that logs become a shadow database of personal data.
 
 ### Make deletion real (and define what “delete” means)
 
@@ -1297,7 +1297,7 @@ To act on this without boiling the ocean:
 * Audit who has access to production data, and remove default access that cannot be justified.
 * Define a minimum viable account-deletion process and test it end-to-end.
 
-For more context on the foundations this builds on, start with [Fundamentals of Software Security](/blog/2025/12/02/fundamentals-of-software-security/), [Fundamentals of Databases](/blog/2025/09/24/fundamentals-of-databases/), and [Fundamentals of Monitoring and Observability](/blog/2025/11/16/fundamentals-of-monitoring-and-observability/), then connect those back to privacy outcomes.
+For more context on the foundations this builds on, start with [Fundamentals of Software Security](https://jeffbailey.us/blog/2025/12/02/fundamentals-of-software-security/), [Fundamentals of Databases](https://jeffbailey.us/blog/2025/09/24/fundamentals-of-databases/), and [Fundamentals of Monitoring and Observability](https://jeffbailey.us/blog/2025/11/16/fundamentals-of-monitoring-and-observability/), then connect those back to privacy outcomes.
 
 ## Synthesis
 

@@ -1,7 +1,7 @@
 # Domain Knowledge Reference
 
 Auto-generated from blog posts. Do not edit manually.
-Last updated: 2026-03-03
+Last updated: 2026-04-20
 
 ---
 
@@ -427,7 +427,7 @@ GitOps transforms infrastructure from **manual, error-prone processes** into **r
 * **Performance Tuning**: Use indexes, connection pooling, and caching strategies
 * **Security**: Implement proper authentication, authorization, and data encryption
 
-For a comprehensive guide covering database types, design principles, SQL fundamentals, performance optimization, security, and modern trends, see [Fundamentals of Databases](/blog/2025/09/24/fundamentals-of-databases/).
+For a comprehensive guide covering database types, design principles, SQL fundamentals, performance optimization, security, and modern trends, see [Fundamentals of Databases](https://jeffbailey.us/blog/2025/09/24/fundamentals-of-databases/).
 
 ### Section 5: Software Design Principles
 
@@ -695,7 +695,7 @@ class Dog:
 
 ### Section 6: Testing Strategies
 
-**Testing** isn't about finding bugs; it's about **preventing them**. Well-designed tests give you **confidence** to change code without breaking things. As I believe, you should [test for life](https://jeffbailey.us/a-software-development-philosophy#test-for-life/) because testing prevents future pain and helps you sleep at night. Testing builds upon [fundamental software concepts](/blog/2025/10/11/fundamental-software-concepts/) like error handling and defensive programming.
+**Testing** isn't about finding bugs; it's about **preventing them**. Well-designed tests give you **confidence** to change code without breaking things. As I believe, you should [test for life](https://jeffbailey.us/a-software-development-philosophy#test-for-life/) because testing prevents future pain and helps you sleep at night. Testing builds upon [fundamental software concepts](https://jeffbailey.us/blog/2025/10/11/fundamental-software-concepts/) like error handling and defensive programming.
 
 #### Types of Testing
 
@@ -1118,7 +1118,7 @@ Serve static content from servers closer to your users.
 
 ### Section 13: Software Architecture Patterns
 
-**Architecture** is the blueprint for how your software components interact with each other. It's not about choosing the "best" architecture; it's about selecting the right one for your specific context. Remember that [there's always a design](https://jeffbailey.us/a-software-development-philosophy#theres-always-a-design/) — an unplanned design is terrible, but it's still a design. For advanced architectural patterns and distributed systems, see [fundamentals of distributed systems](/blog/2025/10/11/fundamentals-of-distributed-systems/).
+**Architecture** is the blueprint for how your software components interact with each other. It's not about choosing the "best" architecture; it's about selecting the right one for your specific context. Remember that [there's always a design](https://jeffbailey.us/a-software-development-philosophy#theres-always-a-design/) — an unplanned design is terrible, but it's still a design. For advanced architectural patterns and distributed systems, see [fundamentals of distributed systems](https://jeffbailey.us/blog/2025/10/11/fundamentals-of-distributed-systems/).
 
 #### Monolithic Architecture
 
@@ -1407,7 +1407,7 @@ The best developers I know aren't the ones who know the most languages or framew
 
 ### Call to Action
 
-Ready to become a **rock star developer** and master the fundamentals of software development? Start by picking **one fundamental skill** and focusing on it for the next month. Whether it's writing better tests, improving your debugging skills, or learning a new programming language, **consistent practice** consistently beats sporadic learning. Consider contributing to [open source projects](/blog/2025/03/06/fundamentals-of-open-source/) to see these fundamentals applied in real-world codebases.
+Ready to become a **rock star developer** and master the fundamentals of software development? Start by picking **one fundamental skill** and focusing on it for the next month. Whether it's writing better tests, improving your debugging skills, or learning a new programming language, **consistent practice** consistently beats sporadic learning. Consider contributing to [open source projects](https://jeffbailey.us/blog/2025/03/06/fundamentals-of-open-source/) to see these fundamentals applied in real-world codebases.
 
 Here are some resources to help you get started:
 
@@ -1420,15 +1420,15 @@ Here are some resources to help you get started:
 
 *Related fundamentals articles:*
 
-**Software Engineering:** [Fundamentals of Software Design](/blog/2025/11/05/fundamentals-of-software-design/) teaches you how to design maintainable code that's easier to test and modify. [Fundamentals of Software Architecture](/blog/2025/10/19/fundamentals-of-software-architecture/) helps you understand how to structure larger systems and make architectural decisions. [Fundamentals of Software Testing](/blog/2025/11/30/fundamentals-of-software-testing/) shows how to verify your code works correctly and catch bugs early.
+**Software Engineering:** [Fundamentals of Software Design](https://jeffbailey.us/blog/2025/11/05/fundamentals-of-software-design/) teaches you how to design maintainable code that's easier to test and modify. [Fundamentals of Software Architecture](https://jeffbailey.us/blog/2025/10/19/fundamentals-of-software-architecture/) helps you understand how to structure larger systems and make architectural decisions. [Fundamentals of Software Testing](https://jeffbailey.us/blog/2025/11/30/fundamentals-of-software-testing/) shows how to verify your code works correctly and catch bugs early.
 
-**Engineering Practices:** [Fundamentals of Backend Engineering](/blog/2025/10/14/fundamentals-of-backend-engineering/) shows how to build server-side systems and APIs. [Fundamentals of Frontend Engineering](/blog/2025/11/26/fundamentals-of-frontend-engineering/) teaches you how to build user interfaces and client-side applications.
+**Engineering Practices:** [Fundamentals of Backend Engineering](https://jeffbailey.us/blog/2025/10/14/fundamentals-of-backend-engineering/) shows how to build server-side systems and APIs. [Fundamentals of Frontend Engineering](https://jeffbailey.us/blog/2025/11/26/fundamentals-of-frontend-engineering/) teaches you how to build user interfaces and client-side applications.
 
-**Product Development:** [Fundamentals of Software Product Development](/blog/2025/11/28/fundamentals-of-software-product-development/) shows how software development fits into building products that solve user problems.
+**Product Development:** [Fundamentals of Software Product Development](https://jeffbailey.us/blog/2025/11/28/fundamentals-of-software-product-development/) shows how software development fits into building products that solve user problems.
 
-**Communication:** [Fundamentals of Technical Writing](/blog/2025/10/12/fundamentals-of-technical-writing/) helps you write code comments, documentation, and user-facing text that serves your users.
+**Communication:** [Fundamentals of Technical Writing](https://jeffbailey.us/blog/2025/10/12/fundamentals-of-technical-writing/) helps you write code comments, documentation, and user-facing text that serves your users.
 
-**Collaboration:** [Fundamentals of Open Source](/blog/2025/03/06/fundamentals-of-open-source/) shows how to contribute to and maintain open source projects, which is excellent practice for software development skills.
+**Collaboration:** [Fundamentals of Open Source](https://jeffbailey.us/blog/2025/03/06/fundamentals-of-open-source/) shows how to contribute to and maintain open source projects, which is excellent practice for software development skills.
 
 ## Glossary
 
@@ -1521,7 +1521,7 @@ graph LR
 
 ### Prerequisites & Audience
 
-**Prerequisites:** You should be familiar with basic software development concepts and working on a team. Familiarity with [software development fundamentals](/blog/2025/10/02/fundamentals-of-software-development/) helps but isn't required. No prior agile experience is needed.
+**Prerequisites:** You should be familiar with basic software development concepts and working on a team. Familiarity with [software development fundamentals](https://jeffbailey.us/blog/2025/10/02/fundamentals-of-software-development/) helps but isn't required. No prior agile experience is needed.
 
 **Primary audience:** Beginner to intermediate developers, including team leads and project managers, seeking a stronger foundation in agile software development.
 
@@ -2572,10 +2572,10 @@ Once this feels routine, expand the same workflow to other teams and projects.
 
 **Learning path:**
 
-* If feedback is slow, read [Fundamentals of CI/CD and Release Engineering](/blog/2025/12/23/fundamentals-of-ci-cd-and-release-engineering/).
-* If quality collapses under speed, read [Fundamentals of Software Testing](/blog/2025/11/30/fundamentals-of-software-testing/) and [Fundamentals of Software Debugging](/blog/2025/12/25/fundamentals-of-software-debugging/).
-* If production is a black box, read [Fundamentals of Monitoring and Observability](/blog/2025/11/16/fundamentals-of-monitoring-and-observability/).
-* If change is painful, read [Fundamentals of Software Architecture](/blog/2025/10/19/fundamentals-of-software-architecture/) and [Fundamentals of Reliability Engineering](/blog/2025/11/17/fundamentals-of-reliability-engineering/).
+* If feedback is slow, read [Fundamentals of CI/CD and Release Engineering](https://jeffbailey.us/blog/2025/12/23/fundamentals-of-ci-cd-and-release-engineering/).
+* If quality collapses under speed, read [Fundamentals of Software Testing](https://jeffbailey.us/blog/2025/11/30/fundamentals-of-software-testing/) and [Fundamentals of Software Debugging](https://jeffbailey.us/blog/2025/12/25/fundamentals-of-software-debugging/).
+* If production is a black box, read [Fundamentals of Monitoring and Observability](https://jeffbailey.us/blog/2025/11/16/fundamentals-of-monitoring-and-observability/).
+* If change is painful, read [Fundamentals of Software Architecture](https://jeffbailey.us/blog/2025/10/19/fundamentals-of-software-architecture/) and [Fundamentals of Reliability Engineering](https://jeffbailey.us/blog/2025/11/17/fundamentals-of-reliability-engineering/).
 
 **Practice exercises:**
 
@@ -2751,7 +2751,7 @@ Software project management is the discipline of planning, executing, and contro
 
 This matters because most software work is done through projects such as new features, migrations, launches, and infrastructure changes. Without basic project management, deadlines are missed, scope expands, teams burn out, and software fails.
 
-**What this is (and isn't):** This article explains software project management principles and trade-offs, focusing on *why* software projects succeed or fail and how the core pieces fit together. It doesn't cover specific methodologies ([Agile](/blog/2025/12/23/fundamentals-of-agile-software-development/)
+**What this is (and isn't):** This article explains software project management principles and trade-offs, focusing on *why* software projects succeed or fail and how the core pieces fit together. It doesn't cover specific methodologies ([Agile](https://jeffbailey.us/blog/2025/12/23/fundamentals-of-agile-software-development/)
 , Waterfall, PRINCE2) or project management software tools.
 
 **Why software project management fundamentals matter:**

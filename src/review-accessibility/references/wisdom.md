@@ -1,7 +1,7 @@
 # Domain Knowledge Reference
 
 Auto-generated from blog posts. Do not edit manually.
-Last updated: 2026-03-03
+Last updated: 2026-04-20
 
 ---
 
@@ -1813,7 +1813,7 @@ Color and contrast influence how we perceive and interact with interfaces. Good 
 
 Most developers know color matters, but many lack an understanding of fundamentals. Teams often ship interfaces that appeal to some users but leave others behind. Knowing the fundamentals of color and contrast helps design interfaces that work for everyone, not just those who see color the same way.
 
-**What this is (and isn't):** This article covers color and contrast principles, their importance, and their impact on readability and accessibility. It does **not** include detailed design workflows, advanced color theory, or step-by-step implementation. For details, refer to [Fundamentals of Frontend Engineering](/blog/2025/11/26/fundamentals-of-frontend-engineering/).
+**What this is (and isn't):** This article covers color and contrast principles, their importance, and their impact on readability and accessibility. It does **not** include detailed design workflows, advanced color theory, or step-by-step implementation. For details, refer to [Fundamentals of Frontend Engineering](https://jeffbailey.us/blog/2025/11/26/fundamentals-of-frontend-engineering/).
 
 **Why color and contrast fundamentals matter:**
 
@@ -1998,7 +1998,7 @@ Color temperature affects how colors appear and how they interact.
 
 Color theory offers helpful principles, but real-world interface design faces limits. Display tech varies, and devices show colors differently. Environmental factors like brightness, ambient light, and viewing angles affect perception. Color theory also overlooks accessibility needs, which may require adjustments to harmonious schemes.
 
-See: [Fundamentals of Software Accessibility](/blog/2025/11/30/fundamentals-of-software-accessibility/)
+See: [Fundamentals of Software Accessibility](https://jeffbailey.us/blog/2025/11/30/fundamentals-of-software-accessibility/)
 
 **When color theory falls short:** Cross-device rendering differences, accessibility requirements, and brand constraints may require deviating from theoretical color relationships. Always test color choices on actual devices and with accessibility tools.
 
@@ -2461,7 +2461,7 @@ Color and contrast determine whether interfaces are readable, inclusive, and eff
 
 * Testing with tools, simulators, and real users ensures your color choices work in practice, not just in theory.
 
-These fundamentals are the foundation for more advanced visual design, typography, and accessibility practices. For deeper exploration of accessibility principles, see [Fundamentals of Software Accessibility](/blog/2025/11/30/fundamentals-of-software-accessibility/). For practical implementation, see [Fundamentals of Frontend Engineering](/blog/2025/11/26/fundamentals-of-frontend-engineering/).
+These fundamentals are the foundation for more advanced visual design, typography, and accessibility practices. For deeper exploration of accessibility principles, see [Fundamentals of Software Accessibility](https://jeffbailey.us/blog/2025/11/30/fundamentals-of-software-accessibility/). For practical implementation, see [Fundamentals of Frontend Engineering](https://jeffbailey.us/blog/2025/11/26/fundamentals-of-frontend-engineering/).
 
 ## Future Trends in Color and Contrast
 

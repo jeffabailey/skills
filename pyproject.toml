@@ -1,0 +1,29 @@
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py", "*_steps.py"]
+markers = [
+    "walking_skeleton",
+    "happy_path",
+    "edge_case",
+    "error",
+    "perf",
+    "compat",
+    "property",
+    "ADR-001", "ADR-002", "ADR-003", "ADR-004", "ADR-005", "ADR-006",
+    "FR-1", "FR-2", "FR-3", "FR-4", "FR-5", "FR-6", "FR-7", "FR-8",
+    "NFR-1", "NFR-2", "NFR-3", "NFR-4", "NFR-5",
+    "BR-1", "BR-2", "BR-3", "BR-4", "BR-5",
+    "US-01", "US-02", "US-03", "US-04", "US-05", "US-06", "US-07", "US-08",
+    "AC-01", "AC-02", "AC-03", "AC-04", "AC-05", "AC-06", "AC-07", "AC-08",
+    "AC-01.1", "AC-01.2", "AC-01.3", "AC-01.4", "AC-01.5",
+    "AC-02.1", "AC-02.2", "AC-02.3", "AC-02.4", "AC-02.5",
+    "AC-03.1", "AC-03.2", "AC-03.3", "AC-03.4", "AC-03.5", "AC-03.6", "AC-03.7",
+    "AC-04.1", "AC-04.2", "AC-04.3", "AC-04.4",
+    "AC-05.1", "AC-05.2", "AC-05.3", "AC-05.4", "AC-05.5",
+    "AC-06.1", "AC-06.2", "AC-06.3",
+    "AC-07.1", "AC-07.2", "AC-07.3", "AC-07.4", "AC-07.5",
+    "AC-08.2", "AC-08.3", "AC-08.4",
+]
+filterwarnings = [
+    "ignore::pytest.PytestUnknownMarkWarning",
+]

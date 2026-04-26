@@ -88,6 +88,36 @@ def _read_config(path: Path) -> dict | None:
         return json.load(f)
 
 
+def _read_chain_configs(chain: list[Path]) -> tuple[list[dict] | None, str | None]:
+    """Adapter: read every fitness-config.json on the chain in order.
+
+    Returns (raw_configs, None) on success, or (None, error_message) on the
+    first malformed JSON file. Result-style return so command verbs can
+    short-circuit cleanly without nested try/except blocks. Missing files
+    are skipped silently (already filtered by walk_up_chain's existence
+    check, but we double-check for robustness).
+    """
+    raw_configs: list[dict] = []
+    for entry in chain:
+        try:
+            cfg = _read_config(entry)
+        except json.JSONDecodeError as exc:
+            return None, f"Error: invalid JSON in {entry}: {exc}"
+        if cfg is not None:
+            raw_configs.append(cfg)
+    return raw_configs, None
+
+
+def _print_validation_errors(errors: list[str]) -> None:
+    """Adapter: print each error line on its own to stderr.
+
+    Centralises the multi-line ValidationResult.errors -> stderr boundary
+    so command verbs read as a flat pipeline of validation gates.
+    """
+    for line in errors:
+        print(line, file=sys.stderr)
+
+
 # ---------------------------------------------------------------------------
 # Pure functions — no I/O, no mutation of inputs.
 # ---------------------------------------------------------------------------
@@ -601,15 +631,10 @@ def cmd_init_path(target: Path, base: Path) -> int:
     target_resolved = target.resolve(strict=False)
     parent = target_resolved.parent
     chain = walk_up_chain(parent, stop=base)
-    raw_configs: list[dict] = []
-    for entry in chain:
-        try:
-            cfg = _read_config(entry)
-        except json.JSONDecodeError as exc:
-            print(f"Error: invalid JSON in {entry}: {exc}", file=sys.stderr)
-            return 1
-        if cfg is not None:
-            raw_configs.append(cfg)
+    raw_configs, error = _read_chain_configs(chain)
+    if error is not None:
+        print(error, file=sys.stderr)
+        return 1
 
     seed = build_seed_config(raw_configs)
 
@@ -693,20 +718,14 @@ def cmd_show_path(target: Path, base: Path) -> int:
         return 1
 
     chain = walk.chain
-    raw_configs: list[dict] = []
-    for entry in chain:
-        try:
-            cfg = _read_config(entry)
-        except json.JSONDecodeError as exc:
-            print(f"Error: invalid JSON in {entry}: {exc}", file=sys.stderr)
-            return 1
-        if cfg is not None:
-            raw_configs.append(cfg)
+    raw_configs, error = _read_chain_configs(chain)
+    if error is not None:
+        print(error, file=sys.stderr)
+        return 1
 
     version_check = validate_schema_versions(raw_configs, source_chain=chain)
     if not version_check.ok:
-        for line in version_check.errors:
-            print(line, file=sys.stderr)
+        _print_validation_errors(version_check.errors)
         return 1
 
     merged = deep_merge_chain(raw_configs)
@@ -742,20 +761,14 @@ def cmd_validate_path(target: Path, base: Path) -> int:
         return 1
 
     chain = walk.chain
-    raw_configs: list[dict] = []
-    for entry in chain:
-        try:
-            cfg = _read_config(entry)
-        except json.JSONDecodeError as exc:
-            print(f"Error: invalid JSON in {entry}: {exc}", file=sys.stderr)
-            return 1
-        if cfg is not None:
-            raw_configs.append(cfg)
+    raw_configs, error = _read_chain_configs(chain)
+    if error is not None:
+        print(error, file=sys.stderr)
+        return 1
 
     version_check = validate_schema_versions(raw_configs, source_chain=chain)
     if not version_check.ok:
-        for line in version_check.errors:
-            print(line, file=sys.stderr)
+        _print_validation_errors(version_check.errors)
         return 1
 
     merged = deep_merge_chain(raw_configs)
@@ -769,8 +782,7 @@ def cmd_validate_path(target: Path, base: Path) -> int:
             print("Valid: built-in defaults (no fitness-config.json found)")
         return 0
 
-    for line in result.errors:
-        print(line, file=sys.stderr)
+    _print_validation_errors(result.errors)
     return 1
 
 

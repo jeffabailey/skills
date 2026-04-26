@@ -12,15 +12,7 @@ deep_merge_chain is pure: no filesystem, no mutation of inputs.
 
 from __future__ import annotations
 
-import importlib.util
-import sys
-from pathlib import Path
-
-SCRIPT = Path(__file__).resolve().parents[3] / "scripts" / "fitness-config.py"
-_spec = importlib.util.spec_from_file_location("fitness_config", SCRIPT)
-fitness_config = importlib.util.module_from_spec(_spec)
-sys.modules["fitness_config"] = fitness_config
-_spec.loader.exec_module(fitness_config)
+from unit.fitness_config._loader import fitness_config
 
 
 def test_deep_merge_chain_module_overrides_root_per_domain():

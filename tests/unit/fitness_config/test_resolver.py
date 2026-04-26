@@ -10,18 +10,11 @@ returns a list[Path]. No filesystem mutation; pure read-only inspection.
 
 from __future__ import annotations
 
-import importlib.util
-import sys
 from pathlib import Path
 
 import pytest
 
-# Load fitness-config.py as a module despite its hyphenated filename.
-SCRIPT = Path(__file__).resolve().parents[3] / "scripts" / "fitness-config.py"
-_spec = importlib.util.spec_from_file_location("fitness_config", SCRIPT)
-fitness_config = importlib.util.module_from_spec(_spec)
-sys.modules["fitness_config"] = fitness_config
-_spec.loader.exec_module(fitness_config)
+from unit.fitness_config._loader import fitness_config
 
 
 def test_walk_up_chain_returns_module_then_root_when_both_exist(tmp_path: Path):

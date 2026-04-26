@@ -24,6 +24,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import sys
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -59,20 +60,27 @@ CONFIG_FILENAME = "fitness-config.json"
 # ---------------------------------------------------------------------------
 
 def load(path: Path) -> dict | None:
-    """Load config from path. Returns None if file missing."""
+    """Load config from path for legacy CLI verbs (cmd_validate, cmd_show).
+
+    Returns None if the file is missing OR malformed; on a JSON parse error it
+    prints a one-line "Invalid JSON: ..." message to stderr. This swallow-and-
+    log contract is preserved verbatim from the pre-refactor CLI to keep bare
+    invocations byte-identical (NFR-3). New path-based verbs use _read_config,
+    which RAISES JSONDecodeError so the caller can name the offending file.
+    """
     if not path.exists():
         return None
     try:
-        with path.open(encoding="utf-8") as f:
-            return json.load(f)
+        return _read_config(path)
     except json.JSONDecodeError as e:
         print(f"Invalid JSON: {e}", file=sys.stderr)
         return None
 
 
 def _read_config(path: Path) -> dict | None:
-    """Adapter: read+parse a fitness-config.json. Pure caller-friendly variant
-    that returns None for missing files and raises for malformed JSON.
+    """Adapter: read+parse a fitness-config.json. Returns None for missing
+    files and raises json.JSONDecodeError for malformed JSON so callers can
+    surface the offending path in their error message.
     """
     if not path.exists():
         return None
@@ -761,8 +769,6 @@ def cmd_audit(repo_root: Path) -> int:
     Exit 0 means clean. Exit 1 means at least one violation; the script names
     every offender so reviewers can locate the regression.
     """
-    import re
-
     inline = re.compile(_AUDIT_INLINE_WEIGHTS_PATTERN)
     direct_load = re.compile(_AUDIT_DIRECT_LOAD_PATTERN)
 

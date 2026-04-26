@@ -1,0 +1,206 @@
+journey:
+  name: "Per-Directory Fitness Config"
+  goal: "Apply module-specific fitness review weights by placing fitness-config.json in a subdirectory"
+  persona: "Devin Park - infrastructure engineer maintaining a multi-module Terraform repo"
+
+  emotional_arc:
+    start: "Mildly frustrated - generic root weights miss module-specific priorities"
+    middle: "Cautiously optimistic - drops override config, runs review"
+    end: "Confident - report header names the applied config and effective weights"
+
+steps:
+  - id: 1
+    name: "Resolve config for review target"
+    command: "fitness-config.py show --path <target>  (or implicit during review)"
+    description: |
+      Tool determines which fitness-config.json applies to a given review-target path.
+      Walks up from target directory until first fitness-config.json is found.
+      Always also loads root fitness-config.json (if present) as the base.
+
+    tui_mockup: |
+      Resolved config for: ${review_target_path}
+
+        config sources (in precedence order):
+          1. ${child_config_path}   (override)
+          2. fitness-config.json    (root)
+
+        effective weights (merged):
+          ${effective_weights_table}
+          -------------------
+          total          100   OK
+
+    shared_artifacts:
+      - name: "review_target_path"
+        source: "user invocation (CLI arg or CWD)"
+        displayed_as: "${review_target_path}"
+        consumers: ["resolver walk-up", "report header scope line", "show subcommand banner"]
+      - name: "config_source_chain"
+        source: "resolver output"
+        displayed_as: "${child_config_path} + root"
+        consumers: ["report header config line", "show subcommand banner", "validate error messages"]
+      - name: "effective_weights"
+        source: "resolver merge step"
+        displayed_as: "${effective_weights_table}"
+        consumers: ["all domain scorers", "report header", "weighted-average calculator"]
+
+    emotional_state:
+      entry: "curious / mildly anxious - did my config get picked up?"
+      exit: "reassured - both source files named, totals visible"
+
+    integration_checkpoint: |
+      Resolver output references match what the review actually uses.
+      effective_weights from `show` MUST equal effective_weights used by `review-full`.
+
+    gherkin: |
+      Scenario: Resolve config from module subdirectory
+        Given the repo has fitness-config.json at the root with default weights
+        And infrastructure/modules/postgresql/fitness-config.json exists with data=30, reliability=20
+        When Devin runs fitness-config.py show --path infrastructure/modules/postgresql/main.tf
+        Then output names both config files in precedence order
+        And effective weights show data=30 (override) and architecture=14 (root)
+        And the weights sum line displays "total 100 OK"
+
+  - id: 2
+    name: "Merge child override with root"
+    command: "(internal step in resolver)"
+    description: |
+      Deep-merge: child top-level keys (weights, statusThresholds, security, scoring) override
+      corresponding root keys. Within weights, child keys override root keys per-domain.
+      Validation: effective weights must sum to 100 (within 0.01 tolerance).
+
+    tui_mockup: |
+      (no UI - internal merge; visible only via `show` or report header)
+
+    shared_artifacts:
+      - name: "effective_weights"
+        source: "merge of root weights and child weights"
+        displayed_as: "${effective_weights_table}"
+        consumers: ["all scorers", "report header"]
+
+    emotional_state:
+      entry: "trusting"
+      exit: "trusting (or surfaced error in step 1)"
+
+    integration_checkpoint: |
+      Merge result is deterministic and idempotent.
+      No silent dropping of child keys.
+
+    gherkin: |
+      Scenario: Merge child override with root config
+        Given root fitness-config.json defines all 10 domain weights summing to 100
+        And child fitness-config.json defines weights for data=30 and reliability=20 only
+        When the resolver merges child over root
+        Then effective weights have data=30 and reliability=20 from child
+        And effective weights have remaining 8 domains from root
+        And effective weights sum to 100
+
+  - id: 3
+    name: "Review runs with effective config"
+    command: "review-full / review-<domain>"
+    description: |
+      Each domain skill reads the effective config (not root). Weighted overall score uses
+      merged weights. Per-domain scores remain 1-10 each; only the weighting changes.
+
+    tui_mockup: |
+      [running domain reviews with effective weights...]
+      [3/10] data review ......... 8/10
+      [4/10] reliability review .. 7/10
+      ...
+
+    shared_artifacts:
+      - name: "effective_weights"
+        source: "resolver"
+        displayed_as: "weight applied to each domain score"
+        consumers: ["weighted-average calculator"]
+
+    emotional_state:
+      entry: "engaged"
+      exit: "satisfied"
+
+    integration_checkpoint: |
+      Each domain scorer uses effective weights, not hardcoded defaults.
+      Skipped domains (e.g., accessibility=0) are not run.
+
+    gherkin: |
+      Scenario: Review uses effective merged weights
+        Given the resolver produced effective weights with data=30, accessibility=0
+        When review-full runs
+        Then the data domain contributes 30 percent to the overall score
+        And the accessibility domain is skipped
+        And the overall weighted score reflects the override priorities
+
+  - id: 4
+    name: "Report header surfaces config provenance"
+    command: "(report write step)"
+    description: |
+      Report header (first 10 lines) MUST show: scope, config source chain, effective
+      weights summary. Without this, override is invisible and user cannot trust report.
+
+    tui_mockup: |
+      +-- Project Fitness Report ----------------------------------+
+      | Date:  ${date}                                              |
+      | Scope: ${review_target_path}                                |
+      |                                                             |
+      | Config: ${child_config_path} (merged with root)             |
+      | Effective weights: ${effective_weights_inline}              |
+      |                                                             |
+      | Overall Score: X.X / 10                                     |
+      +-------------------------------------------------------------+
+
+    shared_artifacts:
+      - name: "config_source_chain"
+        source: "resolver"
+        displayed_as: "Config: ... (merged with root)"
+        consumers: ["report header"]
+      - name: "effective_weights"
+        source: "resolver"
+        displayed_as: "Effective weights: ... inline list"
+        consumers: ["report header"]
+
+    emotional_state:
+      entry: "expectant"
+      exit: "confident - the report explicitly proves which config was applied"
+
+    integration_checkpoint: |
+      Report header values come from the same resolver output that drove scoring.
+      No hardcoded "Config: fitness-config.json" anywhere.
+
+    gherkin: |
+      Scenario: Report header proves which config was applied
+        Given a review ran on infrastructure/modules/postgresql/
+        And the resolver applied infrastructure/modules/postgresql/fitness-config.json over root
+        When the report is written
+        Then the report header shows "Config: infrastructure/modules/postgresql/fitness-config.json (merged with root)"
+        And the report header shows the effective weights inline
+        And these values match what scoring used
+
+integration_validation:
+  shared_artifact_consistency:
+    - artifact: "effective_weights"
+      must_match_across: [1, 2, 3, 4]
+      failure_message: "Effective weights from `show` differ from those used in scoring or shown in report header. Resolver is not the single source of truth."
+
+    - artifact: "config_source_chain"
+      must_match_across: [1, 4]
+      failure_message: "`show` subcommand and report header disagree on which config files were used."
+
+    - artifact: "review_target_path"
+      must_match_across: [1, 4]
+      failure_message: "Resolver scope and report scope disagree."
+
+open_questions_for_design:
+  - id: DQ-1
+    question: "Discovery rule: walk-up only, or also support explicit --config flag and/or glob patterns?"
+    luna_assumption: "walk-up only for v1; explicit --config flag for power users in v2+"
+  - id: DQ-2
+    question: "Merge semantics: deep-merge per top-level key (assumed), or full-replacement at top-level keys (weights, statusThresholds, etc.)?"
+    luna_assumption: "deep-merge for weights; future-proof full-replacement opt-in via a 'mergeMode': 'replace' field"
+  - id: DQ-3
+    question: "Schema version mismatch: error, warn-and-use-child, or warn-and-use-root?"
+    luna_assumption: "error - prevents silent surprises"
+  - id: DQ-4
+    question: "Where is the canonical resolver implemented? scripts/fitness-config.py only, or also embedded into each SKILL.md instruction?"
+    luna_assumption: "single resolver in scripts/, SKILL.md tells skills to call it"
+  - id: DQ-5
+    question: "When review target spans multiple subtrees with different overrides (e.g., review-full at repo root touches both postgresql/ and logging/), which config wins?"
+    luna_assumption: "v1 ignores per-subtree configs when scope is broader than any single override; only applies override when scope IS within an override directory. Document as known limitation."

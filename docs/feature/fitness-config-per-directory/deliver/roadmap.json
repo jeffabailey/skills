@@ -1,0 +1,217 @@
+{
+  "roadmap": {
+    "project_id": "fitness-config-per-directory",
+    "created_at": "2026-04-26T00:02:52Z",
+    "total_steps": 8,
+    "phases": 3
+  },
+  "phases": [
+    {
+      "id": "01",
+      "name": "Walking skeleton and core resolution",
+      "description": "Wire the resolver end-to-end via the walking skeleton, then add walk-up discovery and deep-merge semantics so that any target path picks up its nearest fitness-config.json with correct merged weights.",
+      "default_agent": "nw-functional-software-crafter",
+      "default_deps_strategy": "sequential",
+      "steps": [
+        {
+          "id": "01-01",
+          "name": "Walking skeleton: show resolves Postgres override",
+          "agent": "nw-functional-software-crafter",
+          "deps": [],
+          "test_file": "tests/acceptance/fitness-config-per-directory/walking-skeleton.feature",
+          "scenario_name": "Devin previews module-specific weights for a Postgres review target",
+          "criteria": "show --path on a file inside the postgresql override prints both source files in precedence order; effective weights show data=30 and reliability=20; total prints 100 OK; CLI exits 0; walking-skeleton.feature scenario passes",
+          "implementation_notes": "Drives Feature 0 wiring. Software-crafter implements just enough of resolver + merger + reporter + show CLI to make the active scenario pass. Other CLI verbs may stay stubbed. Estimate 2h.",
+          "files_to_modify": [
+            "scripts/fitness-config.py",
+            "tests/unit/fitness_config/test_resolver.py",
+            "tests/unit/fitness_config/test_merger.py",
+            "tests/unit/fitness_config/test_reporter.py",
+            "tests/acceptance/fitness-config-per-directory/steps/conftest.py"
+          ]
+        },
+        {
+          "id": "01-02",
+          "name": "Walk-up discovery covers all target shapes",
+          "agent": "nw-functional-software-crafter",
+          "deps": [
+            "01-01"
+          ],
+          "test_file": "tests/acceptance/fitness-config-per-directory/milestone-1-walk-up-discovery.feature",
+          "scenario_name": "All five milestone-1 scenarios (file in override dir; file two levels below; no override; no config anywhere; determinism)",
+          "criteria": "walk_up_chain handles file and directory inputs equivalently; chain returned as [child, root], [root], or [] depending on tree state; .git boundary and 64-level cap honored; determinism scenario produces identical chain across two invocations; all 5 milestone-1 scenarios pass",
+          "implementation_notes": "Unskip milestone-1 scenarios one at a time. Pure-function unit tests on walk_up_chain drive the inner loop with an in-memory reader. Estimate 1.5h.",
+          "files_to_modify": [
+            "scripts/fitness-config.py",
+            "tests/unit/fitness_config/test_resolver.py",
+            "tests/acceptance/fitness-config-per-directory/milestone-1-walk-up-discovery.feature"
+          ]
+        },
+        {
+          "id": "01-03",
+          "name": "Deep-merge over chain plus defaults",
+          "agent": "nw-functional-software-crafter",
+          "deps": [
+            "01-02"
+          ],
+          "test_file": "tests/acceptance/fitness-config-per-directory/milestone-2-deep-merge.feature",
+          "scenario_name": "All five milestone-2 scenarios (partial override; full override; independent top-level keys; whole-array threshold replacement; invalid total blocks review)",
+          "criteria": "deep_merge_chain folds chain over DEFAULTS per top-level key and per domain weight; statusThresholds and security ranges replace as wholes when present in override; sum-100 violation reported by validator and blocks downstream review; all 5 milestone-2 scenarios pass",
+          "implementation_notes": "Pure function deep_merge_chain plus validate_effective sum check. No filesystem in unit tests. Estimate 1.5h.",
+          "files_to_modify": [
+            "scripts/fitness-config.py",
+            "tests/unit/fitness_config/test_merger.py",
+            "tests/unit/fitness_config/test_validator.py",
+            "tests/acceptance/fitness-config-per-directory/milestone-2-deep-merge.feature"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "02",
+      "name": "Provenance, backward compatibility, init helper",
+      "description": "Make resolution observable through show output and report headers, lock backward compatibility for legacy CLI invocations, and add the init helper so override authors get a valid scaffold on first attempt.",
+      "default_agent": "nw-functional-software-crafter",
+      "default_deps_strategy": "sequential",
+      "steps": [
+        {
+          "id": "02-01",
+          "name": "Provenance reporting in show output",
+          "agent": "nw-functional-software-crafter",
+          "deps": [
+            "01-03"
+          ],
+          "test_file": "tests/acceptance/fitness-config-per-directory/milestone-3-provenance.feature",
+          "scenario_name": "All five milestone-3 scenarios (override+root naming; root only; defaults only; all 10 domains in inline line; byte-identical determinism)",
+          "criteria": "render_show_output prints source chain with correct phrasing for 0, 1, and 2-entry chains; effective-weights line lists all 10 domains sorted descending then alphabetically; show output is byte-identical across two runs; all 5 milestone-3 scenarios pass",
+          "implementation_notes": "Reporter functions are pure string builders. Determinism comes from sorted iteration. Estimate 1h.",
+          "files_to_modify": [
+            "scripts/fitness-config.py",
+            "tests/unit/fitness_config/test_reporter.py",
+            "tests/acceptance/fitness-config-per-directory/milestone-3-provenance.feature"
+          ]
+        },
+        {
+          "id": "02-02",
+          "name": "Add --path flag preserving legacy CLI behavior",
+          "agent": "nw-functional-software-crafter",
+          "deps": [
+            "02-01"
+          ],
+          "test_file": "tests/acceptance/fitness-config-per-directory/milestone-5-backward-compat.feature",
+          "scenario_name": "All five milestone-5 scenarios (validate without --path; reject invalid root; show without --path; init without --path; repo with no overrides)",
+          "criteria": "--path flag added to validate, init, show subcommands; positional path and --path are mutually exclusive in argparse; bare invocations without --path behave byte-identically to today; all 5 milestone-5 scenarios pass and prior tests/test_fitness_config.py still passes",
+          "implementation_notes": "Wire CLI dispatch: cmd_show/cmd_validate/cmd_init route to resolver path when --path supplied, else legacy code path. Estimate 1h.",
+          "files_to_modify": [
+            "scripts/fitness-config.py",
+            "tests/acceptance/fitness-config-per-directory/milestone-5-backward-compat.feature",
+            "tests/acceptance/fitness-config-per-directory/steps/conftest.py"
+          ]
+        },
+        {
+          "id": "02-03",
+          "name": "Init helper seeds override from root",
+          "agent": "nw-functional-software-crafter",
+          "deps": [
+            "02-02"
+          ],
+          "test_file": "tests/acceptance/fitness-config-per-directory/milestone-6-init-helper.feature",
+          "scenario_name": "Three milestone-6 happy and edge scenarios (seed from root; refuse overwrite; fall back to defaults when no root)",
+          "criteria": "init --path writes <dir>/fitness-config.json seeded from current root effective config or DEFAULT_WEIGHTS; refuses overwrite with non-zero exit; generated file passes validate --path immediately; three non-failure milestone-6 scenarios pass",
+          "implementation_notes": "Permission-failure scenario is deferred to step 03-01 (error handling). Estimate 45m.",
+          "files_to_modify": [
+            "scripts/fitness-config.py",
+            "tests/acceptance/fitness-config-per-directory/milestone-6-init-helper.feature"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "03",
+      "name": "Error handling and integration checkpoints",
+      "description": "Cover every error and boundary path with clear fail-closed messages, then prove the cross-component contract via integration scenarios and migrate every consumer (skill prompts, fitness-review-prompt) to call the resolver via CLI.",
+      "default_agent": "nw-functional-software-crafter",
+      "default_deps_strategy": "sequential",
+      "steps": [
+        {
+          "id": "03-01",
+          "name": "Error handling for merge schema and IO",
+          "agent": "nw-functional-software-crafter",
+          "deps": [
+            "02-03"
+          ],
+          "test_file": "tests/acceptance/fitness-config-per-directory/milestone-4-error-handling.feature",
+          "scenario_name": "All eleven milestone-4 scenarios (sum-95 fail; fail-closed block; partial-valid pass; legacy validate; matching versions; child newer; child older; malformed override; malformed root; missing target; depth-guard)",
+          "criteria": "validate_effective surfaces sum!=100, version mismatch, malformed JSON, missing path, and 64-level depth cap as non-zero exits naming every file in the chain with two concrete fixes; all 11 milestone-4 scenarios pass; fail-closed verified",
+          "implementation_notes": "Errors return as ResolutionResult.errors strings; CLI translates to exit 1. Estimate 1.5h.",
+          "files_to_modify": [
+            "scripts/fitness-config.py",
+            "tests/unit/fitness_config/test_validator.py",
+            "tests/unit/fitness_config/test_resolver.py",
+            "tests/acceptance/fitness-config-per-directory/milestone-4-error-handling.feature"
+          ]
+        },
+        {
+          "id": "03-02",
+          "name": "Integration checkpoints and consumer migration",
+          "agent": "nw-functional-software-crafter",
+          "deps": [
+            "03-01"
+          ],
+          "test_file": "tests/acceptance/fitness-config-per-directory/integration-checkpoints.feature",
+          "scenario_name": "All eight integration-checkpoints scenarios (broad-scope ADR-005; CLI mutex; embedded JSON block; determinism; perf; US-08 audit grep; per-domain header parity)",
+          "criteria": "broad-scope review uses only root with optional footnote; CLI rejects positional and --path together; show output embeds parseable JSON sentinel block; per-domain skill prompts emit Config and Effective weights lines and CI grep audit passes; all 8 scenarios pass within NFR-1 perf budget (internal-timing fallback if CI is slow) and AC-03.1 closes",
+          "implementation_notes": "Migrate every src/review-*/SKILL.md and .github/fitness-review-prompt.md to call CLI for weights; add CI grep audit step. Estimate 2h. Closes AC-03.1 (forwarded from DISTILL).",
+          "files_to_modify": [
+            "scripts/fitness-config.py",
+            "tests/acceptance/fitness-config-per-directory/integration-checkpoints.feature",
+            ".github/fitness-review-prompt.md",
+            "src/review-full/SKILL.md",
+            "src/review-architecture/SKILL.md",
+            "src/review-security/SKILL.md",
+            "src/review-reliability/SKILL.md",
+            "src/review-testing/SKILL.md",
+            "src/review-performance/SKILL.md",
+            "src/review-algorithms/SKILL.md",
+            "src/review-data/SKILL.md",
+            "src/review-accessibility/SKILL.md",
+            "src/review-process/SKILL.md",
+            "src/review-maintainability/SKILL.md"
+          ]
+        }
+      ]
+    }
+  ],
+  "implementation_scope": {
+    "source_directories": [
+      "scripts/"
+    ],
+    "test_directories": [
+      "tests/acceptance/fitness-config-per-directory/",
+      "tests/unit/fitness_config/"
+    ],
+    "consumer_directories": [
+      "src/review-architecture/",
+      "src/review-security/",
+      "src/review-reliability/",
+      "src/review-testing/",
+      "src/review-performance/",
+      "src/review-algorithms/",
+      "src/review-data/",
+      "src/review-accessibility/",
+      "src/review-process/",
+      "src/review-maintainability/",
+      "src/review-full/",
+      ".github/"
+    ],
+    "excluded_patterns": [
+      "__init__.py",
+      "__pycache__/**"
+    ]
+  },
+  "validation": {
+    "status": "pending",
+    "reviewer": "nw-solution-architect",
+    "approved_at": "TODO"
+  }
+}

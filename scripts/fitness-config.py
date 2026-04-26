@@ -147,13 +147,19 @@ def walk_up_chain_with_status(target: Path, stop: Path) -> WalkUpResult:
 
 
 def walk_up_chain(target: Path, stop: Path) -> list[Path]:
-    """Walk up from target to stop boundary, collecting fitness-config.json
-    paths in precedence order (nearest-to-target first, root last).
+    """Walk up from target to stop boundary, returning the chain only.
 
-    Pure: only reads file metadata via Path.exists(); does not mutate state.
-
-    Thin wrapper around walk_up_chain_with_status for callers that don't
-    need the depth-cap status flag. Preserved for backward compatibility.
+    Inputs:
+      target: directory or file inside the repo to resolve from.
+      stop: ancestor at which the walk halts (typically repo root / cwd).
+    Output: list of fitness-config.json paths in precedence order
+      (nearest-to-target first, root last). Empty if no configs exist.
+    Side effects: none. Pure aside from Path.exists() metadata reads.
+    Invariants:
+      - The returned list never contains paths outside [target..stop].
+      - File targets are normalised to their parent directory before walking.
+      - On a pathological tree, the depth_capped signal is silently dropped;
+        prefer walk_up_chain_with_status when fail-closed semantics matter.
     """
     return walk_up_chain_with_status(target, stop).chain
 
@@ -161,11 +167,16 @@ def walk_up_chain(target: Path, stop: Path) -> list[Path]:
 def deep_merge_chain(raw_configs: list[dict]) -> dict:
     """Deep-merge a chain of configs in precedence order (nearest-first).
 
-    Per ADR-002:
-      - weights: per-domain merge (override wins for keys it sets)
-      - statusThresholds, security, scoring: replace as wholes (first non-empty wins)
-
-    Pure: returns new dict; does not mutate inputs.
+    Inputs: list[dict] of raw configs ordered nearest-to-target first.
+    Output: a new merged dict with keys: weights, statusThresholds, security,
+      scoring, version (any may be omitted if no chain entry set them).
+    Side effects: none. Pure — returns a fresh dict; never mutates inputs.
+    Invariants (per ADR-002):
+      - weights is per-domain merged (each domain key resolved independently;
+        nearest-wins precedence).
+      - statusThresholds, security, scoring are replace-as-whole (first
+        non-empty entry in the chain wins; lower entries are dropped entirely).
+      - version: nearest-to-target wins, falling back to root.
     """
     merged: dict = {"weights": {}}
     # Iterate from lowest precedence (root) to highest (override) so that
@@ -196,7 +207,14 @@ def deep_merge_chain(raw_configs: list[dict]) -> dict:
 def build_effective_config(merged: dict) -> dict:
     """Apply built-in defaults to fill any missing pieces of a merged config.
 
-    Pure: returns new dict; does not mutate inputs.
+    Inputs: a dict produced by deep_merge_chain (or any equivalent shape).
+    Output: a new dict with all five top-level keys populated (version,
+      weights, statusThresholds, security, scoring), filled from
+      DEFAULT_* constants where the input was silent.
+    Side effects: none. Pure — returns a fresh dict; never mutates input.
+    Invariants:
+      - Every key in DEFAULT_WEIGHTS is present in output["weights"].
+      - Override values from `merged` always win over DEFAULT_* values.
     """
     return {
         "version": merged.get("version", 1),
@@ -405,7 +423,20 @@ def render_show_output(
 ) -> str:
     """Render the human-readable + JSON-sentinel output for `show --path`.
 
-    Pure: returns a string; does not print, does not touch the filesystem.
+    Inputs:
+      target: the path the user passed via `show --path`.
+      source_chain: ordered list of contributing fitness-config.json paths
+        (nearest-first); empty when no configs were found.
+      effective: dict from build_effective_config — fully-populated config.
+      base: optional directory used to render chain entries as relative paths;
+        falls back to absolute when relativisation fails.
+    Output: a single string ending in '\\n', suitable for direct stdout write.
+    Side effects: none. Pure — does not print, does not touch the filesystem.
+    Invariants:
+      - Domains are sorted descending by value, alphabetical for ties (AC-03.6).
+      - The BEGIN/END_EFFECTIVE_CONFIG_JSON sentinel block is always emitted
+        as valid JSON parseable by downstream consumers.
+      - Same inputs produce byte-identical output (AC-NFR-2).
     """
     weights = effective.get("weights", {})
     chain_strs = [_format_chain_path(p, base) for p in source_chain]

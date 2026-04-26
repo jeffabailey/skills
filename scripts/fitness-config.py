@@ -84,11 +84,34 @@ def _read_config(path: Path) -> dict | None:
 # Pure functions — no I/O, no mutation of inputs.
 # ---------------------------------------------------------------------------
 
-def walk_up_chain(target: Path, stop: Path) -> list[Path]:
-    """Walk up from target to stop boundary, collecting fitness-config.json
-    paths in precedence order (nearest-to-target first, root last).
+@dataclass(frozen=True)
+class WalkUpResult:
+    """Immutable algebraic result of walking the ancestor chain.
+
+    chain: discovered fitness-config.json files in precedence order
+    (nearest-first, root-last). depth_capped: True iff the 64-level safety
+    cap terminated the walk before reaching the stop boundary — surfaced
+    so the CLI can fail-closed with a pathological-tree error instead of
+    silently truncating (ADR-006).
+    """
+
+    chain: list[Path] = field(default_factory=list)
+    depth_capped: bool = False
+
+
+# Maximum number of ancestor directories the walk-up will visit before
+# halting. Per ADR-006, the cap is a hard error signal, not a silent truncation.
+_WALK_UP_DEPTH_CAP = 64
+
+
+def walk_up_chain_with_status(target: Path, stop: Path) -> WalkUpResult:
+    """Walk up from target to stop boundary, returning chain + depth_capped flag.
 
     Pure: only reads file metadata via Path.exists(); does not mutate state.
+
+    Returns the same chain as walk_up_chain plus a depth_capped boolean. The
+    flag is True iff the safety cap fired before either the stop boundary or
+    the filesystem root was reached, signalling a pathological tree.
     """
     target = target.resolve(strict=False)
     stop = stop.resolve(strict=False)
@@ -97,6 +120,7 @@ def walk_up_chain(target: Path, stop: Path) -> list[Path]:
     chain: list[Path] = []
     cursor = start_dir
     visited = 0
+    depth_capped = False
     while True:
         candidate = cursor / CONFIG_FILENAME
         if candidate.exists() and candidate.is_file():
@@ -108,9 +132,22 @@ def walk_up_chain(target: Path, stop: Path) -> list[Path]:
             break  # reached filesystem root
         cursor = parent
         visited += 1
-        if visited > 64:  # ADR safety: bound walk-up depth
+        if visited > _WALK_UP_DEPTH_CAP:
+            depth_capped = True
             break
-    return chain
+    return WalkUpResult(chain=chain, depth_capped=depth_capped)
+
+
+def walk_up_chain(target: Path, stop: Path) -> list[Path]:
+    """Walk up from target to stop boundary, collecting fitness-config.json
+    paths in precedence order (nearest-to-target first, root last).
+
+    Pure: only reads file metadata via Path.exists(); does not mutate state.
+
+    Thin wrapper around walk_up_chain_with_status for callers that don't
+    need the depth-cap status flag. Preserved for backward compatibility.
+    """
+    return walk_up_chain_with_status(target, stop).chain
 
 
 def deep_merge_chain(raw_configs: list[dict]) -> dict:
@@ -214,6 +251,88 @@ def _nearest_chain_label(source_chain: list[Path]) -> str | None:
     return str(nearest)
 
 
+def _format_chain_for_error(source_chain: list[Path]) -> str:
+    """Render every file in the chain as a bulleted list.
+
+    Pure: takes already-resolved paths and returns a string. Naming every
+    chain entry — not just the nearest — lets Devin locate the offending
+    file even when responsibility lies upstream of the deepest override
+    (fail-closed contract, Step 03-01).
+    """
+    return "\n".join(f"  - {entry}" for entry in source_chain)
+
+
+# Supported schema version. ADR-003: any chain config declaring a different
+# version is a HARD ERROR, surfaced before any merge is attempted so the CLI
+# never produces an effective config from incompatible inputs.
+_SUPPORTED_SCHEMA_VERSION = 1
+
+
+def validate_schema_versions(
+    raw_configs: list[dict],
+    source_chain: list[Path],
+) -> ValidationResult:
+    """Validate that every chain config declares the supported schema version.
+
+    Pure function: no filesystem, no mutation of inputs.
+
+    Per ADR-003, schema-version mismatch is a HARD ERROR. Configs missing
+    a `version` key are treated as version 1 (the documented default). On
+    mismatch, the returned ValidationResult.errors names every chain file
+    paired with its declared version, states the supported version, and
+    offers two concrete fixes (upgrade the older config, or pin the newer
+    config to the supported version).
+    """
+    if not raw_configs:
+        return ValidationResult(ok=True, errors=[])
+
+    declared: list[tuple[Path, int]] = []
+    mismatched: list[tuple[Path, int]] = []
+    for entry, cfg in zip(source_chain, raw_configs):
+        if not isinstance(cfg, dict):
+            continue
+        version = cfg.get("version", _SUPPORTED_SCHEMA_VERSION)
+        if not isinstance(version, int):
+            mismatched.append((entry, version))
+            continue
+        declared.append((entry, version))
+        if version != _SUPPORTED_SCHEMA_VERSION:
+            mismatched.append((entry, version))
+
+    if not mismatched:
+        return ValidationResult(ok=True, errors=[])
+
+    # Build chain-naming message: every file with its declared version.
+    chain_lines = [
+        f"  - {entry} declares version {version}"
+        for entry, version in declared
+    ]
+    errors: list[str] = [
+        "Schema version mismatch across the resolution chain "
+        f"(supported schema version is {_SUPPORTED_SCHEMA_VERSION}):",
+        *chain_lines,
+    ]
+    # Two concrete fixes per ADR-003 / fail-closed contract.
+    has_newer = any(v > _SUPPORTED_SCHEMA_VERSION for _, v in declared)
+    has_older = any(v < _SUPPORTED_SCHEMA_VERSION for _, v in declared)
+    if has_older and not has_newer:
+        errors.append(
+            f"Fix: upgrade the older config(s) to version {_SUPPORTED_SCHEMA_VERSION}, "
+            f"or pin the newer config(s) back to version {_SUPPORTED_SCHEMA_VERSION}."
+        )
+    elif has_newer and not has_older:
+        errors.append(
+            f"Fix: pin the newer config(s) back to version {_SUPPORTED_SCHEMA_VERSION}, "
+            f"or upgrade tooling to support the newer schema."
+        )
+    else:
+        errors.append(
+            f"Fix: align every config to version {_SUPPORTED_SCHEMA_VERSION} "
+            "(upgrade older entries or pin newer entries)."
+        )
+    return ValidationResult(ok=False, errors=errors)
+
+
 def validate_effective(effective: dict, source_chain: list[Path]) -> ValidationResult:
     """Validate an EFFECTIVE merged config against domain invariants.
 
@@ -223,8 +342,11 @@ def validate_effective(effective: dict, source_chain: list[Path]) -> ValidationR
       - Effective weights sum to 100 (±_WEIGHTS_SUM_TOLERANCE).
 
     On violation, the returned ValidationResult.errors lists actionable
-    messages — naming the offending source file and offering two fixes
-    (adjust the override weights, or use a full replacement of all 10).
+    messages naming EVERY file in the source chain (not just the deepest)
+    and offers two fixes (adjust the override weights, or use a full
+    replacement of all 10). Naming the whole chain is a fail-closed
+    requirement: Devin must be able to locate the offending file even when
+    responsibility lies upstream of the deepest override.
 
     Per ADR-002 / ADR-006, this is the single validator that downstream
     review skills consult before initiating a review.
@@ -235,7 +357,8 @@ def validate_effective(effective: dict, source_chain: list[Path]) -> ValidationR
     if abs(total - 100) <= _WEIGHTS_SUM_TOLERANCE:
         return ValidationResult(ok=True, errors=[])
 
-    # Sum violation — build an actionable error message.
+    # Sum violation — build an actionable error message that names every
+    # entry in the chain so Devin can find the offending file.
     errors: list[str] = []
     nearest = _nearest_chain_label(source_chain)
     if nearest:
@@ -246,6 +369,9 @@ def validate_effective(effective: dict, source_chain: list[Path]) -> ValidationR
         errors.append(
             f"Effective weights sum to {total:g}; must sum to 100."
         )
+    if source_chain:
+        errors.append("Resolution chain (nearest first):")
+        errors.append(_format_chain_for_error(source_chain))
     errors.append(
         "Fix: either adjust the override weights so the merged total is 100, "
         "or replace all 10 weights in the override (full replacement)."
@@ -468,9 +594,66 @@ def cmd_show(path: Path) -> int:
     return 0
 
 
+def _check_target_exists(target: Path, base: Path) -> str | None:
+    """Return an actionable error message iff the target path is missing.
+
+    Adapter-level guard: walk-up resolution requires a real anchor for the
+    chain. Missing-path is a hard error per ADR-006 (fail-closed): silent
+    fallback to defaults would let downstream consumers receive an effective
+    config from the wrong scope.
+
+    A path is considered "missing" iff neither the path itself NOR its
+    immediate parent directory exists under base. This preserves the prior
+    contract for `show --path` invocations that name a file inside a real
+    directory (the file may not exist yet, but the anchor directory does).
+    """
+    candidate = (base / target) if not target.is_absolute() else target
+    if candidate.exists():
+        return None
+    if candidate.parent.exists():
+        return None
+    return (
+        f"Error: target path does not exist: {target}\n"
+        f"  Fix: create the directory at {target}, "
+        f"or invoke validate from a path that exists."
+    )
+
+
+def _depth_cap_error_message(target: Path) -> str:
+    """Build the pathological-tree depth-cap error message.
+
+    The 64-level safety cap fires only when an ancestor walk traverses more
+    than _WALK_UP_DEPTH_CAP directories without reaching the stop boundary.
+    That signals a pathological tree (no .git, no repo root, no fitness-config
+    anywhere on the way up). Surfacing this as a hard error lets the CLI
+    fail-closed instead of silently truncating.
+    """
+    return (
+        f"Error: pathological-tree depth limit (>{_WALK_UP_DEPTH_CAP} levels) "
+        f"reached while resolving config from {target}.\n"
+        f"  Fix: invoke from a path within a normal repo tree, "
+        f"or place a fitness-config.json above the target so resolution can anchor."
+    )
+
+
 def cmd_show_path(target: Path, base: Path) -> int:
-    """Resolve walk-up chain from target, deep-merge, render to stdout."""
-    chain = walk_up_chain(target, stop=base)
+    """Resolve walk-up chain from target, deep-merge, render to stdout.
+
+    Fail-closed: every IO/parse/depth-cap/version-mismatch error short-
+    circuits BEFORE rendering so downstream consumers cannot read the JSON
+    sentinel block from a partial chain.
+
+    Note: `show` deliberately does NOT reject non-existent target paths —
+    legacy preview behavior (milestone-5 backward-compat) renders the root
+    chain when the target is a hypothetical/future path. `validate` is the
+    fail-closed gate; `show` is a preview tool.
+    """
+    walk = walk_up_chain_with_status(target, stop=base)
+    if walk.depth_capped:
+        print(_depth_cap_error_message(target), file=sys.stderr)
+        return 1
+
+    chain = walk.chain
     raw_configs: list[dict] = []
     for entry in chain:
         try:
@@ -480,6 +663,12 @@ def cmd_show_path(target: Path, base: Path) -> int:
             return 1
         if cfg is not None:
             raw_configs.append(cfg)
+
+    version_check = validate_schema_versions(raw_configs, source_chain=chain)
+    if not version_check.ok:
+        for line in version_check.errors:
+            print(line, file=sys.stderr)
+        return 1
 
     merged = deep_merge_chain(raw_configs)
     effective = build_effective_config(merged)
@@ -495,8 +684,25 @@ def cmd_validate_path(target: Path, base: Path) -> int:
     On failure: prints actionable error(s) to stderr and exits non-zero.
     Critical: on failure, the JSON sentinel block MUST NOT appear on stdout
     so downstream review skills cannot consume an invalid config.
+
+    Fail-closed order (each step short-circuits before the next):
+      1. Target path must exist
+      2. Walk-up must complete within the depth cap
+      3. Every chain file must parse as JSON
+      4. Every chain file must declare the supported schema version
+      5. The effective merged config must satisfy domain invariants
     """
-    chain = walk_up_chain(target, stop=base)
+    missing = _check_target_exists(target, base)
+    if missing is not None:
+        print(missing, file=sys.stderr)
+        return 1
+
+    walk = walk_up_chain_with_status(target, stop=base)
+    if walk.depth_capped:
+        print(_depth_cap_error_message(target), file=sys.stderr)
+        return 1
+
+    chain = walk.chain
     raw_configs: list[dict] = []
     for entry in chain:
         try:
@@ -506,6 +712,12 @@ def cmd_validate_path(target: Path, base: Path) -> int:
             return 1
         if cfg is not None:
             raw_configs.append(cfg)
+
+    version_check = validate_schema_versions(raw_configs, source_chain=chain)
+    if not version_check.ok:
+        for line in version_check.errors:
+            print(line, file=sys.stderr)
+        return 1
 
     merged = deep_merge_chain(raw_configs)
     effective = build_effective_config(merged)

@@ -128,6 +128,42 @@ def test_walk_up_chain_caps_ascent_to_avoid_infinite_walks(tmp_path: Path):
     assert chain == []
 
 
+# ---------------------------------------------------------------------------
+# Depth-cap signal — Step 03-01, ADR-006: walk_up_chain_with_status returns
+# both the chain and a `depth_capped` boolean so the CLI can fail-closed
+# with a specific pathological-tree error rather than silently truncating.
+# ---------------------------------------------------------------------------
+
+def test_walk_up_chain_with_status_reports_depth_capped_when_walk_terminates_at_64(tmp_path: Path):
+    # Build a 70-level deep target with an unreachable stop (filesystem root).
+    cursor = tmp_path
+    for i in range(70):
+        cursor = cursor / f"d{i}"
+    cursor.mkdir(parents=True)
+    target = cursor / "leaf.txt"
+    target.touch()
+
+    status = fitness_config.walk_up_chain_with_status(
+        target, stop=Path(target.anchor)
+    )
+
+    assert status.chain == []
+    assert status.depth_capped is True
+
+
+def test_walk_up_chain_with_status_reports_no_cap_when_stop_reached_normally(tmp_path: Path):
+    (tmp_path / "fitness-config.json").write_text("{}")
+    sub = tmp_path / "a" / "b"
+    sub.mkdir(parents=True)
+    target = sub / "leaf.txt"
+    target.touch()
+
+    status = fitness_config.walk_up_chain_with_status(target, stop=tmp_path)
+
+    assert status.chain == [tmp_path / "fitness-config.json"]
+    assert status.depth_capped is False
+
+
 def test_walk_up_chain_is_deterministic_across_repeated_calls(tmp_path: Path):
     # Given: a tree with multiple configs at different depths
     (tmp_path / "fitness-config.json").write_text("{}")

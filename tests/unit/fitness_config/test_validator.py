@@ -171,3 +171,105 @@ def test_validate_effective_returns_result_with_ok_and_errors_fields():
     assert hasattr(result, "ok")
     assert hasattr(result, "errors")
     assert isinstance(result.errors, list)
+
+
+# ---------------------------------------------------------------------------
+# Sum-violation message MUST name every file in the chain (Step 03-01,
+# fail-closed contract: Devin needs every chain entry called out so the
+# offending file is locatable even when the deepest entry isn't responsible).
+# ---------------------------------------------------------------------------
+
+def test_validate_effective_names_every_file_in_chain_on_sum_violation():
+    # Chain has THREE distinct entries — message must reference all three so
+    # Devin can locate the offending file even when the deepest isn't to blame.
+    weights = dict(_default_effective()["weights"])
+    weights["data"] = 5  # sum = 95
+
+    chain = [
+        Path("infrastructure/modules/postgresql/database/fitness-config.json"),
+        Path("infrastructure/modules/postgresql/fitness-config.json"),
+        Path("fitness-config.json"),
+    ]
+
+    result = fitness_config.validate_effective(
+        _effective_with_weights(weights), source_chain=chain
+    )
+
+    combined = "\n".join(result.errors)
+    # Each distinct chain entry must appear in the error somewhere.
+    assert "postgresql/database/fitness-config.json" in combined, (
+        f"deepest chain entry missing: {combined}"
+    )
+    assert "postgresql/fitness-config.json" in combined, (
+        f"intermediate chain entry missing: {combined}"
+    )
+    # Root entry — its rendered string is just 'fitness-config.json' on its own.
+    # We assert the bare root form appears at least once outside the longer paths.
+    chain_naming = combined
+    # Strip the deeper paths so only standalone root mentions remain.
+    standalone = chain_naming.replace(
+        "postgresql/database/fitness-config.json", ""
+    ).replace("postgresql/fitness-config.json", "")
+    assert "fitness-config.json" in standalone, (
+        f"root entry missing as standalone reference: {combined}"
+    )
+
+
+# ---------------------------------------------------------------------------
+# Schema version mismatch detection (ADR-003) — pure function, runs
+# BEFORE merge so the CLI can short-circuit without computing an effective
+# config from incompatible inputs.
+# ---------------------------------------------------------------------------
+
+def test_validate_schema_versions_ok_when_all_configs_match():
+    raw_configs = [
+        {"version": 1, "weights": {}},  # nearest
+        {"version": 1, "weights": {}},  # root
+    ]
+    chain = [
+        Path("infrastructure/modules/postgresql/fitness-config.json"),
+        Path("fitness-config.json"),
+    ]
+
+    result = fitness_config.validate_schema_versions(raw_configs, source_chain=chain)
+
+    assert result.ok is True
+    assert result.errors == []
+
+
+def test_validate_schema_versions_fails_when_child_newer_than_root():
+    raw_configs = [
+        {"version": 2, "weights": {}},  # nearest (override) declares newer
+        {"version": 1, "weights": {}},  # root declares supported
+    ]
+    chain = [
+        Path("infrastructure/modules/postgresql/fitness-config.json"),
+        Path("fitness-config.json"),
+    ]
+
+    result = fitness_config.validate_schema_versions(raw_configs, source_chain=chain)
+
+    assert result.ok is False
+    combined = "\n".join(result.errors).lower()
+    assert "postgresql/fitness-config.json" in "\n".join(result.errors)
+    assert "fitness-config.json" in "\n".join(result.errors)
+    # Names declared versions and the supported version (1).
+    assert "version" in combined
+    assert "supported" in combined or "supported schema version is 1" in combined or "1" in combined
+
+
+def test_validate_schema_versions_fails_when_child_older_than_root_with_upgrade_hint():
+    raw_configs = [
+        {"version": 1, "weights": {}},  # nearest (override) older
+        {"version": 2, "weights": {}},  # root newer
+    ]
+    chain = [
+        Path("infrastructure/modules/postgresql/fitness-config.json"),
+        Path("fitness-config.json"),
+    ]
+
+    result = fitness_config.validate_schema_versions(raw_configs, source_chain=chain)
+
+    assert result.ok is False
+    combined = "\n".join(result.errors).lower()
+    assert "upgrade" in combined or "older" in combined or "newer" in combined

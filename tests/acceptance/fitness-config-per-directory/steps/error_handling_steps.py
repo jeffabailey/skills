@@ -34,6 +34,43 @@ scenarios(
 
 
 # ---------------------------------------------------------------------------
+# Given — Background steps (shared with config_resolution_steps; restated
+# locally because pytest-bdd only registers step defs from the module that
+# calls scenarios() for a given feature file).
+# ---------------------------------------------------------------------------
+
+@given("the repo has a root fitness-config.json with the default weights")
+def m4_background_root_default(repo: RepoTree):
+    repo.write_default_root_config()
+
+
+@given("the repo has a valid root fitness-config.json")
+def m4_legacy_valid_root(repo: RepoTree):
+    """Background for AC-05.5 legacy single-file mode."""
+    repo.write_default_root_config()
+
+
+@given(parsers.parse(
+    'Devin invokes resolution from a path {depth:d} levels deep with no fitness-config.json on the way up'
+))
+def m4_deep_path_no_config(repo: RepoTree, depth: int, context: dict):
+    """Build a pathological deep tree with no anchor config along the way.
+
+    The 64-level depth cap fires when walk-up traverses more than 64 dirs.
+    A 100-deep tree with no fitness-config.json forces the cap signal.
+    """
+    parts = [f"d{i}" for i in range(depth)]
+    rel = "/".join(parts)
+    repo.touch_file(f"{rel}/leaf.txt")
+    context["deep_path"] = f"{rel}/leaf.txt"
+
+
+@when("Devin previews the resolved config for that deeply nested path")
+def m4_preview_deep_one(repo: RepoTree, context: dict):
+    context["preview"] = repo.run("show", "--path", context["deep_path"])
+
+
+# ---------------------------------------------------------------------------
 # Given — invalid / mismatched config setup
 # ---------------------------------------------------------------------------
 

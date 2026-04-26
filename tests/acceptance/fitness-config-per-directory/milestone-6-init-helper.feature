@@ -38,7 +38,7 @@ Feature: Init scaffolds a new module override that passes validate immediately
     And the output notes that no root config was found and defaults were used
     And the init command exits with success
 
-  @skip @infrastructure-failure
+  @infrastructure-failure
   Scenario: Init reports a permission failure when the target directory is not writable
     Given the directory "infrastructure/modules/locked" exists but is not writable by the current user
     When Devin initializes an override at "infrastructure/modules/locked"

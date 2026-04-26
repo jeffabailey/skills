@@ -8,154 +8,154 @@ Input: list[dict] of raw configs in precedence order (nearest-to-target first).
 Output: dict with merged 'weights', 'statusThresholds', 'security', 'scoring'.
 
 deep_merge_chain is pure: no filesystem, no mutation of inputs.
+
+Test count budget (per 2x distinct-behaviors rule):
+  Behavior B4: deep_merge_chain merges weights per-domain
+  Behavior B5: deep_merge_chain replaces statusThresholds/security/scoring as wholes
 """
 
 from __future__ import annotations
 
+import pytest
+
 from unit.fitness_config._loader import fitness_config
 
 
-def test_deep_merge_chain_module_overrides_root_per_domain():
-    # Module override wins for the keys it specifies; root fills the rest.
-    root = {
-        "version": 1,
-        "weights": {
-            "architecture": 14, "security": 14, "reliability": 10, "testing": 10,
-            "performance": 10, "algorithms": 10, "data": 10, "accessibility": 8,
-            "process": 8, "maintainability": 6,
-        },
-    }
-    override = {
-        "version": 1,
-        "weights": {
-            "architecture": 14, "security": 14, "reliability": 20, "testing": 10,
-            "performance": 6, "algorithms": 4, "data": 30, "accessibility": 0,
-            "process": 1, "maintainability": 1,
-        },
-    }
+# ---------------------------------------------------------------------------
+# B4: weights merged per-domain; nearest entry wins per key.
+# Parametrized over input-variation cases that share the SAME assertion
+# logic: merged["weights"] equals expected.
+# ---------------------------------------------------------------------------
 
-    merged = fitness_config.deep_merge_chain([override, root])
+@pytest.mark.parametrize(
+    "case_id,chain,expected_weights",
+    [
+        # Module override wins for the keys it specifies; root unaffected keys flow through.
+        (
+            "module_overrides_root_per_domain",
+            [
+                {"version": 1, "weights": {
+                    "architecture": 14, "security": 14, "reliability": 20, "testing": 10,
+                    "performance": 6, "algorithms": 4, "data": 30, "accessibility": 0,
+                    "process": 1, "maintainability": 1,
+                }},
+                {"version": 1, "weights": {
+                    "architecture": 14, "security": 14, "reliability": 10, "testing": 10,
+                    "performance": 10, "algorithms": 10, "data": 10, "accessibility": 8,
+                    "process": 8, "maintainability": 6,
+                }},
+            ],
+            {
+                "architecture": 14, "security": 14, "reliability": 20, "testing": 10,
+                "performance": 6, "algorithms": 4, "data": 30, "accessibility": 0,
+                "process": 1, "maintainability": 1,
+            },
+        ),
+        # Single-entry chain: merged result equals that root's weights.
+        (
+            "single_entry_returns_root_weights",
+            [{"version": 1, "weights": {"data": 10, "architecture": 90}}],
+            {"data": 10, "architecture": 90},
+        ),
+        # Partial override: unspecified domains inherit from root.
+        (
+            "partial_override_inherits_unspecified_domains",
+            [
+                {"version": 1, "weights": {"data": 30}},
+                {"version": 1, "weights": {"architecture": 50, "security": 30, "data": 20}},
+            ],
+            {"architecture": 50, "security": 30, "data": 30},
+        ),
+        # Empty chain: merger returns empty weights (caller substitutes defaults).
+        ("empty_chain_returns_empty_weights", [], {}),
+        # Three-level chain: nearest beats intermediate beats root, per-key.
+        (
+            "three_level_chain_nearest_wins_per_key",
+            [
+                {"version": 1, "weights": {"c": 3}},               # deepest
+                {"version": 1, "weights": {"b": 2, "c": 2}},       # intermediate
+                {"version": 1, "weights": {"a": 1, "b": 1, "c": 1}},  # root
+            ],
+            {"a": 1, "b": 2, "c": 3},
+        ),
+    ],
+)
+def test_deep_merge_chain_merges_weights_per_domain(
+    case_id: str, chain: list[dict], expected_weights: dict
+):
+    merged = fitness_config.deep_merge_chain(chain)
 
-    assert merged["weights"]["data"] == 30
-    assert merged["weights"]["reliability"] == 20
-    assert merged["weights"]["architecture"] == 14
-    assert sum(merged["weights"].values()) == 100
-
-
-def test_deep_merge_chain_returns_only_root_when_chain_has_one():
-    root = {"version": 1, "weights": {"data": 10, "architecture": 90}}
-
-    merged = fitness_config.deep_merge_chain([root])
-
-    assert merged["weights"]["data"] == 10
-    assert merged["weights"]["architecture"] == 90
-
-
-def test_deep_merge_chain_partial_override_inherits_unspecified_domains():
-    root = {
-        "version": 1,
-        "weights": {"architecture": 50, "security": 30, "data": 20},
-    }
-    override = {
-        "version": 1,
-        "weights": {"data": 30},  # only redefines data
-    }
-
-    merged = fitness_config.deep_merge_chain([override, root])
-
-    assert merged["weights"]["architecture"] == 50  # inherited
-    assert merged["weights"]["security"] == 30      # inherited
-    assert merged["weights"]["data"] == 30          # overridden
-
-
-def test_deep_merge_chain_returns_empty_weights_when_chain_empty():
-    merged = fitness_config.deep_merge_chain([])
-
-    # No configs found -> caller will substitute defaults; merger returns empty.
-    assert "weights" in merged
-    assert merged["weights"] == {}
+    assert merged["weights"] == expected_weights, f"case={case_id}"
 
 
 # ---------------------------------------------------------------------------
-# Whole-replacement keys: statusThresholds, security, scoring (ADR-002).
-# Override that sets one of these keys replaces it entirely; root is dropped.
+# B5: whole-replacement keys (statusThresholds, security, scoring).
+# Parametrized over (key, override-replaces vs override-silent) variations
+# that share the SAME assertion: merged[key] equals expected (no leak from root
+# when overridden, full inherit when silent).
 # ---------------------------------------------------------------------------
 
-def test_deep_merge_chain_status_thresholds_replace_as_whole():
-    # Override sets only 'healthy'; per ADR-002 the entire statusThresholds
-    # block from the override REPLACES root, not merges per sub-key.
-    root = {
-        "version": 1,
-        "weights": {"data": 100},
-        "statusThresholds": {
-            "healthy": [8, 10],
-            "needsAttention": [5, 7],
-            "critical": [1, 4],
-        },
-    }
-    override = {
-        "version": 1,
-        "statusThresholds": {"healthy": [9, 10]},
-    }
+@pytest.mark.parametrize(
+    "case_id,key,root_block,override_block,expected",
+    [
+        # statusThresholds: override replaces as a whole — no leak from root.
+        (
+            "statusThresholds_replace_as_whole",
+            "statusThresholds",
+            {"healthy": [8, 10], "needsAttention": [5, 7], "critical": [1, 4]},
+            {"healthy": [9, 10]},
+            {"healthy": [9, 10]},
+        ),
+        # statusThresholds: override silent -> root block inherited intact.
+        (
+            "statusThresholds_inherit_when_override_silent",
+            "statusThresholds",
+            {"healthy": [8, 10], "needsAttention": [5, 7], "critical": [1, 4]},
+            None,  # marker: override does NOT set this key
+            {"healthy": [8, 10], "needsAttention": [5, 7], "critical": [1, 4]},
+        ),
+        # security: override replaces as a whole — 'extra' from root must NOT leak.
+        (
+            "security_replace_as_whole",
+            "security",
+            {"confidenceThreshold": 7, "extra": "x"},
+            {"confidenceThreshold": 9},
+            {"confidenceThreshold": 9},
+        ),
+        # security: override silent -> root inherited.
+        (
+            "security_inherit_when_override_silent",
+            "security",
+            {"confidenceThreshold": 7},
+            None,
+            {"confidenceThreshold": 7},
+        ),
+        # scoring: override replaces as a whole — 'badRange' must not leak.
+        (
+            "scoring_replace_as_whole",
+            "scoring",
+            {"goodRange": [8, 10], "badRange": [1, 3]},
+            {"goodRange": [9, 10]},
+            {"goodRange": [9, 10]},
+        ),
+    ],
+)
+def test_deep_merge_chain_whole_replacement_keys(
+    case_id: str, key: str, root_block: dict, override_block: dict | None, expected: dict
+):
+    root = {"version": 1, "weights": {"data": 100}, key: root_block}
+    if override_block is None:
+        override = {"version": 1, "weights": {"data": 100}}
+    else:
+        override = {"version": 1, key: override_block}
 
     merged = fitness_config.deep_merge_chain([override, root])
 
-    # Whole-replacement: only 'healthy' present from override; needsAttention/critical
-    # do NOT leak from root.
-    assert merged["statusThresholds"] == {"healthy": [9, 10]}
+    assert merged[key] == expected, f"case={case_id}"
 
 
-def test_deep_merge_chain_status_thresholds_inherit_when_override_silent():
-    # Override does not set statusThresholds; root's whole block is inherited.
-    root = {
-        "version": 1,
-        "statusThresholds": {
-            "healthy": [8, 10],
-            "needsAttention": [5, 7],
-            "critical": [1, 4],
-        },
-    }
-    override = {"version": 1, "weights": {"data": 100}}
-
-    merged = fitness_config.deep_merge_chain([override, root])
-
-    assert merged["statusThresholds"] == {
-        "healthy": [8, 10], "needsAttention": [5, 7], "critical": [1, 4],
-    }
-
-
-def test_deep_merge_chain_security_replace_as_whole():
-    root = {"version": 1, "security": {"confidenceThreshold": 7, "extra": "x"}}
-    override = {"version": 1, "security": {"confidenceThreshold": 9}}
-
-    merged = fitness_config.deep_merge_chain([override, root])
-
-    # Whole-replace: 'extra' from root must NOT leak through.
-    assert merged["security"] == {"confidenceThreshold": 9}
-
-
-def test_deep_merge_chain_security_inherits_when_override_silent():
-    root = {"version": 1, "security": {"confidenceThreshold": 7}}
-    override = {"version": 1, "weights": {"data": 100}}
-
-    merged = fitness_config.deep_merge_chain([override, root])
-
-    assert merged["security"] == {"confidenceThreshold": 7}
-
-
-def test_deep_merge_chain_scoring_replace_as_whole():
-    root = {"version": 1, "scoring": {"goodRange": [8, 10], "badRange": [1, 3]}}
-    override = {"version": 1, "scoring": {"goodRange": [9, 10]}}
-
-    merged = fitness_config.deep_merge_chain([override, root])
-
-    # Whole-replace: 'badRange' must not leak from root.
-    assert merged["scoring"] == {"goodRange": [9, 10]}
-
-
-def test_deep_merge_chain_independent_top_level_keys():
-    # weights from override (per-domain merge) AND security from override
-    # (whole replace) are independently merged with root.
+def test_deep_merge_chain_independent_top_level_keys_compose_correctly():
+    """Independent top-level keys merge independently per their per-key strategy."""
     root = {
         "version": 1,
         "weights": {"architecture": 50, "security": 50},
@@ -169,29 +169,13 @@ def test_deep_merge_chain_independent_top_level_keys():
 
     merged = fitness_config.deep_merge_chain([override, root])
 
-    # weights: untouched by override -> inherited
     assert merged["weights"] == {"architecture": 50, "security": 50}
-    # security: overridden as whole
     assert merged["security"] == {"confidenceThreshold": 9}
-    # statusThresholds: inherited from root
     assert merged["statusThresholds"] == {"healthy": [8, 10]}
 
 
-def test_deep_merge_chain_three_level_chain_nearest_wins():
-    # When a chain has 3 entries (deepest, intermediate, root), the deepest
-    # entry's per-key value should win the per-domain merge.
-    root = {"version": 1, "weights": {"a": 1, "b": 1, "c": 1}}
-    intermediate = {"version": 1, "weights": {"b": 2, "c": 2}}
-    deepest = {"version": 1, "weights": {"c": 3}}
-
-    merged = fitness_config.deep_merge_chain([deepest, intermediate, root])
-
-    assert merged["weights"]["a"] == 1  # only root has it
-    assert merged["weights"]["b"] == 2  # intermediate beats root
-    assert merged["weights"]["c"] == 3  # deepest beats both
-
-
 def test_deep_merge_chain_does_not_mutate_inputs():
+    """Purity contract: inputs unchanged after merge."""
     root = {"version": 1, "weights": {"a": 1, "b": 2}}
     override = {"version": 1, "weights": {"b": 20}}
     root_snapshot = {"version": 1, "weights": {"a": 1, "b": 2}}
@@ -199,6 +183,5 @@ def test_deep_merge_chain_does_not_mutate_inputs():
 
     fitness_config.deep_merge_chain([override, root])
 
-    # Purity: inputs unchanged after merge.
     assert root == root_snapshot
     assert override == override_snapshot

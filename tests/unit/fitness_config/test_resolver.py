@@ -6,6 +6,11 @@ nearest-to-target first (highest precedence), repo-root last (lowest).
 
 walk_up_chain is pure: takes a starting Path and a stop boundary Path,
 returns a list[Path]. No filesystem mutation; pure read-only inspection.
+
+Test count budget (per 2x distinct-behaviors rule):
+  Behavior B1: walk_up_chain returns chain in precedence order
+  Behavior B2: walk_up_chain stops at stop boundary
+  Behavior B3: walk_up_chain caps depth at 64 (with_status reports it)
 """
 
 from __future__ import annotations
@@ -17,148 +22,137 @@ import pytest
 from unit.fitness_config._loader import fitness_config
 
 
-def test_walk_up_chain_returns_module_then_root_when_both_exist(tmp_path: Path):
-    # Given: root config + module override + target inside the module
-    (tmp_path / "fitness-config.json").write_text("{}")
-    module_dir = tmp_path / "infrastructure" / "modules" / "postgresql"
-    module_dir.mkdir(parents=True)
-    (module_dir / "fitness-config.json").write_text("{}")
-    target = module_dir / "main.tf"
-    target.touch()
+# ---------------------------------------------------------------------------
+# Helpers — keep test bodies focused on assertions, not setup mechanics.
+# ---------------------------------------------------------------------------
+
+def _write_config(at: Path) -> Path:
+    at.parent.mkdir(parents=True, exist_ok=True)
+    cfg = at / "fitness-config.json" if at.is_dir() else at
+    cfg.write_text("{}")
+    return cfg
+
+
+# ---------------------------------------------------------------------------
+# B1: walk_up_chain returns chain in precedence order across input shapes.
+# Parametrized over input-variation cases that share the SAME assertion
+# logic: the returned chain must equal the expected list of config paths.
+# ---------------------------------------------------------------------------
+
+@pytest.mark.parametrize(
+    "case_id,override_subpath,start_kind,expect_override,expect_root",
+    [
+        # Both root + module override; target file inside module.
+        ("module_and_root_with_file_target", "infrastructure/modules/postgresql", "file", True, True),
+        # Both root + module override; target IS the module directory itself.
+        ("module_and_root_with_dir_target", "infra/postgres", "dir", True, True),
+        # Only root config exists; deep file target.
+        ("only_root_with_deep_file_target", None, "file", False, True),
+        # No configs anywhere; deep file target.
+        ("no_configs_anywhere", None, "file", False, False),
+    ],
+)
+def test_walk_up_chain_returns_chain_in_precedence_order(
+    tmp_path: Path,
+    case_id: str,
+    override_subpath: str | None,
+    start_kind: str,
+    expect_override: bool,
+    expect_root: bool,
+):
+    expected: list[Path] = []
+    if expect_root:
+        _write_config(tmp_path)
+        expected_root = tmp_path / "fitness-config.json"
+    if override_subpath is not None:
+        module_dir = tmp_path / override_subpath
+        module_dir.mkdir(parents=True)
+        if expect_override:
+            _write_config(module_dir)
+            expected.append(module_dir / "fitness-config.json")
+        start_dir = module_dir
+    else:
+        start_dir = tmp_path / "a" / "b" / "c"
+        start_dir.mkdir(parents=True)
+    if expect_root:
+        expected.append(expected_root)
+
+    if start_kind == "file":
+        target = start_dir / "leaf.tf"
+        target.touch()
+    else:
+        target = start_dir
 
     chain = fitness_config.walk_up_chain(target, stop=tmp_path)
 
-    assert len(chain) == 2
-    assert chain[0] == module_dir / "fitness-config.json"
-    assert chain[1] == tmp_path / "fitness-config.json"
+    assert chain == expected, f"case={case_id}: got {chain}, expected {expected}"
 
 
-def test_walk_up_chain_returns_only_root_when_no_module_override(tmp_path: Path):
-    (tmp_path / "fitness-config.json").write_text("{}")
-    deep = tmp_path / "a" / "b" / "c"
-    deep.mkdir(parents=True)
-    target = deep / "leaf.txt"
-    target.touch()
+# ---------------------------------------------------------------------------
+# B2: walk_up_chain stops at the stop boundary even if ancestors have configs.
+# ---------------------------------------------------------------------------
 
-    chain = fitness_config.walk_up_chain(target, stop=tmp_path)
-
-    assert chain == [tmp_path / "fitness-config.json"]
-
-
-def test_walk_up_chain_returns_empty_when_no_config_anywhere(tmp_path: Path):
-    deep = tmp_path / "a" / "b"
-    deep.mkdir(parents=True)
-    target = deep / "leaf.txt"
-    target.touch()
-
-    chain = fitness_config.walk_up_chain(target, stop=tmp_path)
-
-    assert chain == []
-
-
-def test_walk_up_chain_accepts_directory_target(tmp_path: Path):
-    (tmp_path / "fitness-config.json").write_text("{}")
-    sub = tmp_path / "sub"
-    sub.mkdir()
-
-    chain = fitness_config.walk_up_chain(sub, stop=tmp_path)
-
-    assert chain == [tmp_path / "fitness-config.json"]
-
-
-def test_walk_up_chain_treats_file_and_its_parent_dir_as_equivalent_starts(tmp_path: Path):
-    # Given: root config + override + a file inside the override directory
-    (tmp_path / "fitness-config.json").write_text("{}")
-    module_dir = tmp_path / "infra" / "postgres"
-    module_dir.mkdir(parents=True)
-    (module_dir / "fitness-config.json").write_text("{}")
-    file_target = module_dir / "main.tf"
-    file_target.touch()
-
-    # When: walk from the file vs from the parent directory
-    from_file = fitness_config.walk_up_chain(file_target, stop=tmp_path)
-    from_dir = fitness_config.walk_up_chain(module_dir, stop=tmp_path)
-
-    # Then: chains are identical — file input is normalized to its parent dir
-    assert from_file == from_dir
-    assert from_file == [
-        module_dir / "fitness-config.json",
-        tmp_path / "fitness-config.json",
-    ]
-
-
-def test_walk_up_chain_stops_at_stop_boundary_even_if_ancestor_has_config(tmp_path: Path):
-    # Given: a config above the stop boundary, plus one inside it
+def test_walk_up_chain_stops_at_stop_boundary_and_excludes_ancestors_above(tmp_path: Path):
     outer = tmp_path / "outer"
     inner = outer / "inner"
     inner.mkdir(parents=True)
-    (tmp_path / "fitness-config.json").write_text("{}")  # outside stop, MUST be ignored
-    (outer / "fitness-config.json").write_text("{}")     # at stop boundary, INCLUDED
+    (tmp_path / "fitness-config.json").write_text("{}")  # ABOVE stop -> ignored
+    (outer / "fitness-config.json").write_text("{}")     # AT stop -> included
     target = inner / "leaf.txt"
     target.touch()
 
     chain = fitness_config.walk_up_chain(target, stop=outer)
 
-    # Walk-up halts at the stop boundary (.git equivalent in production)
     assert chain == [outer / "fitness-config.json"]
 
 
-def test_walk_up_chain_caps_ascent_to_avoid_infinite_walks(tmp_path: Path):
-    # Given: a deeply nested target far past the 64-level guard, with no stop
-    # boundary on the way up. Build a 70-level chain to force the cap to fire.
+# ---------------------------------------------------------------------------
+# B3: walk_up_chain caps depth at 64; walk_up_chain_with_status surfaces it.
+# Parametrized over the two cases of the depth_capped flag (capped vs not).
+# ---------------------------------------------------------------------------
+
+@pytest.mark.parametrize(
+    "case_id,depth,use_unreachable_stop,write_root_config,expected_depth_capped,expected_chain_nonempty",
+    [
+        # 70 levels deep + unreachable stop -> cap fires, depth_capped True.
+        ("70_levels_unreachable_stop", 70, True, False, True, False),
+        # Modest depth + reachable stop -> cap does NOT fire, depth_capped False.
+        ("normal_depth_reachable_stop", 2, False, True, False, True),
+    ],
+)
+def test_walk_up_chain_with_status_reports_depth_cap_status(
+    tmp_path: Path,
+    case_id: str,
+    depth: int,
+    use_unreachable_stop: bool,
+    write_root_config: bool,
+    expected_depth_capped: bool,
+    expected_chain_nonempty: bool,
+):
+    if write_root_config:
+        (tmp_path / "fitness-config.json").write_text("{}")
+
     cursor = tmp_path
-    for i in range(70):
+    for i in range(depth):
         cursor = cursor / f"d{i}"
     cursor.mkdir(parents=True)
     target = cursor / "leaf.txt"
     target.touch()
 
-    # Configure stop at filesystem root (effectively unreachable within budget)
-    chain = fitness_config.walk_up_chain(target, stop=Path(target.anchor))
+    stop = Path(target.anchor) if use_unreachable_stop else tmp_path
+    status = fitness_config.walk_up_chain_with_status(target, stop=stop)
 
-    # The cap must terminate the walk; chain must remain a list (never raise).
-    # No configs exist anywhere on the path, so the chain is empty.
-    assert chain == []
-
-
-# ---------------------------------------------------------------------------
-# Depth-cap signal — Step 03-01, ADR-006: walk_up_chain_with_status returns
-# both the chain and a `depth_capped` boolean so the CLI can fail-closed
-# with a specific pathological-tree error rather than silently truncating.
-# ---------------------------------------------------------------------------
-
-def test_walk_up_chain_with_status_reports_depth_capped_when_walk_terminates_at_64(tmp_path: Path):
-    # Build a 70-level deep target with an unreachable stop (filesystem root).
-    cursor = tmp_path
-    for i in range(70):
-        cursor = cursor / f"d{i}"
-    cursor.mkdir(parents=True)
-    target = cursor / "leaf.txt"
-    target.touch()
-
-    status = fitness_config.walk_up_chain_with_status(
-        target, stop=Path(target.anchor)
+    assert status.depth_capped is expected_depth_capped, (
+        f"case={case_id}: depth_capped={status.depth_capped}"
     )
-
-    assert status.chain == []
-    assert status.depth_capped is True
-
-
-def test_walk_up_chain_with_status_reports_no_cap_when_stop_reached_normally(tmp_path: Path):
-    (tmp_path / "fitness-config.json").write_text("{}")
-    sub = tmp_path / "a" / "b"
-    sub.mkdir(parents=True)
-    target = sub / "leaf.txt"
-    target.touch()
-
-    status = fitness_config.walk_up_chain_with_status(target, stop=tmp_path)
-
-    assert status.chain == [tmp_path / "fitness-config.json"]
-    assert status.depth_capped is False
+    if expected_chain_nonempty:
+        assert status.chain == [tmp_path / "fitness-config.json"]
+    else:
+        assert status.chain == []
 
 
 def test_walk_up_chain_is_deterministic_across_repeated_calls(tmp_path: Path):
-    # Given: a tree with multiple configs at different depths
+    """Property: same inputs -> same chain across repeated invocations (purity)."""
     (tmp_path / "fitness-config.json").write_text("{}")
     mid = tmp_path / "a" / "b"
     mid.mkdir(parents=True)
@@ -168,10 +162,8 @@ def test_walk_up_chain_is_deterministic_across_repeated_calls(tmp_path: Path):
     target = leaf / "main.tf"
     target.touch()
 
-    # When: invoked many times with identical inputs
     runs = [fitness_config.walk_up_chain(target, stop=tmp_path) for _ in range(5)]
 
-    # Then: every invocation produces the same chain (no ordering, no state)
     assert all(run == runs[0] for run in runs)
     assert runs[0] == [
         mid / "fitness-config.json",

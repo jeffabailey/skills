@@ -25,6 +25,7 @@ from __future__ import annotations
 import argparse
 import json
 import sys
+from dataclasses import dataclass, field
 from pathlib import Path
 
 DEFAULT_WEIGHTS = {
@@ -159,6 +160,82 @@ def build_effective_config(merged: dict) -> dict:
         "security": {**DEFAULT_SECURITY, **(merged.get("security") or {})},
         "scoring": {**DEFAULT_SCORING, **(merged.get("scoring") or {})},
     }
+
+
+@dataclass(frozen=True)
+class ValidationResult:
+    """Immutable algebraic result of validating an effective config.
+
+    ok=True means the config passes all invariants.
+    errors holds zero or more actionable messages naming files when possible.
+
+    Pure data — no methods with side effects.
+    """
+
+    ok: bool
+    errors: list[str] = field(default_factory=list)
+
+
+# Acceptable absolute deviation from 100 when summing weights, to absorb
+# rounding from floating-point overrides without permitting real drift.
+_WEIGHTS_SUM_TOLERANCE = 0.01
+
+
+def _sum_weights(weights: dict) -> float:
+    """Sum numeric weight values, ignoring non-numeric noise. Pure."""
+    return sum(v for v in weights.values() if isinstance(v, (int, float)))
+
+
+def _nearest_chain_label(source_chain: list[Path]) -> str | None:
+    """Return a human-readable label for the deepest (override) entry.
+
+    Pure: takes already-resolved paths and returns a string. The deepest entry
+    is the one most likely responsible for an override that pushed the
+    effective sum off 100, so naming it gives Devin a single place to look.
+    """
+    if not source_chain:
+        return None
+    nearest = source_chain[0]
+    return str(nearest)
+
+
+def validate_effective(effective: dict, source_chain: list[Path]) -> ValidationResult:
+    """Validate an EFFECTIVE merged config against domain invariants.
+
+    Pure function: no filesystem, no globals, no mutation of inputs.
+
+    Invariants enforced:
+      - Effective weights sum to 100 (±_WEIGHTS_SUM_TOLERANCE).
+
+    On violation, the returned ValidationResult.errors lists actionable
+    messages — naming the offending source file and offering two fixes
+    (adjust the override weights, or use a full replacement of all 10).
+
+    Per ADR-002 / ADR-006, this is the single validator that downstream
+    review skills consult before initiating a review.
+    """
+    weights = effective.get("weights") or {}
+    total = _sum_weights(weights)
+
+    if abs(total - 100) <= _WEIGHTS_SUM_TOLERANCE:
+        return ValidationResult(ok=True, errors=[])
+
+    # Sum violation — build an actionable error message.
+    errors: list[str] = []
+    nearest = _nearest_chain_label(source_chain)
+    if nearest:
+        errors.append(
+            f"Effective weights from {nearest} sum to {total:g}; must sum to 100."
+        )
+    else:
+        errors.append(
+            f"Effective weights sum to {total:g}; must sum to 100."
+        )
+    errors.append(
+        "Fix: either adjust the override weights so the merged total is 100, "
+        "or replace all 10 weights in the override (full replacement)."
+    )
+    return ValidationResult(ok=False, errors=errors)
 
 
 def _format_chain_path(path: Path, base: Path | None) -> str:
@@ -341,6 +418,41 @@ def cmd_show_path(target: Path, base: Path) -> int:
     return 0
 
 
+def cmd_validate_path(target: Path, base: Path) -> int:
+    """Resolve walk-up chain from target, deep-merge, validate effective config.
+
+    On success: prints a confirmation that the merged config is valid.
+    On failure: prints actionable error(s) to stderr and exits non-zero.
+    Critical: on failure, the JSON sentinel block MUST NOT appear on stdout
+    so downstream review skills cannot consume an invalid config.
+    """
+    chain = walk_up_chain(target, stop=base)
+    raw_configs: list[dict] = []
+    for entry in chain:
+        try:
+            cfg = _read_config(entry)
+        except json.JSONDecodeError as exc:
+            print(f"Error: invalid JSON in {entry}: {exc}", file=sys.stderr)
+            return 1
+        if cfg is not None:
+            raw_configs.append(cfg)
+
+    merged = deep_merge_chain(raw_configs)
+    effective = build_effective_config(merged)
+    result = validate_effective(effective, source_chain=chain)
+
+    if result.ok:
+        if chain:
+            print(f"Valid: merged config from {chain[0]}")
+        else:
+            print("Valid: built-in defaults (no fitness-config.json found)")
+        return 0
+
+    for line in result.errors:
+        print(line, file=sys.stderr)
+    return 1
+
+
 # ---------------------------------------------------------------------------
 # Argparse wiring.
 # ---------------------------------------------------------------------------
@@ -364,7 +476,7 @@ def _build_parser() -> argparse.ArgumentParser:
         "--path",
         dest="resolve_path",
         default=None,
-        help="(show only) Resolve walk-up chain starting from this target path",
+        help="(show/validate) Resolve walk-up chain starting from this target path",
     )
     return parser
 
@@ -373,7 +485,7 @@ def main() -> int:
     parser = _build_parser()
     args = parser.parse_args()
 
-    if args.command == "show" and args.resolve_path is not None:
+    if args.resolve_path is not None and args.command in ("show", "validate"):
         if args.path is not None:
             print(
                 "Error: positional path and --path are mutually exclusive",
@@ -381,7 +493,9 @@ def main() -> int:
             )
             return 2
         target = Path(args.resolve_path)
-        return cmd_show_path(target, base=Path.cwd())
+        if args.command == "show":
+            return cmd_show_path(target, base=Path.cwd())
+        return cmd_validate_path(target, base=Path.cwd())
 
     legacy_path = Path(args.path) if args.path else Path("fitness-config.json")
 

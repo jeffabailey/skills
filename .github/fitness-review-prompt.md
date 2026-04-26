@@ -140,22 +140,23 @@ Status: 8–10 = ✅ Healthy, 5–7 = ⚠️ Needs Attention, 1–4 = ❌ Critic
 Based on guidance from https://jeffbailey.us/categories/fundamentals/
 ```
 
+## Configuration
+
+Always invoke the resolver CLI to read effective weights and thresholds. Never load `fitness-config.json` directly. The CLI walks up from the review target to find module overrides and merges them with the root config per ADR-001 / ADR-002 / ADR-005.
+
+```bash
+python3 scripts/fitness-config.py show --path <target>
+```
+
+For a broad-scope review, pass the repository root as `<target>`. Per ADR-005, only the root config is applied at root scope; the resolver names any discovered subtree overrides as a footnote but does not apply them.
+
+Parse the resolver output to obtain the `Config:` line, the `Effective weights:` line, and the embedded JSON block delimited by `<!-- BEGIN_EFFECTIVE_CONFIG_JSON -->` / `<!-- END_EFFECTIVE_CONFIG_JSON -->`. Include the `Config:` and `Effective weights:` lines within the first 10 lines of the report as the provenance trail.
+
 ## Scoring
 
-Overall score = weighted average:
+Overall score = weighted average across the 10 domains. Read the effective weights from the resolver output (the `Effective weights:` line or the `effective.weights` field of the embedded JSON block). Do NOT hardcode weights here — every weight comes from the resolver so a per-directory override changes scoring without editing this prompt (ADR-002 / FR-7).
 
-- Architecture: 14%
-- Security: 14%
-- Reliability: 10%
-- Testing: 10%
-- Performance: 10%
-- Algorithms: 10%
-- Data: 10% (0% if skipped)
-- Accessibility: 8% (0% if skipped)
-- Process: 8%
-- Maintainability: 6%
-
-If a domain is skipped, redistribute its weight proportionally.
+If a domain is skipped (e.g., accessibility on a backend-only repo), redistribute its weight proportionally.
 
 ## Action Item Prioritization
 

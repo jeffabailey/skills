@@ -739,13 +739,81 @@ def cmd_validate_path(target: Path, base: Path) -> int:
 # Argparse wiring.
 # ---------------------------------------------------------------------------
 
+_AUDIT_INLINE_WEIGHTS_PATTERN = r'"weights"\s*:\s*\{'
+_AUDIT_DIRECT_LOAD_PATTERN = r"(json\.load.*fitness-config\.json|open.*fitness-config\.json)"
+
+
+def cmd_audit(repo_root: Path) -> int:
+    """Grep audit step (BR-5 / FR-7 / US-08): refuse inline weight tables and direct config loads in SKILL.md.
+
+    Walks every SKILL.md under <repo_root>/src/ plus the canonical prompt at
+    <repo_root>/.github/fitness-review-prompt.md and fails closed if any of
+    them either:
+      - declares an inline `"weights": { ... }` JSON literal (ADR-002 / FR-7
+        forbids hardcoded weights in skill prose), or
+      - reads `fitness-config.json` directly via `json.load(...)` or `open(...)`
+        instead of calling the resolver CLI (US-08 / AC-08.4).
+
+    Designed to be invoked from CI:
+
+        python3 scripts/fitness-config.py audit
+
+    Exit 0 means clean. Exit 1 means at least one violation; the script names
+    every offender so reviewers can locate the regression.
+    """
+    import re
+
+    inline = re.compile(_AUDIT_INLINE_WEIGHTS_PATTERN)
+    direct_load = re.compile(_AUDIT_DIRECT_LOAD_PATTERN)
+
+    candidates: list[Path] = []
+    src_dir = repo_root / "src"
+    if src_dir.is_dir():
+        for skill in sorted(src_dir.glob("review-*/SKILL.md")):
+            candidates.append(skill)
+    prompt = repo_root / ".github" / "fitness-review-prompt.md"
+    if prompt.is_file():
+        candidates.append(prompt)
+
+    inline_hits: list[tuple[Path, int, str]] = []
+    direct_hits: list[tuple[Path, int, str]] = []
+    for path in candidates:
+        try:
+            text = path.read_text(encoding="utf-8")
+        except (UnicodeDecodeError, OSError):
+            continue
+        for lineno, line in enumerate(text.splitlines(), start=1):
+            if inline.search(line):
+                inline_hits.append((path, lineno, line.strip()))
+            if direct_load.search(line):
+                direct_hits.append((path, lineno, line.strip()))
+
+    if not inline_hits and not direct_hits:
+        print(f"Audit clean: scanned {len(candidates)} SKILL.md / prompt files; no inline weight tables, no direct config loads.")
+        return 0
+
+    if inline_hits:
+        print("Inline weight tables found (forbidden by ADR-002 / FR-7):", file=sys.stderr)
+        for path, lineno, line in inline_hits:
+            print(f"  {path}:{lineno}: {line}", file=sys.stderr)
+        print("  Fix: replace the inline table with a CLI invocation: python3 scripts/fitness-config.py show --path <target>", file=sys.stderr)
+
+    if direct_hits:
+        print("Direct fitness-config.json loads found (forbidden by US-08 / AC-08.4):", file=sys.stderr)
+        for path, lineno, line in direct_hits:
+            print(f"  {path}:{lineno}: {line}", file=sys.stderr)
+        print("  Fix: invoke the resolver CLI instead of reading the file directly.", file=sys.stderr)
+
+    return 1
+
+
 def _build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description="Manage fitness-config.json for project fitness review skills."
     )
     parser.add_argument(
         "command",
-        choices=["validate", "init", "show"],
+        choices=["validate", "init", "show", "audit"],
         help="Command to run",
     )
     parser.add_argument(
@@ -766,6 +834,18 @@ def _build_parser() -> argparse.ArgumentParser:
 def main() -> int:
     parser = _build_parser()
     args = parser.parse_args()
+
+    # `audit` is a special-case CI gate: it scans the repo for inline weight
+    # tables and direct fitness-config.json loads in SKILL.md prose. It does
+    # not accept --path or a positional config path; the scan root is cwd.
+    if args.command == "audit":
+        if args.resolve_path is not None or args.path is not None:
+            print(
+                "Error: audit takes no path arguments — it scans cwd",
+                file=sys.stderr,
+            )
+            return 2
+        return cmd_audit(Path.cwd())
 
     if args.resolve_path is not None:
         if args.path is not None:

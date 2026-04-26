@@ -20,7 +20,13 @@ Use the wisdom reference when evaluating code and assigning dimension scores.
 
 ## Configuration
 
-If the project root contains `fitness-config.json` or `.fitness-config.json`, read it and use `security.confidenceThreshold` (default 7) for the minimum confidence to report findings. Otherwise use 7/10.
+Invoke the resolver CLI to obtain the effective `security.confidenceThreshold`. Never load `fitness-config.json` directly.
+
+```bash
+python3 scripts/fitness-config.py show --path <target>
+```
+
+Read `effective.security.confidenceThreshold` from the JSON block delimited by `<!-- BEGIN_EFFECTIVE_CONFIG_JSON -->` / `<!-- END_EFFECTIVE_CONFIG_JSON -->`. The default is 7. Include the `Config:` and `Effective weights:` lines from the resolver within the first 10 lines of the report as the provenance trail (AC-03.1, AC-08.2).
 
 ## Workflow
 

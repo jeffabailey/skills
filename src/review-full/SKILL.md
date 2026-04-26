@@ -9,7 +9,22 @@ Run all review skills in parallel to produce a unified fitness assessment.
 
 ## Configuration
 
-If the project root contains `fitness-config.json` or `.fitness-config.json`, read it and use its `weights` and `statusThresholds` for scoring. Otherwise use the defaults below. See `fitness-config.example.json` in the skills repo for the schema.
+Always invoke the resolver CLI to read effective weights and thresholds. Never load `fitness-config.json` directly. The CLI walks up from the review target to find module overrides and merges them with the root config per ADR-001 / ADR-002 / ADR-005.
+
+```bash
+python3 scripts/fitness-config.py show --path <target>
+```
+
+Where `<target>` is:
+- The repository root for a broad-scope review (per ADR-005, only the root config is honored at root scope; subtree overrides are listed as a footnote but not applied).
+- A specific file or directory when the user has scoped the review to a module.
+
+Parse the resolver output to obtain:
+- The `Config:` line (names the config sources actually applied).
+- The `Effective weights:` line (lists all 10 domains with their effective values).
+- The fenced JSON block delimited by `<!-- BEGIN_EFFECTIVE_CONFIG_JSON -->` and `<!-- END_EFFECTIVE_CONFIG_JSON -->` for programmatic access to weights, status thresholds, security, and scoring.
+
+Include the `Config:` and `Effective weights:` lines in the final report header (within the first 10 lines) as the provenance trail. If the report is at root scope and the resolver names subtree overrides discovered but not applied, restate them as a footnote so reviewers know overrides exist for narrower scopes.
 
 ## Workflow
 
@@ -104,19 +119,9 @@ Based on guidance from [Fundamentals](https://jeffbailey.us/categories/fundament
 
 ### Scoring
 
-Overall score = weighted average:
-- Architecture: 14%
-- Security: 14%
-- Reliability: 10%
-- Testing: 10%
-- Performance: 10%
-- Algorithms: 10%
-- Data: 10% (0% if skipped)
-- Accessibility: 8% (0% if skipped)
-- Process: 8%
-- Maintainability: 6%
+Overall score = weighted average across the 10 domains. Read the effective weights from the `Effective weights:` line of the resolver output (or the `effective.weights` field of the embedded JSON sentinel block). Do NOT hardcode weights in this skill — every weight comes from the resolver so a per-directory override changes scoring without editing this file (ADR-002 / FR-7).
 
-If a domain is skipped, redistribute its weight proportionally across the remaining domains.
+If a domain is skipped (e.g., accessibility on a backend-only repo), redistribute its weight proportionally across the remaining domains.
 
 ## Action Item Prioritization
 

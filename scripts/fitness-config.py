@@ -162,6 +162,21 @@ def build_effective_config(merged: dict) -> dict:
     }
 
 
+def build_seed_config(raw_configs: list[dict]) -> dict:
+    """Build a fully-populated seed config dict for `init --path` to write.
+
+    When `raw_configs` is non-empty (i.e., a root or ancestor chain was found),
+    the seed reflects the effective merged config so the new override starts
+    out byte-equivalent to what was already applied at that scope. When the
+    chain is empty, the seed is the documented built-in defaults so the file
+    is valid on first author.
+
+    Pure: returns a new dict; does not mutate inputs and does no I/O.
+    """
+    merged = deep_merge_chain(raw_configs)
+    return build_effective_config(merged)
+
+
 @dataclass(frozen=True)
 class ValidationResult:
     """Immutable algebraic result of validating an effective config.
@@ -397,6 +412,54 @@ def cmd_init(path: Path) -> int:
     return 0
 
 
+def cmd_init_path(target: Path, base: Path) -> int:
+    """Seed a per-directory override at <target>/fitness-config.json.
+
+    Resolution rule: walk up from <target>'s PARENT (so we don't read the
+    file we're about to create) to <base>, collect any fitness-config.json
+    files into a chain (nearest-first), and seed the new override from the
+    deep-merged effective config. When no ancestor config is found, fall
+    back to documented DEFAULT_WEIGHTS and note that on stdout so Devin
+    knows the seed source.
+
+    Refuses to overwrite an existing file (exit 1, names the file). The
+    file-write boundary stays here; the seed builder above is pure.
+    """
+    out_path = target / CONFIG_FILENAME
+
+    if out_path.exists():
+        print(f"Error: {out_path} already exists", file=sys.stderr)
+        return 1
+
+    # Walk up from the parent of target so we never include the file we're
+    # about to create. Use base (cwd) as the stop boundary like show/validate.
+    target_resolved = target.resolve(strict=False)
+    parent = target_resolved.parent
+    chain = walk_up_chain(parent, stop=base)
+    raw_configs: list[dict] = []
+    for entry in chain:
+        try:
+            cfg = _read_config(entry)
+        except json.JSONDecodeError as exc:
+            print(f"Error: invalid JSON in {entry}: {exc}", file=sys.stderr)
+            return 1
+        if cfg is not None:
+            raw_configs.append(cfg)
+
+    seed = build_seed_config(raw_configs)
+
+    target.mkdir(parents=True, exist_ok=True)
+    with out_path.open("w", encoding="utf-8") as f:
+        json.dump(seed, f, indent=2)
+
+    if not raw_configs:
+        print(
+            "No root fitness-config.json found; seeded with documented default weights."
+        )
+    print("Created:", out_path)
+    return 0
+
+
 def cmd_show(path: Path) -> int:
     """Print effective config (legacy single-file mode)."""
     data = load(path) or {}
@@ -505,11 +568,7 @@ def main() -> int:
         if args.command == "validate":
             return cmd_validate_path(target, base=Path.cwd())
         if args.command == "init":
-            # Seed an override file at <target>/fitness-config.json.
-            # Milestone 6 will extend this to copy from the resolved root effective
-            # config; for now, init --path delegates to the legacy seed path so
-            # the flag is wired without changing seed semantics.
-            return cmd_init(target / CONFIG_FILENAME)
+            return cmd_init_path(target, base=Path.cwd())
         return 1
 
     legacy_path = Path(args.path) if args.path else Path(CONFIG_FILENAME)

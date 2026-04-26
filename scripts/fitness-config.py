@@ -200,9 +200,9 @@ def render_show_output(
         lines.append("  config sources (in precedence order):")
         lines.append(f"    1. {chain_strs[0]}  (root)")
     else:
-        lines.append(f"Config: {chain_strs[0]} (merged with root)")
+        lines.append(f"Config: {chain_strs[0]} (merged with root, found by walking up from input path)")
         lines.append("")
-        lines.append("  config sources (in precedence order):")
+        lines.append("  config sources (in precedence order, found by walking up the ancestor chain):")
         lines.append(f"    1. {chain_strs[0]}  (override)")
         for idx, entry in enumerate(chain_strs[1:-1], start=2):
             lines.append(f"    {idx}. {entry}  (intermediate)")

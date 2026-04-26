@@ -1,0 +1,73 @@
+"""Pure-function unit tests for the resolver: walk_up_chain.
+
+The resolver walks up from a target path looking for fitness-config.json
+in each ancestor directory. It returns the chain in precedence order:
+nearest-to-target first (highest precedence), repo-root last (lowest).
+
+walk_up_chain is pure: takes a starting Path and a stop boundary Path,
+returns a list[Path]. No filesystem mutation; pure read-only inspection.
+"""
+
+from __future__ import annotations
+
+import importlib.util
+import sys
+from pathlib import Path
+
+import pytest
+
+# Load fitness-config.py as a module despite its hyphenated filename.
+SCRIPT = Path(__file__).resolve().parents[3] / "scripts" / "fitness-config.py"
+_spec = importlib.util.spec_from_file_location("fitness_config", SCRIPT)
+fitness_config = importlib.util.module_from_spec(_spec)
+sys.modules["fitness_config"] = fitness_config
+_spec.loader.exec_module(fitness_config)
+
+
+def test_walk_up_chain_returns_module_then_root_when_both_exist(tmp_path: Path):
+    # Given: root config + module override + target inside the module
+    (tmp_path / "fitness-config.json").write_text("{}")
+    module_dir = tmp_path / "infrastructure" / "modules" / "postgresql"
+    module_dir.mkdir(parents=True)
+    (module_dir / "fitness-config.json").write_text("{}")
+    target = module_dir / "main.tf"
+    target.touch()
+
+    chain = fitness_config.walk_up_chain(target, stop=tmp_path)
+
+    assert len(chain) == 2
+    assert chain[0] == module_dir / "fitness-config.json"
+    assert chain[1] == tmp_path / "fitness-config.json"
+
+
+def test_walk_up_chain_returns_only_root_when_no_module_override(tmp_path: Path):
+    (tmp_path / "fitness-config.json").write_text("{}")
+    deep = tmp_path / "a" / "b" / "c"
+    deep.mkdir(parents=True)
+    target = deep / "leaf.txt"
+    target.touch()
+
+    chain = fitness_config.walk_up_chain(target, stop=tmp_path)
+
+    assert chain == [tmp_path / "fitness-config.json"]
+
+
+def test_walk_up_chain_returns_empty_when_no_config_anywhere(tmp_path: Path):
+    deep = tmp_path / "a" / "b"
+    deep.mkdir(parents=True)
+    target = deep / "leaf.txt"
+    target.touch()
+
+    chain = fitness_config.walk_up_chain(target, stop=tmp_path)
+
+    assert chain == []
+
+
+def test_walk_up_chain_accepts_directory_target(tmp_path: Path):
+    (tmp_path / "fitness-config.json").write_text("{}")
+    sub = tmp_path / "sub"
+    sub.mkdir()
+
+    chain = fitness_config.walk_up_chain(sub, stop=tmp_path)
+
+    assert chain == [tmp_path / "fitness-config.json"]

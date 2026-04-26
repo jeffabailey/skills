@@ -360,12 +360,19 @@ def merge_defaults(data: dict) -> dict:
 # ---------------------------------------------------------------------------
 
 def cmd_validate(path: Path) -> int:
-    """Validate config file."""
+    """Validate config file.
+
+    On failure, names the offending file in the error message so downstream
+    consumers (CI, milestone-5 backward-compat) can identify the source. The
+    successful "Valid: <path>" line is preserved verbatim from the legacy
+    behavior to keep bare invocations byte-identical (NFR-3).
+    """
     data = load(path)
     if data is None:
         print(f"Error: {path} not found or invalid JSON", file=sys.stderr)
         return 1
     if not validate_config(data):
+        print(f"Error: invalid config: {path}", file=sys.stderr)
         return 1
     print("Valid:", path)
     return 0
@@ -476,7 +483,7 @@ def _build_parser() -> argparse.ArgumentParser:
         "--path",
         dest="resolve_path",
         default=None,
-        help="(show/validate) Resolve walk-up chain starting from this target path",
+        help="(show/validate/init) Resolve walk-up chain or seed override starting from this target path",
     )
     return parser
 
@@ -485,7 +492,7 @@ def main() -> int:
     parser = _build_parser()
     args = parser.parse_args()
 
-    if args.resolve_path is not None and args.command in ("show", "validate"):
+    if args.resolve_path is not None:
         if args.path is not None:
             print(
                 "Error: positional path and --path are mutually exclusive",
@@ -495,9 +502,17 @@ def main() -> int:
         target = Path(args.resolve_path)
         if args.command == "show":
             return cmd_show_path(target, base=Path.cwd())
-        return cmd_validate_path(target, base=Path.cwd())
+        if args.command == "validate":
+            return cmd_validate_path(target, base=Path.cwd())
+        if args.command == "init":
+            # Seed an override file at <target>/fitness-config.json.
+            # Milestone 6 will extend this to copy from the resolved root effective
+            # config; for now, init --path delegates to the legacy seed path so
+            # the flag is wired without changing seed semantics.
+            return cmd_init(target / CONFIG_FILENAME)
+        return 1
 
-    legacy_path = Path(args.path) if args.path else Path("fitness-config.json")
+    legacy_path = Path(args.path) if args.path else Path(CONFIG_FILENAME)
 
     if args.command == "validate":
         return cmd_validate(legacy_path)

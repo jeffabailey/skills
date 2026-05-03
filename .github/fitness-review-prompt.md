@@ -148,7 +148,7 @@ Always invoke the resolver CLI to read effective weights and thresholds. Never l
 python3 scripts/fitness-config.py show --path <target>
 ```
 
-For a broad-scope review, pass the repository root as `<target>`. Per ADR-005, only the root config is applied at root scope; the resolver names any discovered subtree overrides as a footnote but does not apply them.
+For a broad-scope review, pass the repository root as `<target>`. Per ADR-005, only the root config is applied at root scope; do not expect this root-scope output to enumerate descendant subtree overrides.
 
 Parse the resolver output to obtain the `Config:` line, the `Effective weights:` line, and the embedded JSON block delimited by `<!-- BEGIN_EFFECTIVE_CONFIG_JSON -->` / `<!-- END_EFFECTIVE_CONFIG_JSON -->`. Include the `Config:` and `Effective weights:` lines within the first 10 lines of the report as the provenance trail.
 

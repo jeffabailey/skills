@@ -19,7 +19,7 @@ from pathlib import Path
 
 import pytest
 
-from unit.fitness_config._loader import fitness_config
+from ._loader import fitness_config
 
 
 # ---------------------------------------------------------------------------

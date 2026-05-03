@@ -155,6 +155,30 @@ else
   fail "check_workflow_timestamp_api referenced without .yml.md source" "$offenders"
 fi
 
+# Regression guard: gh-aw v0.62.0 moved PROMPTS_DEST and SAFEOUTPUTS_DEST from
+# /opt/gh-aw/{prompts,safeoutputs} to ${RUNNER_TEMP}/gh-aw/{prompts,safeoutputs}.
+# The hand-frozen YAML hardcodes the old /opt/gh-aw/* paths, so any gh-aw bump
+# past v0.58.1 breaks `cat /opt/gh-aw/prompts/xpia.md` etc. — see run 25287248940.
+# Pin gh-aw to v0.58.1 until the workflow is regenerated via `gh aw compile`.
+GH_AW_PINNED_SHA="fa061e89469ef007881d22d3af5a8c9e62363a0d"
+GH_AW_PINNED_VERSION="v0.58.1"
+unpinned=$(grep -E "github/gh-aw/actions/setup@" .github/workflows/*.yml \
+           | grep -v "$GH_AW_PINNED_SHA" || true)
+if [ -z "$unpinned" ]; then
+  pass "gh-aw pinned to $GH_AW_PINNED_VERSION (last YAML-compatible version)"
+else
+  fail "gh-aw not pinned to $GH_AW_PINNED_VERSION" "$unpinned"
+fi
+
+# Regression guard: dependabot must ignore github-actions bumps until the
+# workflow YAML is regenerated. Without this, the next bump silently
+# reintroduces path drift.
+if grep -q 'dependency-name: "\*"' .github/dependabot.yml; then
+  pass "dependabot ignores all github-actions bumps"
+else
+  fail "dependabot.yml missing 'dependency-name: \"*\"' ignore rule"
+fi
+
 # ---- act parsing (skipped if act is not installed) ----
 echo "--- act workflow parsing ---"
 if command -v act &>/dev/null; then

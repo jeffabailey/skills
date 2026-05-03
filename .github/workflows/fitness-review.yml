@@ -39,7 +39,7 @@ jobs:
       comment_repo: ""
     steps:
       - name: Setup Scripts
-        uses: github/gh-aw/actions/setup@ce1794953e0ec42adc41b6fca05e02ab49ee21c3 # v0.68.3
+        uses: github/gh-aw/actions/setup@fa061e89469ef007881d22d3af5a8c9e62363a0d # v0.58.1
         with:
           destination: /opt/gh-aw/actions
       - name: Validate context variables
@@ -250,7 +250,7 @@ jobs:
       secret_verification_result: ${{ steps.validate-secret.outputs.verification_result }}
     steps:
       - name: Setup Scripts
-        uses: github/gh-aw/actions/setup@ce1794953e0ec42adc41b6fca05e02ab49ee21c3 # v0.68.3
+        uses: github/gh-aw/actions/setup@fa061e89469ef007881d22d3af5a8c9e62363a0d # v0.58.1
         with:
           destination: /opt/gh-aw/actions
       - name: Checkout repository
@@ -887,7 +887,7 @@ jobs:
       total_count: ${{ steps.missing_tool.outputs.total_count }}
     steps:
       - name: Setup Scripts
-        uses: github/gh-aw/actions/setup@ce1794953e0ec42adc41b6fca05e02ab49ee21c3 # v0.68.3
+        uses: github/gh-aw/actions/setup@fa061e89469ef007881d22d3af5a8c9e62363a0d # v0.58.1
         with:
           destination: /opt/gh-aw/actions
       - name: Download agent output artifact
@@ -977,7 +977,7 @@ jobs:
       success: ${{ steps.parse_results.outputs.success }}
     steps:
       - name: Setup Scripts
-        uses: github/gh-aw/actions/setup@ce1794953e0ec42adc41b6fca05e02ab49ee21c3 # v0.68.3
+        uses: github/gh-aw/actions/setup@fa061e89469ef007881d22d3af5a8c9e62363a0d # v0.58.1
         with:
           destination: /opt/gh-aw/actions
       - name: Checkout repository
@@ -1106,7 +1106,7 @@ jobs:
       process_safe_outputs_temporary_id_map: ${{ steps.process_safe_outputs.outputs.temporary_id_map }}
     steps:
       - name: Setup Scripts
-        uses: github/gh-aw/actions/setup@ce1794953e0ec42adc41b6fca05e02ab49ee21c3 # v0.68.3
+        uses: github/gh-aw/actions/setup@fa061e89469ef007881d22d3af5a8c9e62363a0d # v0.58.1
         with:
           destination: /opt/gh-aw/actions
       - name: Download agent output artifact

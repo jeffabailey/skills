@@ -143,6 +143,18 @@ else
   fail "agent_type dropdown still present"
 fi
 
+# Regression guard: commit 01dc4cf abandoned the gh-aw compile/lock-file model
+# (deleted .yml.md sources, renamed .lock.yml -> .yml). The lock-file staleness
+# check_workflow_timestamp_api requires a sibling .yml.md source and crashes
+# with ERR_CONFIG when none exists — see GH Actions run 25275707144. Any
+# workflow that reintroduces this check without restoring the .md source breaks CI.
+if ! grep -rq "check_workflow_timestamp_api" .github/workflows/; then
+  pass "No orphaned gh-aw lock-file staleness check"
+else
+  offenders=$(grep -lr "check_workflow_timestamp_api" .github/workflows/ | tr '\n' ' ')
+  fail "check_workflow_timestamp_api referenced without .yml.md source" "$offenders"
+fi
+
 # ---- act parsing (skipped if act is not installed) ----
 echo "--- act workflow parsing ---"
 if command -v act &>/dev/null; then

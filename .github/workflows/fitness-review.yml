@@ -58,16 +58,6 @@ jobs:
             .agents
           fetch-depth: 1
           persist-credentials: false
-      - name: Check workflow file timestamps
-        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
-        env:
-          GH_AW_WORKFLOW_FILE: "fitness-review.yml"
-        with:
-          script: |
-            const { setupGlobals } = require('/opt/gh-aw/actions/setup_globals.cjs');
-            setupGlobals(core, github, context, exec, io);
-            const { main } = require('/opt/gh-aw/actions/check_workflow_timestamp_api.cjs');
-            await main();
       - name: Create prompt with built-in context
         env:
           GH_AW_PROMPT: /tmp/gh-aw/aw-prompts/prompt.txt

@@ -16,7 +16,7 @@ python3 scripts/fitness-config.py show --path <target>
 ```
 
 Where `<target>` is:
-- The repository root for a broad-scope review (per ADR-005, only the root config is honored at root scope; subtree overrides are listed as a footnote but not applied).
+- The repository root for a broad-scope review (per ADR-005, only the root config is applied at root scope; the root-scope output does not enumerate descendant subtree overrides).
 - A specific file or directory when the user has scoped the review to a module.
 
 Parse the resolver output to obtain:
@@ -24,7 +24,7 @@ Parse the resolver output to obtain:
 - The `Effective weights:` line (lists all 10 domains with their effective values).
 - The fenced JSON block delimited by `<!-- BEGIN_EFFECTIVE_CONFIG_JSON -->` and `<!-- END_EFFECTIVE_CONFIG_JSON -->` for programmatic access to weights, status thresholds, security, and scoring.
 
-Include the `Config:` and `Effective weights:` lines in the final report header (within the first 10 lines) as the provenance trail. If the report is at root scope and the resolver names subtree overrides discovered but not applied, restate them as a footnote so reviewers know overrides exist for narrower scopes.
+Include the `Config:` and `Effective weights:` lines in the final report header (within the first 10 lines) as the provenance trail.
 
 ## Workflow
 

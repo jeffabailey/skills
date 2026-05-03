@@ -39,7 +39,7 @@ jobs:
       comment_repo: ""
     steps:
       - name: Setup Scripts
-        uses: github/gh-aw/actions/setup@ce1794953e0ec42adc41b6fca05e02ab49ee21c3 # v0.68.3
+        uses: github/gh-aw/actions/setup@fa061e89469ef007881d22d3af5a8c9e62363a0d # v0.58.1
         with:
           destination: /opt/gh-aw/actions
       - name: Validate context variables
@@ -58,16 +58,6 @@ jobs:
             .agents
           fetch-depth: 1
           persist-credentials: false
-      - name: Check workflow file timestamps
-        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
-        env:
-          GH_AW_WORKFLOW_FILE: "fitness-review.yml"
-        with:
-          script: |
-            const { setupGlobals } = require('/opt/gh-aw/actions/setup_globals.cjs');
-            setupGlobals(core, github, context, exec, io);
-            const { main } = require('/opt/gh-aw/actions/check_workflow_timestamp_api.cjs');
-            await main();
       - name: Create prompt with built-in context
         env:
           GH_AW_PROMPT: /tmp/gh-aw/aw-prompts/prompt.txt
@@ -260,7 +250,7 @@ jobs:
       secret_verification_result: ${{ steps.validate-secret.outputs.verification_result }}
     steps:
       - name: Setup Scripts
-        uses: github/gh-aw/actions/setup@ce1794953e0ec42adc41b6fca05e02ab49ee21c3 # v0.68.3
+        uses: github/gh-aw/actions/setup@fa061e89469ef007881d22d3af5a8c9e62363a0d # v0.58.1
         with:
           destination: /opt/gh-aw/actions
       - name: Checkout repository
@@ -897,7 +887,7 @@ jobs:
       total_count: ${{ steps.missing_tool.outputs.total_count }}
     steps:
       - name: Setup Scripts
-        uses: github/gh-aw/actions/setup@ce1794953e0ec42adc41b6fca05e02ab49ee21c3 # v0.68.3
+        uses: github/gh-aw/actions/setup@fa061e89469ef007881d22d3af5a8c9e62363a0d # v0.58.1
         with:
           destination: /opt/gh-aw/actions
       - name: Download agent output artifact
@@ -987,7 +977,7 @@ jobs:
       success: ${{ steps.parse_results.outputs.success }}
     steps:
       - name: Setup Scripts
-        uses: github/gh-aw/actions/setup@ce1794953e0ec42adc41b6fca05e02ab49ee21c3 # v0.68.3
+        uses: github/gh-aw/actions/setup@fa061e89469ef007881d22d3af5a8c9e62363a0d # v0.58.1
         with:
           destination: /opt/gh-aw/actions
       - name: Checkout repository
@@ -1116,7 +1106,7 @@ jobs:
       process_safe_outputs_temporary_id_map: ${{ steps.process_safe_outputs.outputs.temporary_id_map }}
     steps:
       - name: Setup Scripts
-        uses: github/gh-aw/actions/setup@ce1794953e0ec42adc41b6fca05e02ab49ee21c3 # v0.68.3
+        uses: github/gh-aw/actions/setup@fa061e89469ef007881d22d3af5a8c9e62363a0d # v0.58.1
         with:
           destination: /opt/gh-aw/actions
       - name: Download agent output artifact

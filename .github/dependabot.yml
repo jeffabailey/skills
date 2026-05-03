@@ -4,3 +4,11 @@ updates:
     directory: /
     schedule:
       interval: weekly
+    # All actions are pinned to specific SHA + version. Dependabot version
+    # bumps have repeatedly broken CI by silently changing path assumptions
+    # baked into the hand-frozen workflow YAML — most recently the gh-aw
+    # 0.58.1 -> 0.62.0 bump moved /opt/gh-aw/prompts/ to ${RUNNER_TEMP}/gh-aw/prompts/
+    # (see GH Actions runs 25275707144, 25287248940). Until the workflow is
+    # regenerated via `gh aw compile`, hold all version updates.
+    ignore:
+      - dependency-name: "*"

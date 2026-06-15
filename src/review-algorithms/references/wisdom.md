@@ -1,7 +1,7 @@
 # Domain Knowledge Reference
 
 Auto-generated from blog posts. Do not edit manually.
-Last updated: 2026-04-20
+Last updated: 2026-06-15
 
 ---
 
@@ -741,6 +741,7 @@ Use this section when you already know the family and want the specific entry.
 * **Stack and queue patterns.**
     * [Monotonic Stack and Queue](#monotonic-stack-and-queue).
     * [Expression Evaluation, Stacks and Queues](#expression-evaluation-stacks-and-queues).
+    * [Circular Buffer (Ring Buffer)](#circular-buffer-ring-buffer).
 * **Interval and sorting patterns.**
     * [Merge Intervals](#merge-intervals).
     * [Overlapping Intervals](#overlapping-intervals).
@@ -833,6 +834,8 @@ def two_pointers(arr, target):
 
 **When to use:** Problems involving cycles, middle elements, or linked list operations.
 
+**Also known as:** Floyd's cycle detection algorithm, tortoise and hare.
+
 **Contract:** A linked list or pointer chain, return cycle existence, cycle entry, or a position like the middle.
 
 **Typical complexity:** \(O(n)\) time, \(O(1)\) extra space.
@@ -877,6 +880,8 @@ def has_cycle(head):
 ### Sliding Window
 
 **When to use:** Problems involving subarrays, substrings, or contiguous sequences with constraints.
+
+**Also known as:** caterpillar method, window-sliding technique.
 
 **Contract:** A sequence plus a window constraint, return a best window metric (max, min, count) or a window itself.
 
@@ -933,6 +938,8 @@ def sliding_window(arr, k):
 
 **When to use:** Problems requiring frequent range sum queries or cumulative calculations.
 
+**Also known as:** cumulative sum, running sum, prefix scan.
+
 **Contract:** A numeric sequence, return fast range aggregates, or count subarrays that match a condition.
 
 **Decision rules:**
@@ -987,6 +994,8 @@ def range_sum(prefix, i, j):
 
 **When to use:** Problems requiring next/previous greater or smaller elements, or maintaining monotonic order.
 
+**Also known as:** monotone stack, monotonic deque.
+
 **Contract:** A sequence, return “next greater/smaller” answers, spans, or range extents for each position.
 
 **Typical complexity:** \(O(n)\) time, \(O(n)\) extra space for the stack or deque.
@@ -1030,6 +1039,8 @@ def next_greater_element(nums):
 ### Expression Evaluation, Stacks and Queues
 
 **When to use:** Problems involving parsing, evaluating expressions, or handling nested structures.
+
+**Also known as:** shunting-yard algorithm, Reverse Polish Notation (RPN) evaluation.
 
 **Contract:** A token stream or string expression, return a computed value, a decoded string, or a validity boolean.
 
@@ -1092,6 +1103,80 @@ def evaluate_expression(s):
     return result + sign * num
 ```
 
+### Circular Buffer (Ring Buffer)
+
+**When to use:** Fixed-size buffering of a data stream, or a bounded first-in-first-out (FIFO) queue whose maximum capacity is known up front.
+
+**Also known as:** circular queue, cyclic buffer, ring buffer.
+
+**Contract:** A fixed-capacity buffer plus enqueue and dequeue operations, returning the oldest element on a read, and either rejecting or overwriting the oldest data on a write to a full buffer.
+
+**Typical complexity:** \(O(1)\) time per enqueue and dequeue, \(O(n)\) space for a buffer of capacity \(n\).
+
+**Key characteristics:**
+
+* A single fixed-size buffer reused as if its ends were joined.
+* Read and write indices advance modulo the capacity.
+* FIFO ordering, the oldest element leaves first.
+* A full buffer either rejects new writes or overwrites the oldest data.
+
+**Common problems:**
+
+* Bounded producer-consumer queue (audio, network, or keyboard input buffering).
+* Streaming window that keeps only the most recent N log or telemetry entries.
+* Sliding history for LZ77-style compression.
+* Sensor sample buffer or rate limiter with a fixed memory footprint.
+
+**How to spot it:**
+
+* "Fixed size", "most recent N", or "bounded queue" in the problem.
+* Streaming data where old values can be discarded.
+* Constant-time enqueue and dequeue required, without shifting elements.
+* Producer and consumer run at different speeds.
+
+**Decision rules:**
+
+* **Reject on full:** Return false when a write would overwrite unread data; use this for lossless bounded queues.
+* **Overwrite on full:** Drop the oldest element on a write; use this when the newest data matters most (multimedia, telemetry).
+* **Full versus empty:** Distinguish the two states by leaving one slot unused, or by tracking a separate count.
+
+**Constraints/gotchas:**
+
+* With only read and write indices, a full buffer and an empty buffer look identical unless you reserve one slot or keep a count.
+* Decide overwrite-versus-reject semantics before implementing; they change correctness, not just performance.
+* Expanding a circular buffer forces a memory copy; prefer a linked structure when the size is unbounded.
+
+**Canonical shape:**
+
+```python
+class CircularBuffer:
+    def __init__(self, capacity):
+        # One slot reserved so full and empty are distinguishable.
+        self.buffer = [None] * (capacity + 1)
+        self.read_index = 0
+        self.write_index = 0
+
+    def is_empty(self):
+        return self.read_index == self.write_index
+
+    def is_full(self):
+        return (self.write_index + 1) % len(self.buffer) == self.read_index
+
+    def enqueue(self, item):
+        if self.is_full():
+            return False  # Overwrite variant would advance read_index instead.
+        self.buffer[self.write_index] = item
+        self.write_index = (self.write_index + 1) % len(self.buffer)
+        return True
+
+    def dequeue(self):
+        if self.is_empty():
+            return None
+        item = self.buffer[self.read_index]
+        self.read_index = (self.read_index + 1) % len(self.buffer)
+        return item
+```
+
 ## Interval and Sorting Patterns
 
 ### Merge Intervals
@@ -1146,6 +1231,8 @@ def merge_intervals(intervals):
 ### Overlapping Intervals
 
 **When to use:** Problems requiring detection, counting, or scheduling under overlapping time ranges.
+
+**Also known as:** sweep line algorithm, line sweep.
 
 **Contract:** A list of intervals, return overlap counts, conflict detection, or maximum concurrency.
 
@@ -1306,6 +1393,8 @@ def cyclic_sort(nums):
 ### Binary Search and Variants
 
 **When to use:** Problems with sorted data, search space reduction, or peak finding.
+
+**Also known as:** half-interval search, logarithmic search, bisection method.
 
 **Contract:** A sorted array, or a monotonic predicate over a search space, return an index, a boundary, or an extremal feasible value.
 
@@ -1620,6 +1709,8 @@ See [Fundamentals of Algorithms](https://jeffbailey.us/blog/2025/12/04/fundament
 
 **When to use:** Problems involving dependencies, ordering, or prerequisite relationships in a **DAG** (directed acyclic graph).
 
+**Also known as:** topological ordering, topsort.
+
 **Contract:** A directed acyclic graph (DAG), return a valid ordering of nodes that respects edges.
 
 **Typical complexity:** \(O(V + E)\) time, \(O(V + E)\) space for the graph and indegree.
@@ -1684,6 +1775,8 @@ def topo_sort(nodes, edges):
 ### Binary Tree Traversals, Preorder, Inorder, Postorder, Level Order
 
 **When to use:** Problems requiring tree node processing in specific orders, or when an order constraint is part of correctness.
+
+**Also known as:** depth-first traversals (preorder, inorder, postorder) and breadth-first traversal (level-order).
 
 **Contract:** A binary tree, return values in an order, or compute an aggregate while visiting nodes.
 
@@ -1784,6 +1877,8 @@ def has_root_to_leaf_sum(root, target):
 
 **When to use:** Problems involving connectivity, grouping, or cycle detection in undirected graphs.
 
+**Also known as:** disjoint-set union (DSU), merge-find set.
+
 **Contract:** A set of elements with union operations and connectivity queries, return component membership or connectivity.
 
 **Typical complexity:** Amortized near-constant time per operation with path compression and union by rank, \(O(n)\) space.
@@ -1844,6 +1939,8 @@ class UnionFind:
 ### Shortest Path Pattern Family
 
 **When to use:** Problems requiring finding shortest paths in weighted graphs.
+
+**Also known as:** single-source shortest path (SSSP), all-pairs shortest path (APSP).
 
 **Contract:** A graph or grid plus a source (and sometimes a target), return shortest distances, and sometimes the path.
 
@@ -1915,6 +2012,8 @@ def dijkstra(graph, start):
 
 **When to use:** Problems requiring connecting all nodes with minimum total cost.
 
+**Also known as:** minimum-weight spanning tree (MST).
+
 **Contract:** A weighted graph, return a minimum spanning tree or the minimum total cost to connect all nodes.
 
 **Choose the algorithm:**
@@ -1975,6 +2074,8 @@ def kruskal(n, edges):
 
 **When to use:** Problems involving 2D grids, matrices, or spatial relationships.
 
+**Also known as:** grid traversal, flood fill (for connected-region variants).
+
 **Contract:** A grid plus movement rules, return visited cells, components, or a computed value like shortest steps.
 
 **Typical complexity:** Usually \(O(R \times C)\) time and space, where \(R\) is rows and \(C\) is columns.
@@ -2034,6 +2135,8 @@ def matrix_traversal(matrix):
 
 **When to use:** Problems involving linked list manipulation or transformation.
 
+**Also known as:** sentinel (dummy) node technique.
+
 **Contract:** A linked list, return a modified list, a removed node, or a derived property like palindrome detection.
 
 **Typical complexity:** Often \(O(n)\) time, \(O(1)\) extra space for in-place operations.
@@ -2080,6 +2183,8 @@ def reverse_linked_list(head):
 ### Top K Elements, Heap and QuickSelect
 
 **When to use:** Problems requiring finding k largest, smallest, or most frequent elements.
+
+**Also known as:** partial sort, selection algorithm.
 
 **Contract:** A collection plus k, return the k best items, or one boundary item like the kth largest.
 
@@ -2130,6 +2235,8 @@ def top_k_elements(arr, k):
 ### Kth Largest and Smallest Elements
 
 **When to use:** Problems requiring finding specific ranked element.
+
+**Also known as:** order statistics, selection problem, Hoare's selection algorithm (QuickSelect).
 
 **Contract:** A collection plus a rank k, return the kth smallest, kth largest, or a partition around that boundary.
 
@@ -2186,6 +2293,8 @@ def quickselect(nums, k):
 ### Two Heaps Pattern
 
 **When to use:** Problems requiring maintaining a balanced partition or finding medians dynamically.
+
+**Also known as:** median maintenance, min-max heap pairing.
 
 **Contract:** A stream of numbers, return running medians, or maintain a split between “small half” and “large half”.
 
@@ -2246,6 +2355,8 @@ class MedianFinder:
 
 **When to use:** Problems requiring counting, grouping, or fast lookups.
 
+**Also known as:** hash table, dictionary, frequency map.
+
 **Contract:** Items plus a keying rule, return counts, groups, or fast membership tests.
 
 **Typical complexity:** Usually \(O(n)\) time, \(O(n)\) space, assuming near-constant average hash operations.
@@ -2293,6 +2404,8 @@ def frequency_count(arr):
 ### Trie and Prefix Tree
 
 **When to use:** Problems involving prefix matching, word search, or string autocomplete.
+
+**Also known as:** digital tree, radix tree (compressed form).
 
 **Contract:** A set of strings, support fast prefix queries like “does any word start with prefix p”.
 
@@ -2406,6 +2519,8 @@ class LRUCache:
 ### Bit Manipulation
 
 **When to use:** Problems involving optimization, subset generation, or bit-level operations.
+
+**Also known as:** bitwise operations, bit twiddling, bitmasking.
 
 **Contract:** Integers or bitmasks, return a derived value, a transformed representation, or a generated set of subsets.
 

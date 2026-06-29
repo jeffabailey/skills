@@ -1,7 +1,7 @@
 # Domain Knowledge Reference
 
 Auto-generated from blog posts. Do not edit manually.
-Last updated: 2026-04-20
+Last updated: 2026-06-29
 
 ---
 
@@ -680,7 +680,7 @@ URL: https://jeffbailey.us/blog/2025/11/16/fundamentals-of-monitoring-and-observ
 
 Why do some teams debug production issues in minutes while others spend days guessing what went wrong? The difference is their understanding of monitoring and observability fundamentals.
 
-If you're staring at dashboards full of numbers but still can't figure out why your system is slow, this article explains how metrics, logs, and traces work together to help you understand what's happening in your systems.
+If you're staring at dashboards full of numbers but still can't figure out why your system is slow, this article explains how metrics, logs, and traces work together to help you understand what's happening in your system.
 
 **Monitoring** involves collecting and analyzing data about system behavior to detect issues and track performance. **Observability** enables understanding a system's internal state through its outputs. Monitoring indicates problems; observability reveals why.
 
@@ -694,7 +694,7 @@ The software industry relies on monitoring and observability to understand syste
 * **Proactive problem detection** - Monitoring surfaces issues before users notice them.
 * **Better decisions** - Understanding system behavior aids informed decision-making.
 * **Reduced incident duration** - When problems occur, observability tools help you resolve them faster.
-* **System understanding** - It shows how systems truly behave, not just perceived.
+* **System understanding** - It shows how systems truly behave, not just as they are perceived.
 
 Mastering monitoring and observability fundamentals shifts you from reacting to alerts to understanding systems and preventing problems early.
 
@@ -702,6 +702,8 @@ Mastering monitoring and observability fundamentals shifts you from reacting to 
 
 > Type: **Explanation** (understanding-oriented).  
 > Primary audience: **beginner to intermediate** engineers learning what to monitor and how to design observability systems
+
+> **Updated 2026-06-11:** Added [Wide Events: One Rich Event Per Request](#wide-events-one-rich-event-per-request)—a modern, OpenTelemetry-native way to simplify logging by capturing one richly attributed event per request instead of scattering context across many thin log lines—and threaded the idea through the OpenTelemetry, pitfalls, and future-trends sections. Also deepened the structured-events thread: the first-person view of observability, one event per service hop, and why raw (unaggregated) events are what let you ask new questions.
 
 **Prerequisites:** Basic software development literacy; assumes familiarity with APIs, databases, and application deployment—no monitoring or observability experience needed.
 
@@ -718,10 +720,11 @@ By the end of this article, you will be able to:
 * Identify which telemetry type to use for different debugging scenarios.
 * Recognize common monitoring and observability pitfalls and avoid them.
 * Design observability systems that provide insight without creating noise.
+* Apply the wide-event approach to capture rich, queryable context in one event per request instead of scattered log lines.
 
 ## Section 1: Monitoring Versus Observability
 
-Knowing the difference between monitoring and observability improves system understanding.
+Knowing the difference between monitoring and observability improves understanding of systems.
 
 ### What Is Monitoring?
 
@@ -736,11 +739,11 @@ Think of monitoring like a car dashboard with gauges for speed, fuel, engine tem
 * **Reactive** - Alerts fire when problems occur.
 * **Known unknowns** - You know what might go wrong and monitor for it.
 
-**Example:** You monitor CPU, memory, and errors. When CPU exceeds 80% for five minutes, an alert fires. You find a memory leak causing high CPU usage.
+**Example:** You monitor CPU, memory, and errors. When the CPU exceeds 80% for 5 minutes, an alert is triggered. You find a memory leak causing high CPU usage.
 
 ### What Is Observability?
 
-**Observability** is understanding a system's internal state from its outputs without knowing beforehand, enabling the questions being explored and discovered.
+**Observability** is understanding a system's internal state from its outputs without prior knowledge, enabling the exploration and discovery of questions.
 
 Think of observability like a flight data recorder: when a plane crashes, investigators examine the recorder's data to understand what happened. It works the same way—collect telemetry data and analyze it to understand system behavior, even in the face of unexpected problems.
 
@@ -763,6 +766,8 @@ Monitoring and observability complement each other—monitoring detects known is
 
 **Monitoring and observability together:** You quickly detect problems via monitoring, then use observability to find root causes and resolve them efficiently.
 
+**A matter of perspective:** Monitoring is a third-person view—one system checking another from the outside, with no knowledge of what the code intended. Instrumentation for observability is first-person—the code reporting on itself from the inside as it executes each request. First-person reports map directly to user experience in a way that external checks cannot, which is why observability can explain *why* a specific request behaved the way it did.
+
 **Section Summary:** Monitoring watches known metrics and alerts on thresholds, while observability explores system behavior to understand unknown problems. Use monitoring for detection and observability for understanding; both are vital for production systems.
 
 **Quick Check:**
@@ -772,7 +777,7 @@ Monitoring and observability complement each other—monitoring detects known is
 
 ## Section 2: The Three Pillars of Observability
 
-Observability depends on three telemetry types: metrics, logs, and traces, each offering a unique system view, together forming a complete picture.
+Observability depends on three telemetry types: metrics, logs, and traces, each offering a unique system view that together form a complete picture.
 
 ### Metrics: Quantitative Measurements Over Time
 
@@ -816,7 +821,7 @@ Think of metrics like a weather report. You don't need every raindrop; you need 
 
 Logs are like a ship's logbook, recording key events with details on who, what, when, and conditions, to understand what happened.
 
-**Logs characteristics:**
+** Log characteristics:**
 
 * **Event-focused** - Each log entry represents a specific event.
 * **Context-rich** - Include details about what happened and why.
@@ -842,7 +847,7 @@ Logs are like a ship's logbook, recording key events with details on who, what, 
 * High storage costs for high-volume systems.
 * It can create noise if not structured properly.
 * Hard to see patterns across many events.
-* Require parsing and searching to extract insights.
+* Requires parsing and searching to extract insights.
 
 **Example:** Your error rate is 2%. When searching logs from the last hour, you find database connection timeouts, including details on timed-out queries, parameters, and database instances involved.
 
@@ -850,7 +855,7 @@ Logs are like a ship's logbook, recording key events with details on who, what, 
 
 **Traces** show how requests flow through your system from entry to completion, connecting operations across services, databases, and APIs to illustrate the whole journey.
 
-Think of traces like a package tracking system. When you ship a package, you can see every stop it makes: picked up, sorted, loaded on a truck, and delivered. Traces work the same way; they show every service and operation a request touches, with timing for each step.
+Think of traces as a package-tracking system. When you ship a package, you can see every stop it makes: picked up, sorted, loaded on a truck, and delivered. Traces work the same way; they show every service and operation a request touches, with timing for each step.
 
 **Traces characteristics:**
 
@@ -888,7 +893,7 @@ While metrics, logs, and traces are the three pillars, modern systems add profil
 
 **Profiles** show where code spends time during execution by sampling CPU, memory, or other resources to find performance bottlenecks.
 
-**Profiles characteristics:**
+**Profile characteristics:**
 
 * **Code-level** - Show which functions and lines consume resources.
 * **Sampled** - Collect data periodically to minimize overhead.
@@ -962,13 +967,13 @@ Each telemetry type has strengths that complement each other.
 
 ### Example: Debugging a Production Issue
 
-Metrics, logs, and traces together help debug a core issue.
+Together, metrics, logs, and traces help debug a core issue.
 
 **The problem:** Users report slow page loads, but your dashboard shows all metrics are normal.
 
 **Using metrics:**
 
-You check metrics; P95 latency increased slightly but is within normal variation. Error rates and resource usage are within normal limits. No clear issue, but something feels off.
+You check the metrics; P95 latency has increased slightly but remains within normal variation. Error rates and resource usage are within normal limits. No clear issue, but something feels off.
 
 **Using traces:**
 
@@ -976,7 +981,7 @@ You find a pattern in traces: requests with a specific API call are slow, taking
 
 **Using logs:**
 
-You search the logs for external API call timeouts and find that about 10% are due to network issues, not application errors. The logs show the external service is unreliable, not your code.
+You search the logs for external API call timeouts and find that about 10% are due to network issues rather than application errors. The logs show the external service is unreliable, not your code.
 
 **The solution:**
 
@@ -1060,6 +1065,55 @@ USE metrics help monitor resources and identify CPU, memory, disk, or network bo
 
 Structured logs enable queries such as "show errors for user456 in the last hour" or "find payment-service errors over 3 seconds."
 
+### Wide Events: One Rich Event Per Request
+
+**Wide events** capture everything about a single unit of work—usually one request—in one richly attributed event, rather than scattering that context across many thin log lines.
+
+Consider the two ways to record what happened during a request. The **deep** approach emits many small log lines, each carrying one or two fields: request started, user authenticated, cache missed, order placed, response sent. To answer "which restaurants had a cache miss *and* a slow response?" you must correlate—effectively JOIN—across several lines per request. At millions of requests, that correlation is slow or impossible, so teams give up and bolt on a new metric for each new question. The codebase fills with ad-hoc counters, each a pre-aggregated answer to exactly one question someone thought of in advance.
+
+The **wide** approach emits one event at the end of the request. It attaches every attribute that describes it—infrastructure (region, pod, deploy SHA), request (route, status, duration), user (id, plan), business (restaurant, order total), and dependencies (cache hit, query count):
+
+```json
+{
+  "trace_id": "abc-123",
+  "service.name": "order-service",
+  "http.route": "/v1/orders",
+  "http.status_code": 200,
+  "duration_ms": 340,
+  "user.id": "u_123",
+  "user.plan": "premium",
+  "restaurant.id": "r_456",
+  "cache.hit": false,
+  "order.item_count": 3,
+  "order.total": 750,
+  "deploy.sha": "a1b2c3d",
+  "feature_flag.new_cart": true,
+  "db.query_count": 3,
+  "db.total_ms": 120,
+  "region": "ap-south-1"
+}
+```
+
+One event. No JOINs. You can `GROUP BY` any field and filter by any field, so the same data answers questions you never anticipated: "which deploy increased cache misses for premium users in `ap-south-1`?" needs no new instrumentation and no deploy—just a different query. A truly wide event carries dozens to a few hundred attributes; the guiding rule is *default to inclusion*, because the answer you need at 3 am is usually a dimension you didn't think to add.
+
+Wide events are the natural evolution of structured logging. Structured logging makes each line queryable; wide events make the *whole request* queryable as a single row, which is why they pair naturally with distributed tracing—a span is precisely this kind of event (covered in [OpenTelemetry: The Standard](#opentelemetry-the-standard)).
+
+That example shows a single service. In a distributed system, the unit is one wide event per request *per service hop*: a request crossing the edge, an API, and two internal services emits a wide event from each, all carrying the same request or trace ID. Connect those events by that shared ID and a trace becomes a visualization layer over the underlying wide events, not a separate kind of data.
+
+Store these events in raw form, without aggregating them at write time. You can always derive metrics, dashboards, and traces from raw events, but you can never recover the raw detail once it has been aggregated away—aggregation is a one-way trip. Keeping events raw is what preserves the ability to ask a question you never anticipated, which is the entire point of observability.
+
+**When to use wide events:**
+
+* Capturing request-scoped context in services where many dimensions matter (user, business, infra).
+* Answering ad-hoc, high-cardinality questions—by user, tenant, deploy, or feature flag—without pre-planning every dashboard.
+* Reducing reliance on ad-hoc counters and cross-line log correlation.
+
+**Wide events trade-offs:**
+
+* They assume a request-oriented unit of work; batch jobs and streaming pipelines may need a different event boundary.
+* High-cardinality fields (like `user.id`) demand a backend built for them. Columnar analytical stores compress repeated low-cardinality columns heavily, so more queryable data often costs *less* to store—wide events change the *shape* of your data, not necessarily its volume.
+* Because the events stay raw, the cost lever is *sampling* rather than aggregation. Keep the interesting events (errors, slow requests, payments) and shed high-volume, low-signal ones (health checks returning 200), ideally deciding on the client side. See [sampling strategies](#distributed-tracing-patterns).
+
 ### Distributed Tracing Patterns
 
 **Distributed Tracing** needs consistent patterns across services.
@@ -1136,7 +1190,7 @@ Understanding common mistakes helps avoid creating monitoring systems that cause
 * Important events buried in noise.
 * Teams avoid checking logs because they're overwhelming.
 
-**Solution:** Log at appropriate levels using structured logs with consistent fields. Implement sampling for high-volume events and set retention policies. Focus on errors, key business events, and debugging info.
+**Solution:** Log at appropriate levels using structured logs with consistent fields. Implement sampling for high-volume events and set retention policies. Focus on errors, key business events, and debugging info. Often the fix is to log *wider, not less*—consolidate the many thin lines emitted per request into one [wide event](#wide-events-one-rich-event-per-request), which reduces line volume while *increasing* what you can answer.
 
 ### Trace Sampling Too Aggressive
 
@@ -1175,7 +1229,7 @@ Understanding common mistakes helps avoid creating monitoring systems that cause
 * Debugging distributed issues is impossible.
 * No visibility into service dependencies.
 
-**Solution:** Implement trace context propagation across all services using headers like `traceparent` or `X-Trace-Id`. Ensure message queues and RPC calls propagate context and test end-to-end traces.
+**Solution:** Implement trace context propagation across all services using headers like `traceparent` or `X-Trace-Id`. Ensure that message queues and RPC calls propagate context and that tests end-to-end traces.
 
 ### Monitoring Implementation Details
 
@@ -1213,6 +1267,8 @@ Observability data is only valid if it improves decisions. Don't add new metrics
 * You're adding instrumentation "just in case" without a clear use case.
 
 When unsure, link new telemetry signals to a decision, runbook, or alert. Don't collect signals if you can't explain the action on change.
+
+This restraint applies to new *signals*—a fresh metric, a new log stream, a new pipeline—each of which carries real collection, storage, and cognitive cost. It does not contradict the "default to inclusion" guidance for [wide events](#wide-events-one-rich-event-per-request): adding one more *attribute* to an event you already emit is nearly free, because it is the same write and the same row. Be frugal with new signals; be generous with attributes on the events you already produce.
 
 ### Common Misconceptions
 
@@ -1280,6 +1336,8 @@ Instrument at the framework level when possible, as most frameworks offer middle
 * **Collectors** - Services that receive, process, and export telemetry data.
 * **Instrumentation libraries** - Auto-instrumentation for common frameworks.
 
+**A span is a wide event.** This is what makes OpenTelemetry the practical foundation for [wide events](#wide-events-one-rich-event-per-request). An OTEL span carries trace context (trace ID, span ID, parent span ID) *plus* an attributes map—and that attributes map is exactly a wide event. The trace context connects the event across services; the attributes carry the rich, queryable detail. To build wide events well, draw attribute names from two sources: OTEL **semantic conventions** for standard infrastructure attributes (HTTP, database, gRPC, Kubernetes, cloud), and your own organization's convention package for business attributes (order, restaurant, user segment). Consistent naming across services is what lets a single `GROUP BY` work everywhere.
+
 Using OpenTelemetry allows switching observability backends without changing instrumentation code.
 
 ### Data Collection Architecture
@@ -1312,7 +1370,7 @@ Metrics are time-series data. Use specialized databases. Retention policies vary
 
 **Log storage:**
 
-Logs need varied storage: hot for recent days, warm for weeks/months, cold for years. Use compression and indexing to reduce costs.
+Logs need varied storage: hot for recent days, warm for weeks to months, cold for years. Use compression and indexing to reduce costs.
 
 **Trace storage:**
 
@@ -1372,15 +1430,15 @@ Understanding how monitoring and observability work in real scenarios helps you 
 
 **Using metrics:**
 
-You notice the P95 latency for `/api/users/{id}` rose from 200ms to 2 seconds in the last hour, while error rates remain normal, indicating an issue with this endpoint.
+You notice that the P95 latency for `/api/users/{id}` has risen from 200ms to 2 seconds over the last hour, while error rates remain normal, indicating an issue with this endpoint.
 
 **Using traces:**
 
-Traces for slow requests show that the endpoint executes a database query that takes 1.8 seconds, selecting all columns from a large table without proper indexing.
+Traces for slow requests show that the endpoint executes a database query that takes 1.8 seconds to select all columns from a large table without proper indexing.
 
 **Using logs:**
 
-Logs reveal that the SQL query executed for this endpoint does a full table scan, starting after a recent deployment changed the query logic.
+Logs reveal that the SQL query executed for this endpoint performs a full table scan, which began after a recent deployment changed the query logic.
 
 **The solution:**
 
@@ -1420,7 +1478,7 @@ Metrics indicate that each service has low latency on its own, but end-to-end la
 
 **Using logs:**
 
-Logs reveal service call sequences and timing, showing that most time is spent in network calls between services rather than processing.
+Logs reveal service call sequences and timing, showing that most of the time is spent on network calls between services rather than on processing.
 
 **The solution:**
 
@@ -1441,7 +1499,7 @@ How do you know your observability setup works? Use these signals:
 
 **Metrics confirm fixes:**
 
-After changes, metrics confirm the solutions worked: error rates drop, latency improves, and system health is normal. If metrics don't improve, you might have fixed a symptom rather than the root cause.
+After the changes, metrics confirm the solutions worked: error rates dropped, latency improved, and system health returned to normal. If metrics don't improve, you might have fixed a symptom rather than the root cause.
 
 **Traces show improved flow:**
 
@@ -1461,11 +1519,11 @@ Observability practices evolve rapidly. Tools and standards will change, but the
 
 **Standardization:**
 
-OpenTelemetry unifies metrics, logs, traces, and profiles, reducing vendor lock-in and simplifying switching observability backends without modifying code.
+OpenTelemetry unifies metrics, logs, traces, and profiles, reducing vendor lock-in and simplifying switching observability backends without modifying code. With spans modeled as [wide events](#wide-events-one-rich-event-per-request), the once-separate pillars increasingly converge on one richly attributed event you can query by any dimension.
 
 **Cost-aware observability:**
 
-More teams are designing telemetry with cost and value in mind from day one, leading to innovative sampling, retention policies, and selective data collection tailored to specific needs.
+More teams are designing telemetry with cost and value in mind from day one, leading to innovative sampling, retention policies, and selective data collection tailored to specific needs. Columnar analytical stores compress repeated columns so aggressively that rich wide events can cost less than the scattered logs they replace, weakening the old assumption that more queryable detail must mean a larger bill.
 
 **Shift-left observability:**
 
@@ -1475,19 +1533,19 @@ Observability is incorporated earlier in design and development rather than adde
 
 Machine learning identifies patterns in telemetry data that humans might miss. AI surfaces anomalies, identifies root causes, and predicts problems in advance. Still, human judgment is vital for validating AI suggestions and aligning insights with outcomes.
 
-Understanding fundamentals like metrics, logs, traces, and patterns such as RED and USE helps adapt as tools change. Principles stay constant despite technological evolution.
+Understanding fundamentals such as metrics, logs, and traces, and patterns such as RED and USE, helps one adapt as tools change. Principles stay constant despite technological evolution.
 
 **Reflection Prompt:** Which of these trends (standardization, cost-awareness, shift-left, AI-assisted analysis) is most relevant to your team now, and what small change could you make next month to advance it?
 
 ## Conclusion
 
-Monitoring and observability help understand system behavior, debug problems, and make informed decisions. Monitoring detects known issues via metrics and alerts, while observability explores system behavior to identify unknown problems through metrics, logs, and traces.
+Monitoring and observability help in understanding system behavior, debugging problems, and making informed decisions. Monitoring detects known issues via metrics and alerts, while observability explores system behavior to identify unknown problems through metrics, logs, and traces.
 
 Good monitoring and observability systems offer insight without noise. They prioritize outcomes over implementations, enabling quick debugging with rich telemetry data. They foster learning cultures that constantly enhance systems.
 
 Master these fundamentals to build understandable systems, debug quickly, prevent issues early, and trust your systems.
 
-**You should now understand** the difference between monitoring and observability, how metrics, logs, and traces complement each other, common patterns like golden signals and structured logging, pitfalls such as metrics explosion and alert fatigue, and how to implement effective observability systems.
+**You should now understand** the difference between monitoring and observability; how metrics, logs, and traces complement each other; common patterns such as golden signals, structured logging, and wide events; pitfalls such as metrics explosion and alert fatigue; and how to implement effective observability systems.
 
 ### Related Articles
 
@@ -1566,7 +1624,7 @@ Test your understanding of monitoring and observability fundamentals:
 3. **What are the golden signals?**
    <details><summary>Show answer</summary>
 
-   The golden signals are four essential metrics: latency (how long requests take), traffic (how much demand), errors (the failure rate), and saturation (how complete the system is). These four signals provide a full picture of system health.
+The golden signals are four essential metrics: latency (how long requests take), traffic (how much demand there is), errors (the failure rate), and saturation (how complete the system is). These four signals provide a full picture of system health.
 
    </details>
 
@@ -1580,7 +1638,14 @@ Test your understanding of monitoring and observability fundamentals:
 5. **What is OpenTelemetry and why does it matter?**
    <details><summary>Show answer</summary>
 
-   OpenTelemetry is a vendor-neutral standard for observability instrumentation. It provides APIs for metrics, logs, traces, and profiles. Using OpenTelemetry means you can instrument once and use it with any observability backend, avoiding vendor lock-in and enabling flexibility.
+OpenTelemetry is a vendor-neutral standard for observability instrumentation. It provides APIs for metrics, logs, traces, and profiles. Using OpenTelemetry means you can instrument once and use it with any observability backend, avoiding vendor lock-in and enabling flexibility.
+
+   </details>
+
+6. **What is a wide event, and how does it simplify logging?**
+   <details><summary>Show answer</summary>
+
+   A wide event captures everything about one unit of work—usually a request—in a single richly attributed event, instead of scattering that context across many thin log lines. Because all attributes live on one row, you can filter and `GROUP BY` any dimension without correlating across lines or adding new instrumentation. In OpenTelemetry, a span with its attributes map is a wide event, which is why adopting OTEL spans with rich attributes is the practical way to log more, not just more.
 
    </details>
    <!-- markdownlint-enable MD033 -->
@@ -1597,6 +1662,7 @@ Test your understanding of monitoring and observability fundamentals:
 * [Google SRE Book - Monitoring](https://sre.google/sre-book/monitoring-distributed-systems/): Google's approach to monitoring distributed systems, including the four golden signals.
 * [The RED Method](https://grafana.com/blog/2018/08/02/the-red-method-how-to-instrument-your-services/): Rate, Errors, and Duration metrics for microservices monitoring.
 * [The USE Method](http://www.brendangregg.com/usemethod.html): Utilization, Saturation, and Errors method for resource monitoring.
+* [Live Your Best Life With Structured Events](https://charity.wtf/2022/08/15/live-your-best-life-with-structured-events/) by Charity Majors: Why observability needs arbitrarily wide, raw structured events rather than pre-aggregated metrics or unstructured logs.
 
 ### Books
 

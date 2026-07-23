@@ -1,7 +1,7 @@
 # Domain Knowledge Reference
 
 Auto-generated from blog posts. Do not edit manually.
-Last updated: 2026-04-20
+Last updated: 2026-07-20
 
 ---
 
@@ -761,7 +761,7 @@ This article outlines a workflow for projects:
 
 ### TL;DR - API Design Fundamentals in One Pass
 
-If I only remember one workflow, make it this:
+If you only remember one workflow, make it this:
 
 * **Name the promises** so consumers understand what the API guarantees.
 * **Preserve compatibility** so changes do not break existing clients.
@@ -783,7 +783,7 @@ graph TD
 
 ### Learning Outcomes
 
-By the end of this article, I will be able to:
+By the end of this article, you will be able to:
 
 * Explain **why** API contracts reduce integration risk and confusion, and how ambiguity causes rework.
 * Explain **why** representation and semantics must align for reliable APIs and how misalignment leads to integration failures.
@@ -830,12 +830,12 @@ paths:
 
 ### Quick Check: Contracts as Promises
 
-Before moving on, I should test my understanding:
+Before moving on, test your understanding:
 
-* Can I describe the core promises of one API I use weekly?
-* Can I explain how the API behaves when the input is invalid?
+* Can you describe the core promises of one API you use weekly?
+* Can you explain how the API behaves when the input is invalid?
 
-**Answer guidance:** **Ideal result:** I can summarize the endpoint's inputs, outputs, and failure behavior without guessing.
+**Answer guidance:** **Ideal result:** You can summarize the endpoint's inputs, outputs, and failure behavior without guessing.
 
 ## Section 2: Representation and Semantics {#section-2-representation-and-semantics}
 
@@ -870,12 +870,12 @@ The representation is JSON, but the semantics say the amount is in cents and the
 
 ### Quick Check: Representation and Semantics
 
-Before moving on, I should test my understanding:
+Before moving on, test your understanding:
 
-* Can I explain what each field means, not just its type?
-* Can I explain a real business rule that affects the payload?
+* Can you explain what each field means, not just its type?
+* Can you explain a real business rule that affects the payload?
 
-**Answer guidance:** **Ideal result:** I can explain both the shape and the meaning of the data.
+**Answer guidance:** **Ideal result:** You can explain both the shape and the meaning of the data.
 
 ## Section 3: Versioning and Compatibility {#section-3-versioning-and-compatibility}
 
@@ -942,14 +942,14 @@ However, versioning has practical limits. You cannot support every version indef
 
 ### Quick Check: Versioning and Compatibility
 
-Before moving on, I should test my understanding:
+Before moving on, test your understanding:
 
-* Can I tell which changes are backward compatible and which are not?
-* Can I explain how I communicate breaking changes to consumers?
-* Do I have a deprecation policy that defines how long I'll support old versions?
+* Can you tell which changes are backward compatible and which are not?
+* Can you explain how you communicate breaking changes to consumers?
+* Do you have a deprecation policy that defines how long you'll support old versions?
 * What happens when a storage schema refactor makes supporting an old API version impractical?
 
-**Answer guidance:** **Ideal result:** I can classify changes, explain my versioning policy clearly, and have a plan for version lifecycle management including retirement.
+**Answer guidance:** **Ideal result:** You can classify changes, explain your versioning policy clearly, and have a plan for version lifecycle management including retirement.
 
 ## Section 4: Errors and Status Codes {#section-4-errors-and-status-codes}
 
@@ -985,10 +985,10 @@ This response tells the client what failed and where.
 
 ### Quick Check: Errors and Status Codes
 
-Before moving on, I should test my understanding:
+Before moving on, test your understanding:
 
-* Do my errors have a stable structure across endpoints?
-* Do I document which errors are retryable?
+* Do your errors have a stable structure across endpoints?
+* Do you document which errors are retryable?
 
 **Answer guidance:** **Ideal result:** Errors are predictable, structured, and documented with recovery hints.
 
@@ -1023,12 +1023,12 @@ The contract states that the same key should produce the same outcome.
 
 ### Quick Check: Idempotency and Reliability
 
-Before moving on, I should test my understanding:
+Before moving on, test your understanding:
 
-* Can I explain which operations must be idempotent and why?
-* Can I explain how retries interact with timeouts?
+* Can you explain which operations must be idempotent and why?
+* Can you explain how retries interact with timeouts?
 
-**Answer guidance:** **Ideal result:** I can map retries to safe, documented outcomes.
+**Answer guidance:** **Ideal result:** You can map retries to safe, documented outcomes.
 
 ## Section 6: Common API Design Mistakes {#section-6-common-api-design-mistakes}
 
@@ -1087,9 +1087,9 @@ A consistent error model lets clients handle failures uniformly.
 
 ### Quick Check: Common Mistakes
 
-I should test my understanding:
+Test your understanding:
 
-* Do I have a documented policy for breaking changes?
+* Do you have a documented policy for breaking changes?
 * Can every endpoint produce a consistent error shape?
 
 **Answer guidance:** **Ideal result:** The API avoids silent breaking changes and uses one error schema everywhere.
@@ -1155,13 +1155,13 @@ Contracts define promises between provider and consumer, with representation and
 
 **Learning path:**
 
-* Read [Fundamentals of Technical Writing](https://jeffbailey.us/blog/2025/10/12/fundamentals-of-technical-writing/) to improve my API documentation structure.
+* Read [Fundamentals of Technical Writing](https://jeffbailey.us/blog/2025/10/12/fundamentals-of-technical-writing/) to improve your API documentation structure.
 * Explore [Fundamentals of Software Architecture](https://jeffbailey.us/blog/2025/10/19/fundamentals-of-software-architecture/) for broader system boundaries.
 * Study [Fundamentals of Centralized Software Systems](https://jeffbailey.us/blog/2026/01/19/fundamentals-of-centralized-software-systems/) to understand when centralized architectures work well and when API contracts become critical for distributed systems.
 
 **Questions for reflection:**
 
-* Which promises are implicit instead of explicit in my APIs?
+* Which promises are implicit instead of explicit in your APIs?
 
 ### The API Contract Workflow: A Quick Reminder
 
@@ -1181,22 +1181,22 @@ graph TD
 
 ### Final Quick Check
 
-Before I move on, I should see if I can answer these out loud:
+Before you move on, see if you can answer these out loud:
 
-1. What is the most important promise in my main API?
+1. What is the most important promise in your main API?
 2. Which changes are backward compatible?
-3. How does my API represent errors consistently?
+3. How does your API represent errors consistently?
 
-If any answer feels fuzzy, I should revisit the matching section and skim the examples again.
+If any answer feels fuzzy, revisit the matching section and skim the examples again.
 
-### Self-Assessment - Can I Explain These in My Own Words?
+### Self-Assessment - Can You Explain These in Your Own Words?
 
-Before moving on, I should see if I can explain these concepts in my own words:
+Before moving on, see if you can explain these concepts in your own words:
 
 * Contract versus schema.
 * Compatibility and versioning trade-offs.
 
-If I can explain these clearly, I have internalized the fundamentals.
+If you can explain these clearly, you've internalized the fundamentals.
 
 ## Future Trends & Evolving Standards {#future-trends--evolving-standards}
 

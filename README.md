@@ -1,8 +1,11 @@
-# Project Fitness Review Skills
+# Development Skills
 
 [![PR Checks](https://github.com/jeffabailey/skills/actions/workflows/pr-checks.yml/badge.svg)](https://github.com/jeffabailey/skills/actions/workflows/pr-checks.yml) [![Project Fitness Review](https://github.com/jeffabailey/skills/actions/workflows/fitness-review.yml/badge.svg)](https://github.com/jeffabailey/skills/actions/workflows/fitness-review.yml)
 
-Reusable skills for **Cursor**, **Claude Code**, **VS Code (Copilot)**, and **pipelines** (GitHub Agentic Workflows, Claude Code Action) that review software project fitness across architecture, security, reliability, testing, performance, algorithms, data, accessibility, and process. Based on guidance from the [Fundamentals series](https://jeffbailey.us/categories/fundamentals/).
+Reusable skills for **Cursor**, **Claude Code**, **VS Code (Copilot)**, and **pipelines** (GitHub Agentic Workflows, Claude Code Action). The collection covers two areas:
+
+- **Project fitness review** — score a codebase across architecture, security, reliability, testing, performance, algorithms, data, accessibility, and process. Based on guidance from the [Fundamentals series](https://jeffbailey.us/categories/fundamentals/).
+- **General development** — everyday authoring skills (e.g. generating conventional commit messages) that work in any project, adapting to the project's own language and tooling.
 
 **Repository:** [github.com/jeffabailey/skills](https://github.com/jeffabailey/skills)
 
@@ -11,6 +14,14 @@ Reusable skills for **Cursor**, **Claude Code**, **VS Code (Copilot)**, and **pi
 This repository and the article [Fundamental Skills](https://jeffbailey.us/blog/2026/02/21/fundamental-skills) on [jeffbailey.us](https://jeffbailey.us) are cross-linked: the article explains the design, trade-offs, and how the skills fit together; this repository contains the installable skill definitions and checklists.
 
 ## Skills
+
+### General development
+
+| Skill | Purpose | Triggers |
+|-------|---------|----------|
+| `generate-commit` | Generate a conventional commit message from staged changes, review before committing. Detects the project's language/formatter and applies it. | "generate commit", "write a commit message", "commit my changes" |
+
+### Project fitness review
 
 | Skill | Scores | Triggers |
 |-------|--------|----------|
@@ -28,7 +39,7 @@ This repository and the article [Fundamental Skills](https://jeffbailey.us/blog/
 | `review-jit-test-gen` | Generates tests (no scores) | "generate tests", "write tests for changes" |
 | `review-apply` | Applies fitness report findings (no scores) | "apply review", "address review feedback", "fix review issues" |
 
-Each domain skill produces scores (1-10) with file:line evidence and prioritized action items.
+Each review skill produces scores (1-10) with file:line evidence and prioritized action items. General-development skills produce artifacts (commits, tests, edits) rather than scores.
 
 ## Installation
 
@@ -207,13 +218,19 @@ claude -p "Review database schema"
 
 # Should NOT trigger review-data (expect no skill activation)
 claude -p "Check database performance"
+
+# Should trigger generate-commit (expect skill to activate)
+claude -p "Write a commit message for my staged changes"
+
+# Should NOT trigger generate-commit (expect no skill activation)
+claude -p "Explain what this function does"
 ```
 
 A skill passes its trigger tests when it activates for all "should trigger" phrases and does not activate for any "should NOT trigger" phrases.
 
 ### 2. Functional Tests
 
-**Goal:** Verify each skill produces correct, structured output with real evidence.
+**Goal:** Verify each skill produces the correct outcome — structured output with real evidence for review skills, or the correct artifact and side effects for general-development skills.
 
 Test scenarios are in `tests/functional-tests.md` using Given/When/Then format. Each scenario defines the preconditions, the command to run, and what to check in the output.
 
@@ -240,25 +257,35 @@ claude -p "/review:review-full"
 #   - Overall weighted score
 #   - All domain scores in table format
 #   - Top 10 prioritized action items
+
+# Test: generate-commit produces a conventional commit and respects confirmation
+claude -p "/generate-commit"
+# Then check that the skill:
+#   - Detected the project's language/formatter and ran the check-only variant
+#   - Proposed a `type(scope): description` message matching recent git log style
+#   - Waited for explicit confirmation before committing (no commit on abort)
+#   - Left no model attribution (e.g. Co-Authored-By) in the message
 ```
 
-A skill passes its functional tests when the output report matches the expected structure, scores include file:line evidence, and findings are accurate (no false positives).
+For review skills, a functional test passes when the output report matches the expected structure, scores include file:line evidence, and findings are accurate (no false positives). For general-development skills, it passes when the produced artifact (commit, tests, edits) is correct and any required confirmation and side effects behave as specified.
 
 ### 3. Performance Comparison
 
-**Goal:** Confirm the skills improve review quality versus unassisted review.
+**Goal:** Confirm the skill improves on an unassisted prompt for the same task.
 
-Compare results with and without the skill on the same codebase:
+Compare results with and without the skill on the same project:
 
 ```bash
-# Without skill: generic prompt, no structured checklist
-claude -p "Review this project for security issues"
+# Review skill — without vs. with
+claude -p "Review this project for security issues"   # generic prompt, no checklist
+claude -p "/review:review-security"                    # structured workflow + rubric
 
-# With skill: structured workflow, scoring rubric, evidence requirements
-claude -p "/review:review-security"
+# General-development skill — without vs. with
+claude -p "Commit my changes"                          # ad hoc message, no style detection
+claude -p "/generate-commit"                            # detects tooling, enforces convention, confirms
 ```
 
-The skill should produce more findings, fewer false positives, consistent scoring, and file:line evidence that the unassisted review lacks.
+Review skills should produce more findings, fewer false positives, consistent scoring, and file:line evidence that the unassisted run lacks. General-development skills should produce more consistent, convention-following output with the intended safety checks (e.g. style detection and confirmation before committing) that an ad hoc prompt skips.
 
 ## Structure
 
@@ -270,6 +297,8 @@ fitness-config.schema.json    # JSON schema for validation
 scripts/
   fitness-config.py           # validate, init, show (cross-platform)
 src/
+  generate-commit/          # general-development skill (conventional commits)
+    SKILL.md
   review-<domain>/          # one per domain (architecture, security, etc.)
     SKILL.md                # Skill definition (workflow + scoring rubric)
     references/

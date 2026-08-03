@@ -1,68 +1,92 @@
 #!/usr/bin/env bash
-# Install project fitness review skills by symlinking src/* into a destination
-# directory (e.g. ~/.claude/skills or ~/.cursor/skills).
+# Install skills by symlinking src/* into detected AI tool config directories
 #
 # Usage:
-#   install-skills.sh SOURCE_DIR DEST_DIR
-#     Symlink SOURCE_DIR/src/* into DEST_DIR. Use when the repo is already
-#     present (e.g. after checkout in CI or existing clone).
+#   install-skills.sh
+#     Auto-detect installed tools and symlink skills to each
 #
-#   install-skills.sh --clone CLONE_PATH DEST_DIR [REPO_URL]
-#     If CLONE_PATH exists, remove it (so clone works when the repo was moved).
-#     Clone REPO_URL into CLONE_PATH, then symlink CLONE_PATH/src/* into DEST_DIR.
-#     Default REPO_URL: https://github.com/jeffabailey/skills.git
+#   install-skills.sh SOURCE_DIR
+#     Use SOURCE_DIR instead of script's parent directory
 #
 set -euo pipefail
 
-REPO_URL_DEFAULT="https://github.com/jeffabailey/skills.git"
-
-usage() {
-  echo "Usage: $0 SOURCE_DIR DEST_DIR" >&2
-  echo "   or: $0 --clone CLONE_PATH DEST_DIR [REPO_URL]" >&2
-  echo "" >&2
-  echo "  SOURCE_DIR   Repo root containing src/ (e.g. \$GITHUB_WORKSPACE or ~/Projects/skills)" >&2
-  echo "  DEST_DIR     Where to create symlinks (e.g. ~/.claude/skills or ~/.cursor/skills)" >&2
-  echo "  CLONE_PATH   Directory to clone into; removed first if it exists" >&2
-  echo "  REPO_URL     Git URL (default: $REPO_URL_DEFAULT)" >&2
-  exit 1
+detect_tool_configs() {
+  local configs=()
+  
+  # Claude.app desktop
+  [[ -d ~/.config/Claude ]] && configs+=("$HOME/.config/Claude/skills")
+  
+  # Cursor.app
+  [[ -d ~/.config/Cursor ]] && configs+=("$HOME/.config/Cursor/skills")
+  
+  # opencode
+  [[ -d ~/.config/opencode ]] && configs+=("$HOME/.config/opencode/skills")
+  
+  # Zed agents
+  [[ -d ~/.agents ]] && configs+=("$HOME/.agents/skills")
+  
+  printf '%s\n' "${configs[@]}"
 }
 
 symlink_skills() {
-  local source_dir dest_dir
-  source_dir="$(cd "$1" && pwd)"
-  dest_dir="$2"
-
+  local source_dir="$1"
+  local dest_dir="$2"
+  
   if [[ ! -d "$source_dir/src" ]]; then
     echo "Error: $source_dir/src not found" >&2
     exit 1
   fi
-
+  
   mkdir -p "$dest_dir"
+  
+  local count=0
   for skill in "$source_dir/src"/*/; do
     [[ -d "$skill" ]] || continue
+    local name
     name="$(basename "$skill")"
     ln -sf "$(cd "$skill" && pwd)" "$dest_dir/$name"
+    count=$((count + 1))
   done
-  echo "Installed skills from $source_dir/src into $dest_dir"
+  
+  echo "✓ Installed $count skills to $dest_dir"
 }
 
-if [[ $# -lt 2 ]]; then
-  usage
-fi
+main() {
+  local source_dir
+  
+  if [[ $# -eq 0 ]]; then
+    # Default: use script's parent directory
+    source_dir="$(cd "$(dirname "$0")/.." && pwd)"
+  elif [[ $# -eq 1 ]]; then
+    source_dir="$(cd "$1" && pwd)"
+  else
+    echo "Usage: $0 [SOURCE_DIR]" >&2
+    echo "" >&2
+    echo "  SOURCE_DIR   Repo root containing src/ (default: script's parent dir)" >&2
+    exit 1
+  fi
+  
+  # Store detected configs
+  local configs_output
+  configs_output="$(detect_tool_configs)"
+  
+  if [[ -z "$configs_output" ]]; then
+    echo "No AI tool configs detected. Checked:" >&2
+    echo "  ~/.config/Claude" >&2
+    echo "  ~/.config/Cursor" >&2
+    echo "  ~/.config/opencode" >&2
+    echo "  ~/.agents (Zed)" >&2
+    exit 1
+  fi
+  
+  echo "Detected tools:"
+  echo "$configs_output" | sed 's/^/  /'
+  echo ""
+  
+  echo "$configs_output" | while IFS= read -r dest_dir; do
+    [[ -n "$dest_dir" ]] || continue
+    symlink_skills "$source_dir" "$dest_dir"
+  done
+}
 
-if [[ "$1" == "--clone" ]]; then
-  if [[ $# -lt 3 ]]; then
-    usage
-  fi
-  clone_path="$2"
-  dest_dir="$3"
-  repo_url="${4:-$REPO_URL_DEFAULT}"
-  if [[ -d "$clone_path" ]]; then
-    echo "Removing existing $clone_path (e.g. repo was moved)"
-    rm -rf "$clone_path"
-  fi
-  git clone "$repo_url" "$clone_path"
-  symlink_skills "$clone_path" "$dest_dir"
-else
-  symlink_skills "$1" "$2"
-fi
+main "$@"

@@ -103,4 +103,21 @@ jobs:
           python-version: "3.12"
       - name: Run engine-config unit tests
         run: python3 -m unittest tests/test_engine_config.py -v
+
+  internal-link-check:
+    name: Internal link check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Check internal (relative) markdown links
+        uses: lycheeverse/lychee-action@e7477775783ea5526144ba13e8db5eec57747ce8 # v2.9.0
+        with:
+          # --offline checks only local/relative links (no network) — this is a
+          # required status check, so keep it secret-free and deterministic.
+          # Exclude src/*/references/wisdom.md: those are machine-synced blog
+          # exports whose Hugo cover-images (*.png) and site-absolute /blog/...
+          # links are not repo-internal and would false-fail every sync PR.
+          args: --offline --no-progress --exclude-path 'wisdom.md' './**/*.md'
+          fail: true
         

@@ -1,7 +1,7 @@
 # Domain Knowledge Reference
 
 Auto-generated from blog posts. Do not edit manually.
-Last updated: 2026-07-20
+Last updated: 2026-09-21
 
 ---
 
@@ -237,6 +237,10 @@ When systems break, ask why. Was it a coding problem or an architectural problem
 ### 4. Read About Real Systems
 
 Study how companies like Amazon, Google, and Netflix have evolved their architectures. Understand the problems they were solving and why they chose their solutions.
+
+### 5. Draw the Architecture
+
+Diagrams make boundaries and communication paths visible, so teammates can review them. The C4 model gives you four zoom levels, from system context down to code, and [Structurizr examples](https://jeffbailey.us/learn-structurizr/) shows how to define those views as code.
 
 ## When NOT to Focus on Architecture
 

@@ -1,7 +1,7 @@
 # Domain Knowledge Reference
 
 Auto-generated from blog posts. Do not edit manually.
-Last updated: 2026-06-29
+Last updated: 2026-09-21
 
 ---
 
@@ -1600,7 +1600,7 @@ Begin building the fundamentals of monitoring and observability today. Select an
 
 * **Standards:** [OpenTelemetry](https://opentelemetry.io/) (vendor-neutral observability), [OpenTracing](https://opentracing.io/) (distributed tracing standard, merged into OpenTelemetry).
 
-* **Tools:** [Prometheus](https://prometheus.io/) (metrics), [Grafana](https://grafana.com/) (visualization), [Jaeger](https://www.jaegertracing.io/) (distributed tracing), [Elasticsearch](https://www.elastic.co/elasticsearch/) (log analysis), [Datadog](https://www.datadoghq.com/) (unified observability platform), [SigNoz](https://signoz.io/) (open-source observability platform).
+* **Tools:** [Prometheus](https://prometheus.io/) (metrics), [Grafana](https://grafana.com/) (visualization), [Jaeger](https://www.jaegertracing.io/) (distributed tracing), [Elasticsearch](https://www.elastic.co/elasticsearch/) (log analysis), [Datadog](https://www.datadoghq.com/) (unified observability platform), [SigNoz](https://signoz.io/) (open-source observability platform), and Splunk Observability Cloud, formerly SignalFx (see the [SignalFx tutorial](https://jeffbailey.us/learn-signalfx/) for a hands-on walkthrough).
 
 ### Self-Assessment
 

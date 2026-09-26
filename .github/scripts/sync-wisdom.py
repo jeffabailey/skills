@@ -117,7 +117,7 @@ def main():
         print(f"  SYNC: {skill_name} ({len(posts)} post(s))")
 
         wisdom_content = generate_wisdom(fetch_base_url, canonical_base_url, posts)
-        wisdom_path = root / "src" / skill_name / "references" / "wisdom.md"
+        wisdom_path = root / "skills" / skill_name / "references" / "wisdom.md"
 
         # Check for fetch failures
         if "Failed to fetch content." in wisdom_content:

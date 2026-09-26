@@ -797,7 +797,7 @@ _AUDIT_DIRECT_LOAD_PATTERN = r"(json\.load.*fitness-config\.json|open.*fitness-c
 def cmd_audit(repo_root: Path) -> int:
     """Grep audit step (BR-5 / FR-7 / US-08): refuse inline weight tables and direct config loads in SKILL.md.
 
-    Walks every SKILL.md under <repo_root>/src/ plus the canonical prompt at
+    Walks every SKILL.md under <repo_root>/skills/ plus the canonical prompt at
     <repo_root>/.github/fitness-review-prompt.md and fails closed if any of
     them either:
       - declares an inline `"weights": { ... }` JSON literal (ADR-002 / FR-7
@@ -816,7 +816,7 @@ def cmd_audit(repo_root: Path) -> int:
     direct_load = re.compile(_AUDIT_DIRECT_LOAD_PATTERN)
 
     candidates: list[Path] = []
-    src_dir = repo_root / "src"
+    src_dir = repo_root / "skills"
     if src_dir.is_dir():
         for skill in sorted(src_dir.glob("review-*/SKILL.md")):
             candidates.append(skill)

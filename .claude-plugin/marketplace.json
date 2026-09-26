@@ -1,0 +1,15 @@
+{
+  "name": "jbb",
+  "description": "Jeff Bailey's agent skills.",
+  "owner": {
+    "name": "Jeff Bailey",
+    "url": "https://jeffbailey.us"
+  },
+  "plugins": [
+    {
+      "name": "jbb-skills",
+      "source": "./",
+      "description": "Project fitness review skills plus commit and root-cause helpers."
+    }
+  ]
+}

@@ -29,7 +29,7 @@ Quality attributes:
 
 **v1 keeps `scripts/fitness-config.py` as a single file.** The new resolver, merger, validator, and reporter functions live inside it as logical groupings (function clusters with comment-banner separators), not as separate modules.
 
-Skill prompts (`src/review-*/SKILL.md`, `.github/fitness-review-prompt.md`) call the script as a CLI subprocess: `python3 <skills>/scripts/fitness-config.py show --path <target>`. They do NOT import functions from the script and do NOT inline resolver logic.
+Skill prompts (`skills/review-*/SKILL.md`, `.github/fitness-review-prompt.md`) call the script as a CLI subprocess: `python3 <skills>/scripts/fitness-config.py show --path <target>`. They do NOT import functions from the script and do NOT inline resolver logic.
 
 The internal logical groupings inside the script are:
 

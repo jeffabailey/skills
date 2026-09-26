@@ -20,22 +20,22 @@ Thank you for your interest in contributing! This guide explains how to propose 
 
 ### Skill file structure
 
-Each skill lives in its own directory under `src/`:
+Each skill lives in its own directory under `skills/`:
 
 ```
-src/review-<domain>/
+skills/review-<domain>/
   SKILL.md               # skill definition: triggers, workflow, scoring rubric
   references/
     checklist.md         # detailed checklist items
 ```
 
 - `SKILL.md` must include: YAML frontmatter with `name` and `description` (including trigger phrases) and a `## Workflow` section. Domain review skills must also include a `## Scoring Dimensions` section. Utility skills (`review-full`, `review-jit-test-gen`, `review-apply`) may omit scoring dimensions.
-- Scoring weights in `src/review-full/SKILL.md` must stay consistent with the weights listed in `README.md`.
+- Scoring weights in `skills/review-full/SKILL.md` must stay consistent with the weights listed in `README.md`.
 - Trigger phrases must be domain-specific. Avoid general phrases that overlap with other skills (see [ADR 0001](docs/adrs/0001-skill-based-review-architecture.md)).
 
 ### Naming
 
-- Skill directories: `src/review-<domain>` (all lowercase, hyphenated)
+- Skill directories: `skills/review-<domain>` (all lowercase, hyphenated)
 - Report output files: `docs/<domain>-review.md`
 
 ### Scoring weights
@@ -59,10 +59,10 @@ The current domain weights (used by `review-full`) are:
 
 The skill list appears in multiple files in different formats. When adding, removing, or renaming a skill, update **all** of these locations:
 
-1. **`README.md`** — Skills table and installation (install commands use `src/*/` so new skills are picked up automatically; update the table)
+1. **`README.md`** — Skills table and installation (install commands use `skills/*/` so new skills are picked up automatically; update the table)
 2. **`CONTRIBUTING.md`** — Scoring weights table (this file)
-3. **`src/review-full/SKILL.md`** — Domain launch list and scoring weights
-4. **`SETUP.md`** — Skill reference list (install commands use `src/*/` so new skills are picked up automatically)
+3. **`skills/review-full/SKILL.md`** — Domain launch list and scoring weights
+4. **`SETUP.md`** — Skill reference list (install commands use `skills/*/` so new skills are picked up automatically)
 5. **`.github/fitness-review-prompt.md`** — Review domains section
 6. **`tests/trigger-tests.md`** — Trigger test cases for the skill
 7. **`tests/functional-tests.md`** — Functional test scenarios for the skill

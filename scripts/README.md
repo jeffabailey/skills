@@ -2,7 +2,7 @@
 
 ## install-skills.sh
 
-Auto-detects installed AI tools and symlinks skills from `src/` to their config directories.
+Auto-detects installed AI tools and symlinks skills from `skills/` to their config directories.
 
 ### Usage
 
@@ -26,7 +26,7 @@ The script automatically detects and installs skills for:
 ### What It Does
 
 1. Scans for installed AI tool config directories
-2. Creates symlinks from `src/*/` to each tool's skills directory
+2. Creates symlinks from `skills/*/` to each tool's skills directory
 3. Reports how many skills were installed to each location
 
 ### Why Symlinks?

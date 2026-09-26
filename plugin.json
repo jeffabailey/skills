@@ -1,0 +1,14 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "name": "jbb-skills",
+  "version": "1.0.0",
+  "description": "Project fitness review skills (architecture, security, reliability, testing, performance, algorithms, data, accessibility, usability, process, maintainability) plus commit and root-cause helpers.",
+  "author": {
+    "name": "Jeff Bailey",
+    "url": "https://jeffbailey.us"
+  },
+  "homepage": "https://jeffbailey.us/blog/2026/02/21/fundamental-skills",
+  "repository": "https://github.com/jeffabailey/skills",
+  "license": "Unlicense",
+  "keywords": ["code-review", "fitness", "architecture", "security", "testing", "accessibility", "usability"]
+}

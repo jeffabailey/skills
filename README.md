@@ -48,7 +48,16 @@ See **[SETUP.md](SETUP.md)** for pipelines and IDE setup (Cursor, Claude Code, V
 
 ### Claude Code
 
-Skills are installed automatically via [mcp-configure](https://github.com/jeffabailey/ide). To install manually, use the install script (see [SETUP.md](SETUP.md)):
+This repository is an [Agent Plugin](https://agent-plugins.org/) (`plugin.json` at the root, skills under `skills/`). It also ships Claude Code plugin and marketplace manifests in `.claude-plugin/`, so you can install it for every Claude Code session:
+
+```bash
+claude plugin marketplace add jeffabailey/skills   # or a local clone path
+claude plugin install jbb-skills@jbb --scope user
+```
+
+Skills are namespaced by the plugin, e.g. `/jbb-skills:review-full`. After pulling changes, run `claude plugin marketplace update jbb && claude plugin update jbb-skills@jbb`.
+
+Alternatively, symlink the skills with the install script (see [SETUP.md](SETUP.md)):
 
 ```bash
 bash ~/Projects/skills/scripts/install-skills.sh --clone ~/Projects/skills ~/.claude/skills
@@ -291,14 +300,14 @@ Review skills should produce more findings, fewer false positives, consistent sc
 
 ## Structure
 
-All skills live under `src/`. Install commands symlink each directory in `src/` (no hardcoded list). See `src/` for the current set of skills; each skill is described in its own `SKILL.md`.
+All skills live under `skills/`. Install commands symlink each directory in `skills/` (no hardcoded list). See `skills/` for the current set of skills; each skill is described in its own `SKILL.md`.
 
 ```
 fitness-config.example.json   # Example config for custom thresholds
 fitness-config.schema.json    # JSON schema for validation
 scripts/
   fitness-config.py           # validate, init, show (cross-platform)
-src/
+skills/
   generate-commit/          # general-development skill (conventional commits)
     SKILL.md
   review-<domain>/          # one per domain (architecture, security, etc.)

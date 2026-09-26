@@ -40,7 +40,7 @@ Mark each item as pass, fail, **N/A** (the site has no matching interaction), or
 ## 2. Efficiency — Rapid Task Completion
 
 ### Getting to the answer
-- [ ] The page's main answer or content starts within the first screen on phone and desktop
+- [ ] The page's main answer or content starts within about 1.5 screens on a phone (roughly 1,250px at 390px wide) and within the first screen on desktop; an open fix list on an error guide counts as content
 - [ ] Long pages have a table of contents or jump links
 - [ ] Code samples, commands, and values can be copied in one action
 
@@ -57,7 +57,7 @@ Mark each item as pass, fail, **N/A** (the site has no matching interaction), or
 ### Keyboard and speed
 - [ ] Every top task can be completed by keyboard; focus is visible throughout (article Mistake 4: No Keyboard Shortcuts)
 - [ ] A keyboard shortcut opens search, if the site has search (common convention: `/` or `Ctrl+K`)
-- [ ] Pages feel fast: content visible quickly, no long blank waits on a typical connection
+- [ ] Pages feel fast: content visible quickly, no long blank waits on a typical connection (measure with a performance trace or Lighthouse on the real host, not a local static server)
 
 ## 3. Memorability — Returning Visitors
 
@@ -69,13 +69,14 @@ Mark each item as pass, fail, **N/A** (the site has no matching interaction), or
 ### Stable structure
 - [ ] URLs are readable and predictable, so a visitor can guess or recall them
 - [ ] Old URLs redirect instead of breaking
+- [ ] HTML responses are not cached by browsers for long (check `Cache-Control` with `curl -sI`); a long `max-age` shows returning visitors stale pages
 - [ ] Content is grouped by purpose, so visitors remember where a topic lives
 
 ## 4. Error Prevention and Recovery
 
 ### Dead ends
 - [ ] The 404 page explains what happened and offers search, the home page, and popular links
-- [ ] A search with no results suggests alternatives rather than a blank page
+- [ ] A search with no results suggests alternatives rather than a blank page (test with a nonsense string; mark not verified if fuzzy matching always returns something)
 - [ ] No broken internal links on the walked pages
 
 ### Forms (newsletter, contact, comments) — N/A if the site has none

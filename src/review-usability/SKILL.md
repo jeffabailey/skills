@@ -5,7 +5,9 @@ description: Reviews a live website's usability by walking its real user tasks i
 
 # Website Usability Review
 
-Evaluate how effectively people can use a **running website**: can they learn it on first visit, finish tasks quickly, find their way back later, avoid mistakes, and leave satisfied. This skill judges rendered pages and real interactions, not source code. Source-level accessibility belongs to `review-accessibility`.
+Evaluate how effectively people can use a **running website**: can they learn it on first visit, finish tasks quickly, find their way back later, avoid mistakes, and leave satisfied. This skill judges rendered pages and real interactions, not source code.
+
+Scope against `review-accessibility`: completing a top task **by keyboard** is in scope here, because the article treats keyboard access as efficiency (Mistake 4). Screen-reader behavior, ARIA, color contrast, and WCAG conformance are not; note them in one line and point to `review-accessibility`.
 
 Reference: [Fundamentals of Software Usability](https://jeffbailey.us/blog/2026/01/01/fundamentals-of-software-usability/) — see also [Fundamentals](https://jeffbailey.us/categories/fundamentals/)
 
@@ -23,7 +25,7 @@ mkdir -p "$CACHE_DIR"
 if curl -fsSL --max-time 20 -A "skills-review-usability/1.0" "$ARTICLE_URL" -o "$ARTICLE.tmp" \
    && grep -q "Learnability" "$ARTICLE.tmp"; then
   mv "$ARTICLE.tmp" "$ARTICLE"
-  echo "SOURCE: live $ARTICLE_URL ($(date -u +%Y-%m-%d))"
+  echo "SOURCE: live $ARTICLE_URL (fetched $(date '+%Y-%m-%d %H:%M %Z'))"
 else
   rm -f "$ARTICLE.tmp"
   echo "SOURCE: fallback references/wisdom.md (live fetch failed)"
@@ -52,11 +54,20 @@ If the article's content contradicts this file, the article wins. It is the sour
 
 3. **Define 3 to 5 top tasks.** These are the things a visitor came to do. For a content site that usually means: land on an article from search and get the answer; find related content; search the site; browse a topic or category; copy a code sample; subscribe or follow. Confirm the task list with the user when they are available, because the wrong tasks make the whole review wrong (the article's "When Usability Testing Fails").
 
-4. **Walk each task.** Use a browser automation tool if one is available (Playwright, Chrome DevTools, or a similar MCP server), at both a desktop viewport (1280px) and a phone viewport (390px). For each step, record the URL, what was clicked or typed, what happened, and a screenshot path when you can capture one. Also try the task by keyboard alone. With no browser tool, fall back to fetching HTML with `curl` and mark every interaction-dependent check (search results, menus, focus behavior, animations) as **not verified** rather than guessing.
+4. **Walk each task.** Use a browser automation tool if one is available (Playwright, Chrome DevTools, or a similar MCP server), at a desktop viewport (about 1280px) and a phone viewport (about 390px). For each step, record the URL, what was clicked or typed, what happened, and a screenshot path when you can capture one. Also try the task by keyboard alone. With no browser tool, fall back to fetching HTML with `curl` and mark every interaction-dependent check (search results, menus, focus behavior, animations) as **not verified** rather than guessing.
+
+   - **Viewports:** if the tool cannot set an exact width (a maximized window often refuses to resize), use device emulation or open a new window at the target size. Any width within about 50px is fine. Record the actual widths in the report header.
+   - **Cache:** start from a fresh profile or reload with the cache bypassed, so you judge what a new visitor gets. Then check what a *returning* visitor gets: read the HTML response's `Cache-Control` with `curl -sI <url>`. A long `max-age` on HTML means returning visitors can see stale pages (a memorability finding).
+   - **Reading page state:** prefer small scripts that return compact JSON (element offsets, computed styles, `document.activeElement`, result counts) over full accessibility snapshots. On long pages a snapshot can exceed 60,000 characters per action.
+   - **Timing:** after an action that triggers a CSS transition, wait past it before reading computed styles, or you will read the starting value.
 
 5. **Run the checklist.** Evaluate the walked pages against `references/checklist.md`. Every finding needs a URL plus the element or step where it occurred.
 
 6. **Translate before judging.** The article's patterns are written for applications in general. Map each one to this site before scoring it, for example: "undo" on a content site is a working back button and reversible filters; "bulk operations" rarely apply. Mark a check **N/A** when the site has no matching interaction, and never lower a score for a pattern the site has no reason to offer.
+
+   - **"Answer in the first screen":** measure where the main content starts, in pixels and in screens. On a 390px-wide phone, content that starts beyond about 1.5 screens (roughly 1,250px) is a finding. Navigation that *is* the route to the answer, such as an open list of fixes on an error-fix guide, counts as content, not as clutter.
+   - **Empty search results:** search for a nonsense string (for example `qzxwvkjh`). If fuzzy matching still returns results, try one more string, then mark the check **not verified** instead of passing it.
+   - **Page speed:** measure with a DevTools performance trace or Lighthouse against the real host. Local static servers (such as `python -m http.server`) have no compression or CDN and give misleading numbers. When a page is slow only in the browser session and fast with `curl`, list it under Not Verified.
 
 7. **Score each dimension** on a 1-10 scale against its quick-check questions. A score needs evidence from the walkthrough.
 
@@ -93,13 +104,13 @@ Each dimension is scored against the article's matching **Quick Check** question
 
 ## Output Format
 
-Write the report to `docs/usability-review.md` in the current working directory:
+Write the report to the path the user gives. Otherwise, write it to `docs/usability-review.md` in the current working directory, unless that directory is the reviewed site's own repository and the user hasn't asked for the report to live there. In that case, ask for a path or use a scratch or temporary directory, so the review doesn't leave an untracked file in their site. Keep screenshots next to the report.
 
 ```markdown
 # Usability Review: <site>
 
 Rubric source: <the SOURCE line from the fetch step>
-Reviewed: <date> · Viewports: desktop 1280px, phone 390px · Browser tool: <name, or "none (HTML only)">
+Reviewed: <date> · Viewports: desktop <actual>px, phone <actual>px · Browser tool: <name, or "none (HTML only)"> · Target: <live URL or local build>
 
 ## Summary
 

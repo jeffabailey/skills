@@ -23,8 +23,10 @@ Use the wisdom reference when evaluating code and assigning dimension scores.
 Invoke the resolver CLI to obtain the effective `security.confidenceThreshold`. Never load `fitness-config.json` directly.
 
 ```bash
-python3 scripts/fitness-config.py show --path <target>
+python3 "${CLAUDE_SKILL_DIR}/../../scripts/fitness-config.py" show --path <target>
 ```
+
+`${CLAUDE_SKILL_DIR}` is this skill's directory; the resolver ships two levels up in the plugin's `scripts/`. If your agent does not expand the variable, substitute the directory containing this `SKILL.md`.
 
 Read `effective.security.confidenceThreshold` from the JSON block delimited by `<!-- BEGIN_EFFECTIVE_CONFIG_JSON -->` / `<!-- END_EFFECTIVE_CONFIG_JSON -->`. The default is 7. Include the `Config:` and `Effective weights:` lines from the resolver within the first 10 lines of the report as the provenance trail (AC-03.1, AC-08.2).
 

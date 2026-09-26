@@ -12,8 +12,10 @@ Run all review skills in parallel to produce a unified fitness assessment.
 Always invoke the resolver CLI to read effective weights and thresholds. Never load `fitness-config.json` directly. The CLI walks up from the review target to find module overrides and merges them with the root config per ADR-001 / ADR-002 / ADR-005.
 
 ```bash
-python3 scripts/fitness-config.py show --path <target>
+python3 "${CLAUDE_SKILL_DIR}/../../scripts/fitness-config.py" show --path <target>
 ```
+
+`${CLAUDE_SKILL_DIR}` is this skill's directory; the resolver ships two levels up in the plugin's `scripts/`. If your agent does not expand the variable, substitute the directory containing this `SKILL.md`.
 
 Where `<target>` is:
 - The repository root for a broad-scope review (per ADR-005, only the root config is applied at root scope; the root-scope output does not enumerate descendant subtree overrides).

@@ -50,10 +50,10 @@ If the article's content contradicts this file, the article wins. It is the sour
 
 1. **Load the rubric.** Run the fetch above and read the article (or the fallback).
 
-2. **Profile the site.** Take the target URL from the user. If none is given, ask for one.
+2. **Profile the site.** Take the target URL from the user. If none is given, ask for one. Identify what kind of site it is (blog or docs, marketing, e-commerce, web app) and its primary visitors. If the user has analytics or Search Console data, use it to find the pages and entry points real visitors use. Otherwise, infer them from the navigation, the sitemap (`/sitemap.xml`), and the home page.
 
    - **Local target:** a local build or preview server is fine for checking fixes before they deploy. Some things only the real host shows: HTTP caching headers, the custom 404 page (a static server substitutes its own), compression, and speed. Check those against the live URL, and label each finding with the host it came from.
-   - **Re-review:** if a previous usability report exists (the user names it, or it sits at the output path), read it first. Walk the same top tasks so the scores are comparable. The report then adds a "Prev" score column and a "Prior Findings" table giving each earlier finding's status (Fixed, Still present, Deferred, or Not verifiable here) with one line of evidence. Also probe the fixes for regressions: edge-case input (special characters in search, such as `c++` and `a&b`), states that should stay hidden, and links the fix added. Identify what kind of site it is (blog or docs, marketing, e-commerce, web app) and its primary visitors. If the user has analytics or Search Console data, use it to find the pages and entry points real visitors use. Otherwise, infer them from the navigation, the sitemap (`/sitemap.xml`), and the home page.
+   - **Re-review:** if a previous usability report exists (the user names it, or it sits at the output path), read it first. Walk the same top tasks so the scores are comparable. The report then adds a "Prev" score column and a "Prior Findings" table giving each earlier finding's status (Fixed, Still present, Deferred, or Not verifiable here) with one line of evidence. Also probe the fixes for regressions: edge-case input (special characters in search, such as `c++` and `a&b`), states that should stay hidden, and links the fix added. Check each fix from both sides: that the problem is gone, and that whatever sits next to it still works (removing one search tag must not hide titles or excerpts).
 
 3. **Define 3 to 5 top tasks.** These are the things a visitor came to do. For a content site that usually means: land on an article from search and get the answer; find related content; search the site; browse a topic or category; copy a code sample; subscribe or follow. Confirm the task list with the user when they are available, because the wrong tasks make the whole review wrong (the article's "When Usability Testing Fails").
 
@@ -63,6 +63,7 @@ If the article's content contradicts this file, the article wins. It is the sour
    - **Cache:** start from a fresh profile or reload with the cache bypassed, so you judge what a new visitor gets. Then check what a *returning* visitor gets: read the HTML response's `Cache-Control` with `curl -sI <url>`. A long `max-age` on HTML means returning visitors can see stale pages (a memorability finding).
    - **Reading page state:** prefer small scripts that return compact JSON (element offsets, computed styles, `document.activeElement`, result counts) over full accessibility snapshots. On long pages a snapshot can exceed 60,000 characters per action, and some tools attach one to every key press. To test keyboard reach cheaply, focus the element just before the target from a script, press Tab once, then read `document.activeElement`.
    - **Timing:** after an action that triggers a CSS transition, wait past it before reading computed styles, or you will read the starting value.
+   - **Back button:** browsers often restore a page from the back/forward cache without running any of its scripts, so a Back test can pass even when the page's own restore code is broken. Set a marker first (`window.__probe = 1`); if the marker survives Back, the cache served the page. Then reload to exercise the restore code, and report both results.
 
 5. **Run the checklist.** Evaluate the walked pages against `references/checklist.md`. Every finding needs a URL plus the element or step where it occurred.
 
@@ -120,13 +121,13 @@ Reviewed: <date> · Viewports: desktop <actual>px, phone <actual>px · Browser t
 | Dimension | Score | Key Finding |
 |-----------|-------|-------------|
 | Learnability | X/10 | ... |
-
-(On a re-review, add a "Prev" column after Score.)
 | Efficiency | X/10 | ... |
 | Memorability | X/10 | ... |
 | Error Prevention and Recovery | X/10 | ... |
 | Satisfaction | X/10 | ... |
 | **Overall** | **X/10** | |
+
+On a re-review, add a "Prev" column after Score.
 
 ## Prior Findings (re-review only)
 

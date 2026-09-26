@@ -80,6 +80,7 @@ Mark each item as pass, fail, **N/A** (the site has no matching interaction), or
 - [ ] A search with no results suggests alternatives rather than a blank page (test with a nonsense string; mark not verified if fuzzy matching always returns something)
 - [ ] No broken internal links on the walked pages
 - [ ] Diagrams, embeds, and widgets render their content, not error text (search the rendered page for "Syntax error", "Parse error", "Unsupported markdown", or "Error:")
+- [ ] Diagram and chart text stays readable on a phone: at 390px wide, labels render at about 10px or more (rendered width ÷ natural width × font size), or the figure scrolls sideways instead of shrinking
 
 ### Forms (newsletter, contact, comments) — N/A if the site has none
 - [ ] Required fields are marked before submission, not only after

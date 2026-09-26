@@ -331,3 +331,12 @@ For each test scenario:
 **When:** Run `/review:review-usability`
 **Then:** Undo, confirmation, and bulk-operation checks are marked N/A and do not lower any score
 
+
+### Test: Re-review tracks prior findings
+
+**Given:** A previous usability report for the same site
+**When:** Run `/review:review-usability` again after fixes
+**Then:**
+- The summary table has a "Prev" column
+- A "Prior Findings" table gives each earlier finding a status (Fixed, Still present, Deferred, or Not verifiable here) with evidence
+- The same top tasks are walked, and each fix is probed for regressions

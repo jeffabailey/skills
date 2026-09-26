@@ -53,6 +53,7 @@ Mark each item as pass, fail, **N/A** (the site has no matching interaction), or
 - [ ] Search returns relevant results for the site's top topics
 - [ ] Results show enough context (title, excerpt) to choose without opening each one
 - [ ] Search is reachable in one action from every page
+- [ ] Results show only reader-facing information; no internal metadata (file paths, IDs, index fields) appears as tags or labels
 
 ### Keyboard and speed
 - [ ] Every top task can be completed by keyboard; focus is visible throughout (article Mistake 4: No Keyboard Shortcuts)
@@ -78,6 +79,7 @@ Mark each item as pass, fail, **N/A** (the site has no matching interaction), or
 - [ ] The 404 page explains what happened and offers search, the home page, and popular links
 - [ ] A search with no results suggests alternatives rather than a blank page (test with a nonsense string; mark not verified if fuzzy matching always returns something)
 - [ ] No broken internal links on the walked pages
+- [ ] Diagrams, embeds, and widgets render their content, not error text (search the rendered page for "Syntax error", "Parse error", "Unsupported markdown", or "Error:")
 
 ### Forms (newsletter, contact, comments) — N/A if the site has none
 - [ ] Required fields are marked before submission, not only after
@@ -86,7 +88,7 @@ Mark each item as pass, fail, **N/A** (the site has no matching interaction), or
 - [ ] Submission gives clear confirmation of success
 
 ### Recovery
-- [ ] The browser back button returns to the previous state, including scroll position and search results (the content-site form of article Mistake 5: No Undo Functionality)
+- [ ] The browser back button returns to the previous state, including scroll position and search results, also after "Load more" or pagination inside the results (the content-site form of article Mistake 5: No Undo Functionality)
 - [ ] Filters, toggles, and theme switches are reversible and keep their state across pages where that is expected
 - [ ] Irreversible actions, if any, ask for confirmation first
 

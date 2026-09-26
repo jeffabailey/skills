@@ -120,13 +120,14 @@ Should trigger:
 - "Is this WCAG compliant?"
 - "Check color contrast"
 - "Review keyboard navigation"
-- "Audit usability"
+- "Audit usability heuristics in these components"
 - `/review:review-accessibility`
 
 Should NOT trigger:
 - "Review backend performance"
 - "Check database design"
 - "Review CI/CD pipeline"
+- "Walk the top tasks on https://example.com" (that's review-usability)
 
 ## review-process
 
@@ -203,3 +204,17 @@ Should NOT trigger:
 - "Full review" (that's review-full)
 - "Review the architecture"
 - "Generate tests"
+
+## review-usability
+
+Should trigger:
+- "Review the usability of https://example.com"
+- "How can I improve my website's usability?"
+- "Walk the top tasks on my site"
+- "Why can't visitors find anything on my blog?"
+- `/review:review-usability`
+
+Should NOT trigger:
+- "Check WCAG compliance of these templates" (that's review-accessibility)
+- "Check color contrast in the CSS" (that's review-accessibility)
+- "Full review" (that's review-full)

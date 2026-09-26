@@ -291,3 +291,43 @@ For each test scenario:
 **Then:**
 - The specified file is read as the report source
 - Action items are extracted and triaged normally
+
+## review-usability
+
+### Test: Downloads the current article before scoring
+
+**Given:** Network access to jeffbailey.us
+**When:** Run `/review:review-usability` against any public URL
+**Then:**
+- The article's `llm.txt` is fetched to `${TMPDIR:-/tmp}/review-usability/` before any scoring
+- The report header's "Rubric source" line names the live URL and fetch date
+
+### Test: Falls back to the bundled copy when offline
+
+**Given:** No network access to jeffbailey.us, but the target site is reachable (for example, a local build)
+**When:** Run `/review:review-usability`
+**Then:**
+- The review still completes using `references/wisdom.md`
+- The "Rubric source" line says fallback, so the reader knows the rubric may be older than the live article
+
+### Test: Walks tasks instead of reading code
+
+**Given:** A live URL and a browser automation tool
+**When:** Run `/review:review-usability`
+**Then:**
+- 3 to 5 top tasks are listed and walked at desktop and phone widths
+- Every finding cites a URL and an element or task step, not a file:line
+- Report written to docs/usability-review.md with all five dimension scores
+
+### Test: Does not guess without a browser
+
+**Given:** A live URL and no browser automation tool
+**When:** Run `/review:review-usability`
+**Then:** Interaction-dependent checks appear under "Not Verified" rather than as passes or failures
+
+### Test: Keeps recommendations proportionate
+
+**Given:** A static personal blog with no forms or destructive actions
+**When:** Run `/review:review-usability`
+**Then:** Undo, confirmation, and bulk-operation checks are marked N/A and do not lower any score
+

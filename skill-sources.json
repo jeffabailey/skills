@@ -166,6 +166,14 @@
           "url": "/blog/2025/12/16/fundamentals-of-software-quality-assurance"
         }
       ]
+    },
+    "review-usability": {
+      "posts": [
+        {
+          "slug": "fundamentals-of-software-usability",
+          "url": "/blog/2026/01/01/fundamentals-of-software-usability"
+        }
+      ]
     }
   }
 }

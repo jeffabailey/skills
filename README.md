@@ -38,6 +38,7 @@ This repository and the article [Fundamental Skills](https://jeffbailey.us/blog/
 | `review-full` | All of the above (weighted average) | "full review", "comprehensive review", "project fitness" |
 | `review-jit-test-gen` | Generates tests (no scores) | "generate tests", "write tests for changes" |
 | `review-apply` | Applies fitness report findings (no scores) | "apply review", "address review feedback", "fix review issues" |
+| `review-usability` | Learnability, Efficiency, Memorability, Error Prevention, Satisfaction. Walks a **live URL**, not source code, so it is not part of `review-full`. Downloads the current usability article to set its rubric. | "usability review of a website", "improve site usability", "task walkthrough" |
 
 Each review skill produces scores (1-10) with file:line evidence and prioritized action items. General-development skills produce artifacts (commits, tests, edits) rather than scores.
 
@@ -79,6 +80,7 @@ The script removes an existing clone directory first if present, so re-runs succ
 /review:review-full            # Run all reviews, unified report
 /review:review-jit-test-gen    # Generate tests for changed code
 /review:review-apply           # Apply fitness report from GitHub issue
+/review:review-usability       # Walk a live site's top tasks, score usability
 ```
 
 ### Natural Language
@@ -309,6 +311,11 @@ src/
     SKILL.md                # Test generator (no references needed)
   review-apply/
     SKILL.md                # Applies fitness report findings (no references needed)
+  review-usability/
+    SKILL.md                # Live-site usability walkthrough; fetches its rubric article at run time
+    references/
+      checklist.md          # Observable checks derived from the article
+      wisdom.md             # Offline fallback copy of the article (synced weekly)
 tests/
   trigger-tests.md          # What phrases should/shouldn't trigger each skill
   functional-tests.md       # Expected behavior for each skill

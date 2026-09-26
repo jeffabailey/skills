@@ -232,6 +232,7 @@ All skills live under `src/`. The install commands above symlink every directory
 - `src/review-full`
 - `src/review-jit-test-gen`
 - `src/review-apply`
+- `src/review-usability`
 
 ---
 

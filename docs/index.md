@@ -19,6 +19,7 @@ Reusable Claude Code skills that review software project fitness across architec
 | `review-full` | All of the above with weighted scoring |
 | `review-jit-test-gen` | Generates tests for changed code (no scores) |
 | `review-apply` | Applies fitness report findings from GitHub issues (no scores) |
+| `review-usability` | Learnability, efficiency, memorability, error prevention, satisfaction on a live URL (not part of `review-full`) |
 
 Each domain skill produces scores (1--10) with `file:line` evidence and prioritized action items.
 

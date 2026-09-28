@@ -1,7 +1,7 @@
 # Domain Knowledge Reference
 
 Auto-generated from blog posts. Do not edit manually.
-Last updated: 2026-04-20
+Last updated: 2026-09-28
 
 ---
 
@@ -195,7 +195,7 @@ If you found gaps, review the threat modeling process and apply it to your syste
 
 *This section deep-dives Step 2: Find Vulnerabilities from the software security workflow.*
 
-Vulnerabilities are weaknesses attackers can exploit, like unlocked doors. In our web app example, these flaws—such as unsafe SQL queries or missing access checks—could let attackers steal or change data. Detecting them early seals these doors before attackers find them.
+Vulnerabilities are weaknesses attackers can exploit, like unlocked doors. In our web app example, these flaws (such as unsafe SQL queries or missing access checks) could let attackers steal or change data. Detecting them early seals these doors before attackers find them.
 
 ### Common Vulnerability Types
 
@@ -208,19 +208,19 @@ Different vulnerabilities lead to various risks.
 *Primary Risk:* Data theft, modification
 
 *Prevention:* Parameterized queries, input validation, output encoding
---card--
+
 **Broken auth**
 
 *Primary Risk:* Account takeover
 
 *Prevention:* MFA, hashing, strong password policies
---card--
+
 **Broken access control**
 
 *Primary Risk:* Unauthorized access
 
 *Prevention:* Consistent authorization checks
---card--
+
 **Crypto failures**
 
 *Primary Risk:* Confidentiality loss
@@ -363,7 +363,7 @@ You need both. Without authentication, anyone can access everything; without aut
 **Data used:** Passwords, MFA, biometrics
 
 **Typical failures:** Account takeover, weak passwords
---card--
+
 **Authorization**
 
 **Core question:** "What are you allowed to do?"
@@ -616,7 +616,7 @@ This web application also shows how the **TFDM loop** and the **CIA triad** work
 
 * **Monitor (M)** – Logging failed logins, unusual access patterns, and suspicious queries helps you detect attacks on all three CIA goals and respond before damage grows.
 
-This mapping is the point of security fundamentals: you learn one small set of mental models—TFDM and CIA—and then apply them to any system, not just this simple web application.
+This mapping is the point of security fundamentals: you learn one small set of mental models (TFDM and CIA) and then apply them to any system, not just this simple web application.
 
 ### Lessons Learned
 
@@ -852,7 +852,7 @@ Building secure systems requires understanding fundamentals and applying them co
 
 ### Future Trends – Why Fundamentals Always Matter
 
-Security tools, threats, and tech will evolve with AI attacks, new cloud services, and regulations. But core principles—understanding threats, finding vulnerabilities, layered defenses, and monitoring—are constant. Frameworks like NIST use different labels but share basic ideas: identifying risks, protecting, detecting, and responding. New tools change how you apply these, not the need for them.
+Security tools, threats, and tech will evolve with AI attacks, new cloud services, and regulations. But core principles (understanding threats, finding vulnerabilities, layered defenses, and monitoring) are constant. Frameworks like NIST use different labels but share basic ideas: identifying risks, protecting, detecting, and responding. New tools change how you apply these, not the need for them.
 
 ### Key Takeaways
 

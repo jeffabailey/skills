@@ -1,7 +1,7 @@
 # Domain Knowledge Reference
 
 Auto-generated from blog posts. Do not edit manually.
-Last updated: 2026-04-20
+Last updated: 2026-09-28
 
 ---
 
@@ -275,7 +275,7 @@ Here's an example of a keyboard-accessible navigation menu:
 </nav>
 
 <main id="main-content">
-  <!-- Main content here -->
+  
 </main>
 ```
 
@@ -768,7 +768,7 @@ If you answered no to any question, review the misconceptions above and implemen
 
 ## Building Accessible Interfaces
 
-Building accessible interfaces requires understanding fundamentals and applying them consistently. The workflow we covered—semantic HTML foundation, keyboard navigation structure, ARIA enhancement, and testing validation—creates interfaces that work for everyone.
+Building accessible interfaces requires understanding fundamentals and applying them consistently. The workflow we covered (semantic HTML foundation, keyboard navigation structure, ARIA enhancement, and testing validation) creates interfaces that work for everyone.
 
 ### Evaluation & Next Steps at a Glance
 
@@ -1832,7 +1832,7 @@ Mastering color and contrast fundamentals moves you from guessing at colors to m
 
 ### Prerequisites & Audience
 
-**Prerequisites:** This article assumes basic web development literacy—specifically, familiarity with HTML and CSS—but no prior color theory or accessibility experience.
+**Prerequisites:** This article assumes basic web development literacy (specifically, familiarity with HTML and CSS) but no prior color theory or accessibility experience.
 
 **Primary audience:** Beginner to intermediate developers, including full-stack engineers seeking a stronger foundation in visual design and accessibility.
 
@@ -1896,7 +1896,7 @@ For specific tool recommendations, see [Evaluation & Validation](#section-55-eva
 
 **Calculation:** Contrast ratios use the relative luminance formula, which accounts for how the human eye perceives different colors. Most developers use tools rather than calculating manually.
 
-> **Note:** The WCAG contrast formula is (L1 + 0.05) / (L2 + 0.05), where L1 and L2 are the relative luminance of the lighter and darker colors. You don't need to calculate this manually—tools do it for you—but knowing the formula helps you understand why small luminance changes matter so much.
+> **Note:** The WCAG contrast formula is (L1 + 0.05) / (L2 + 0.05), where L1 and L2 are the relative luminance of the lighter and darker colors. You don't need to calculate this manually (tools do it for you) but knowing the formula helps you understand why small luminance changes matter so much.
 
 Here's an example of checking contrast in CSS:
 
@@ -2033,7 +2033,7 @@ WCAG has three conformance levels with different contrast requirements.
 * Normal text: 4.5:1
 * Large text: 3:1
 * Most common target for product teams
---card--
+
 **WCAG Level AAA:**
 
 * Normal text: 7:1
@@ -2062,19 +2062,19 @@ WCAG AA contrast requirements depend on text size and weight.
 * Normal text contrast: 4.5:1
 * Large text contrast: 3:1
 * Most common target for product teams
---card--
+
 **Body text (Level AAA):**
 
 * Normal text contrast: 7:1
 * Large text contrast: 4.5:1
 * Higher bar, harder to achieve consistently
---card--
+
 **UI components (Level AA):**
 
 * Contrast: 3:1 (against adjacent colors)
 * Applies to: Buttons, inputs, focus indicators
 * Text inside components must still meet separate text contrast requirements
---card--
+
 **Graphical objects (Level AA):**
 
 * Contrast: 3:1 (against background)

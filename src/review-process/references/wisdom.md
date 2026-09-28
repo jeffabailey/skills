@@ -1,7 +1,7 @@
 # Domain Knowledge Reference
 
 Auto-generated from blog posts. Do not edit manually.
-Last updated: 2026-04-20
+Last updated: 2026-09-28
 
 ---
 
@@ -9,21 +9,70 @@ Last updated: 2026-04-20
 
 URL: https://jeffbailey.us/blog/2025/10/02/fundamentals-of-software-development
 
-### Introduction
+## Introduction
 
-What is **software development**? It's not just writing code and following tutorials. Software development is fundamentally about **making decisions**, **solving problems**, and building systems that work reliably. These fundamentals align with my [software development philosophy](https://jeffbailey.us/a-software-development-philosophy/) that guides how I approach building software.
+What is **software development**? At its core, it's **making decisions**, **solving problems**, and building systems that work reliably. Writing code and following tutorials are only the visible part. These fundamentals align with my [software development philosophy][a-software-development-philosophy] that guides how I approach building software.
 
 *Developers face thousands of **micro-decisions**:* 
 
 Should I use this library or that one? How do I structure this code? What happens when this fails? These decisions compound into the software that governs our world, from the apps on your phone to the systems that process your bank transactions.
 
-As Simon Wardley puts it, "**Software engineering is a decision-making discipline**." The best developers aren't just skilled at writing code; they're also adept at making the **right decisions** at the **right time**. This aligns with my philosophy of [making decisions at the right moment](https://jeffbailey.us/a-software-development-philosophy#measure-then-commit/) rather than rushing into solutions.
+As Simon Wardley puts it, "**Software engineering is a decision-making discipline**." The best developers aren't just skilled at writing code; they're also adept at making the **right decisions** at the **right time**. This aligns with my philosophy of [making decisions at the right moment][philosophy-measure-then-commit] rather than rushing into solutions.
 
-### Section 1: The Decision-Making Foundation
+## Software Development Learning Path
+
+The 16 sections below build on each other in four stages. Work through them in order, or jump to the skill you need next.
+
+**Stage 1: Think and set up.**
+
+* [Section 1: The Decision-Making Foundation][lp-1]: weigh technical, design, and process decisions under uncertainty.
+* [Section 2: Programming Languages and Tools][lp-2]: pick a language and toolchain, then learn to use them well.
+* [Section 3: Version Control Mastery][lp-3]: track changes, branch, and collaborate with Git.
+
+**Stage 2: Build working software.**
+
+* [Section 4: Database Fundamentals][lp-4]: store and query data reliably.
+* [Section 5: Software Design Principles][lp-5]: apply SOLID and DRY so code stays easy to change.
+* [Section 6: Testing Strategies][lp-6]: write tests that let you change code with confidence.
+* [Section 7: Debugging and Problem-Solving][lp-7]: find root causes instead of patching symptoms.
+
+**Stage 3: Keep it healthy.**
+
+* [Section 8: Code Quality and Maintainability][lp-8]: write code other people can read and modify.
+* [Section 9: Documentation and Communication][lp-9]: explain your code to teammates and your future self.
+* [Section 10: Design Patterns][lp-10]: reuse proven solutions to recurring design problems.
+* [Section 11: Software Maturity Attributes][lp-11]: build in the reliability and security production demands.
+
+**Stage 4: Scale up and keep growing.**
+
+* [Section 12: System Design Fundamentals][lp-12]: plan for scale, reliability, data storage, and performance.
+* [Section 13: Software Architecture Patterns][lp-13]: choose an architecture that fits your context.
+* [Section 14: Modern Development Practices][lp-14]: adopt cloud-native, AI-assisted, and security-first development.
+* [Section 15: The Learning Mindset][lp-15]: keep your skills current as tools change.
+* [Section 16: Building Your Development Career][lp-16]: turn these fundamentals into a job and a career.
+
+[lp-1]: #section-1-the-decision-making-foundation
+[lp-2]: #section-2-programming-languages-and-tools
+[lp-3]: #section-3-version-control-mastery
+[lp-4]: #section-4-database-fundamentals
+[lp-5]: #section-5-software-design-principles
+[lp-6]: #section-6-testing-strategies
+[lp-7]: #section-7-debugging-and-problem-solving
+[lp-8]: #section-8-code-quality-and-maintainability
+[lp-9]: #section-9-documentation-and-communication
+[lp-10]: #section-10-design-patterns
+[lp-11]: #section-11-software-maturity-attributes
+[lp-12]: #section-12-system-design-fundamentals
+[lp-13]: #section-13-software-architecture-patterns
+[lp-14]: #section-14-modern-development-practices
+[lp-15]: #section-15-the-learning-mindset
+[lp-16]: #section-16-building-your-development-career
+
+## Section 1: The Decision-Making Foundation
 
 Software development is fundamentally about **making decisions** in uncertain situations. Every line of code represents a **choice**, and those choices have **consequences**.
 
-#### Understanding the Decision Landscape
+### Understanding the Decision Landscape
 
 * **Technical Decisions**: Which programming language, framework, or architecture to use?
 * **Business Decisions**: What features to build, what problems to solve.
@@ -37,7 +86,7 @@ The key insight from experienced developers is that there are **no perfect solut
 > Type: **Explanation** (understanding-oriented).  
 > Primary audience: **all levels** - developers learning software development principles and decision-making
 
-#### The Context-Driven Approach
+### The Context-Driven Approach
 
 * **Understand the problem first**: What problem are you trying to solve?
 * **Consider the constraints**: Time, budget, team skills, and existing systems.
@@ -65,17 +114,17 @@ flowchart TD
     style L fill:#fff3e0
 ```
 
-### Section 2: Programming Languages and Tools
+## Section 2: Programming Languages and Tools
 
 Choosing the **proper programming language** is one of the first major decisions you'll make. But the language itself matters less than **how you use it**. Adhering to fundamental software development principles is more important.
 
-#### Popular Programming Languages
+### Popular Programming Languages
 
 Here are some widely used programming languages today.
 
 *Most can be used in multiple domains, so don't feel limited by these descriptions or languages.*
 
-**💡 Languages are tools** that help you solve problems. *Pick the right tool for the job.* This principle of [using the right tool](https://jeffbailey.us/a-software-development-philosophy#use-the-right-tool/) extends beyond programming languages to frameworks, databases, and development methodologies.
+**💡 Languages are tools** that help you solve problems. *Pick the right tool for the job.* This principle of [using the right tool][philosophy-use-the-right-tool] extends beyond programming languages to frameworks, databases, and development methodologies.
 
 * **Python**: Great for beginners, powerful for data science, web development, and automation.
 * **C++**: High-performance applications, game development, and system software.
@@ -92,7 +141,7 @@ Here are some widely used programming languages today.
 
 Review the [TIOBE Index], [IEEE Spectrum], and [RedMonk] for comprehensive lists of programming languages and their popularity.
 
-#### Programming Language Paradigms
+### Programming Language Paradigms
 
 Before exploring languages, understanding **programming paradigms** helps you solve problems more effectively, as each offers a unique approach to structuring and solving issues.
 
@@ -176,7 +225,7 @@ graph LR
     style PP_USE fill:#e8f5e8
 ```
 
-#### The Language Selection Framework
+### The Language Selection Framework
 
 *When choosing a language, consider:*
 
@@ -186,11 +235,11 @@ graph LR
 * **Performance needs**: How fast does it need to be?
 * **Maintenance**: How easy is it to find developers?
 
-### Section 3: Version Control Mastery
+## Section 3: Version Control Mastery
 
 **Version control** is required in modern software development. It's how teams **collaborate**, **track changes**, and **recover from mistakes**.
 
-#### Git Fundamentals
+### Git Fundamentals
 
 **Git** is the industry standard for version control. 
 
@@ -216,7 +265,7 @@ git push origin main
 
 Choose between two common approaches:
 
-#### Option 1: Git Flow (Branch-Based Development)
+### Option 1: Git Flow (Branch-Based Development)
 
 * **Main branch**: Production-ready code.
 * **Feature branches**: New features or bug fixes.
@@ -275,7 +324,7 @@ gitGraph
     merge hotfix/critical-bug
 ```
 
-#### Option 2: Trunk-Based Development
+### Option 2: Trunk-Based Development
 
 * **Main branch**: Single integration point for all changes.
 * **Short-lived feature branches**: Merge quickly (within hours or days).
@@ -331,17 +380,17 @@ gitGraph
 
 Trunk-based development requires robust CI/CD pipelines and well-disciplined teams.
 
-*For more details on trunk-based development and mainline integration patterns, see [Martin Fowler's comprehensive guide to branching patterns](https://martinfowler.com/articles/branching-patterns.html#Trunk-basedDevelopment).*
+*For more details on trunk-based development and mainline integration patterns, see [Martin Fowler's comprehensive guide to branching patterns][martin-fowler-s-comprehensive-guide-to-branching-p].*
 
-#### Best Practices
+### Best Practices
 
 * **Commit often**: Small, focused commits are easier to understand and review.
-* **Write clear commit messages**: Explain what and why; try [Conventional Commits](https://jeffbailey.us/what-are-conventional-commits/).
+* **Write clear commit messages**: Explain what and why; try [Conventional Commits][what-are-conventional-commits].
 * **Choose your branching strategy**: Either use branches OR trunk-based development consistently.
 * **Review code with focused pull requests**: Small, concentrated pull requests catch bugs, share knowledge, and are easier to review and merge.
 * **Keep history clean**: Rebase and squash when appropriate.
 
-#### GitOps: Infrastructure as Code
+### GitOps: Infrastructure as Code
 
 **GitOps** extends version control principles to **infrastructure and deployment**. Instead of manually configuring servers or clicking through web interfaces, you **store your entire infrastructure** in Git repositories.
 
@@ -401,11 +450,11 @@ spec:
 
 GitOps transforms infrastructure from **manual, error-prone processes** into **reliable, automated workflows** that teams can trust and scale.
 
-### Section 4: Database Fundamentals
+## Section 4: Database Fundamentals
 
 **Databases** are the backbone of most applications, storing and retrieving data efficiently. Understanding database fundamentals is crucial for building reliable software systems.
 
-#### Core Database Concepts
+### Core Database Concepts
 
 * **Relational Databases**: Store data in tables with predefined relationships using SQL
 * **NoSQL Databases**: Handle unstructured data with flexible schemas
@@ -413,27 +462,27 @@ GitOps transforms infrastructure from **manual, error-prone processes** into **r
 * **Indexing**: Speed up data retrieval by creating pointers to data locations
 * **Normalization**: Organize data to reduce redundancy and improve integrity
 
-#### Database Types and Use Cases
+### Database Types and Use Cases
 
 * **MySQL/PostgreSQL**: Great for web applications and complex queries
 * **MongoDB**: Ideal for rapid development and flexible data structures
 * **Redis**: Perfect for caching and real-time applications
 * **SQLite**: Lightweight option for mobile apps and small projects
 
-#### Essential Database Skills
+### Essential Database Skills
 
 * **SQL Proficiency**: Write efficient queries and understand query optimization
 * **Database Design**: Create normalized schemas that support your application needs
 * **Performance Tuning**: Use indexes, connection pooling, and caching strategies
 * **Security**: Implement proper authentication, authorization, and data encryption
 
-For a comprehensive guide covering database types, design principles, SQL fundamentals, performance optimization, security, and modern trends, see [Fundamentals of Databases](https://jeffbailey.us/blog/2025/09/24/fundamentals-of-databases/).
+For a comprehensive guide covering database types, design principles, SQL fundamentals, performance optimization, security, and modern trends, see [Fundamentals of Databases][fundamentals-of-databases].
 
-### Section 5: Software Design Principles
+## Section 5: Software Design Principles
 
 Good **software design** makes code easier to **understand**, **modify**, and **extend**. These **principles** guide you toward better decisions.
 
-#### Programming Paradigm Applicability
+### Programming Paradigm Applicability
 
 Understanding which **programming paradigms** these principles apply to helps you use them effectively:
 
@@ -473,10 +522,10 @@ Most modern applications combine paradigms. A web application might use:
 
 The key is understanding which principles enhance your chosen paradigm and applying them appropriately.
 
-#### SOLID Principles
+### SOLID Principles
 
 **Single Responsibility Principle (SRP):**
-Each class should have one reason to change. This principle aligns with my philosophy of [single responsibility](https://jeffbailey.us/a-software-development-philosophy#single-responsibility/) in software design, where I isolate software components to reduce complexity.
+Each class should have one reason to change. This principle aligns with my philosophy of [single responsibility][philosophy-single-responsibility] in software design, where I isolate software components to reduce complexity.
 
 ```python
 # Bad: Multiple responsibilities
@@ -612,7 +661,7 @@ class EmailService:
         self.email_client.send(message)
 ```
 
-#### Concrete Code Examples
+### Concrete Code Examples
 
 **DRY (Don't Repeat Yourself):**
 
@@ -661,7 +710,7 @@ class User:
         self.email = email
 ```
 
-This principle connects to my philosophy of [solutions looking for a problem](https://jeffbailey.us/a-software-development-philosophy#solutions-looking-for-a-problem/) — ask yourself if a feature is valuable before building it.
+This principle connects to my philosophy of [solutions looking for a problem][philosophy-solutions-looking-for-a-problem]. Ask yourself if a feature is valuable before building it.
 
 **Composition over Inheritance:**
 
@@ -693,11 +742,11 @@ class Dog:
         self.sound_behavior = BarkingBehavior()
 ```
 
-### Section 6: Testing Strategies
+## Section 6: Testing Strategies
 
-**Testing** isn't about finding bugs; it's about **preventing them**. Well-designed tests give you **confidence** to change code without breaking things. As I believe, you should [test for life](https://jeffbailey.us/a-software-development-philosophy#test-for-life/) because testing prevents future pain and helps you sleep at night. Testing builds upon [fundamental software concepts](https://jeffbailey.us/blog/2025/10/11/fundamental-software-concepts/) like error handling and defensive programming.
+**Testing** isn't about finding bugs; it's about **preventing them**. Well-designed tests give you **confidence** to change code without breaking things. As I believe, you should [test for life][philosophy-test-for-life] because testing prevents future pain and helps you sleep at night. Testing builds upon [fundamental software concepts][fundamental-software-concepts] like error handling and defensive programming.
 
-#### Types of Testing
+### Types of Testing
 
 **Unit Testing:**
 Test individual functions or methods in isolation.
@@ -772,7 +821,7 @@ graph TD
     style UNIT6 fill:#c8e6c9,stroke:#388e3c,stroke-width:2px
 ```
 
-#### Test-Driven Development (TDD)
+### Test-Driven Development (TDD)
 
 **TDD** (Test-Driven Development) flips the traditional approach:
 
@@ -788,13 +837,13 @@ graph TD
 * Creates a safety net for refactoring.
 * Documents how your code should work.
 
-### Section 7: Debugging and Problem-Solving
+## Section 7: Debugging and Problem-Solving
 
-**Debugging** skills separate good developers from great ones. It involves fixing bugs and understanding systems to find their root cause. Effective debugging requires [collecting all the logs in the forest](https://jeffbailey.us/a-software-development-philosophy#all-the-logs-in-the-forest/) because you never know what they might reveal when investigating a problem.
+**Debugging** skills separate good developers from great ones. It involves fixing bugs and understanding systems to find their root cause. Effective debugging requires [collecting all the logs in the forest][philosophy-all-the-logs-in-the-forest] because you never know what they might reveal when investigating a problem.
 
-When facing complex debugging challenges, remember that [there are no big problems](https://jeffbailey.us/a-software-development-philosophy#there-are-no-big-problems/) — just a lot of minor problems. Break down what appears to be a big problem into manageable pieces.
+When facing complex debugging challenges, remember that [there are no big problems][philosophy-there-are-no-big-problems], only a lot of minor ones. Break down what appears to be a big problem into manageable pieces.
 
-#### Systematic Debugging Approach
+### Systematic Debugging Approach
 
 **1. Reproduce the Problem:**
 
@@ -820,7 +869,7 @@ When facing complex debugging challenges, remember that [there are no big proble
 * Test that the fix works.
 * Run tests to verify nothing else is broken.
 
-#### Debugging Tools and Techniques
+### Debugging Tools and Techniques
 
 * **Debuggers**: Step through code line by line.
 * **Logging**: Add strategic print statements.
@@ -828,11 +877,11 @@ When facing complex debugging challenges, remember that [there are no big proble
 * **Unit Tests**: Isolate the problem.
 * **Peer Code Reviews**: Fresh eyes see different things.
 
-### Section 8: Code Quality and Maintainability
+## Section 8: Code Quality and Maintainability
 
-Writing code that works is only half the battle. Writing understandable and modifiable code is the other half. This connects to my philosophy of [driving human value](https://jeffbailey.us/a-software-development-philosophy#drive-human-value/) — prioritizing end-user needs and simplicity over complexity.
+Writing code that works is only half the battle. Writing understandable and modifiable code is the other half. This connects to my philosophy of [driving human value][philosophy-drive-human-value], which means prioritizing end-user needs and simplicity over complexity.
 
-#### Code Readability
+### Code Readability
 
 **Meaningful Names:**
 
@@ -848,7 +897,7 @@ def calculate_circle_area(radius):
     return radius * radius * math.pi
 ```
 
-This follows my principle of [naming things with purpose](https://jeffbailey.us/a-software-development-philosophy#name-things-with-purpose/) — when naming variables, name them in ways that make them easy to rename and call things exactly what they are.
+This follows my principle of [naming things with purpose][philosophy-name-things-with-purpose]. When naming variables, name them in ways that make them easy to rename and call things exactly what they are.
 
 **Small Functions:**
 Functions should do one thing and do it right.
@@ -856,32 +905,32 @@ Functions should do one thing and do it right.
 **Comments That Explain Why:**
 Code should be self-documenting, but comments should explain the "why" behind complex logic.
 
-#### Code Organization
+### Code Organization
 
 * **Consistent formatting**: Use linters and formatters.
 * **Logical structure**: Group related code together.
 * **Clear interfaces**: Make it obvious how to use your code.
 * **Error handling**: Plan for potential issues that may arise.
 
-### Section 9: Documentation and Communication
+## Section 9: Documentation and Communication
 
-**Code is written once but read many times**. Good **documentation** makes your code accessible to others and your future self. This aligns with my principle of [being empathetic](https://jeffbailey.us/a-software-development-philosophy#be-empathetic/) — writing code anyone can understand by eliminating questions collected through solicited feedback.
+**Code is written once but read many times**. Good **documentation** makes your code accessible to others and your future self. This aligns with my principle of [being empathetic][philosophy-be-empathetic], which means writing code anyone can understand by eliminating questions collected through solicited feedback.
 
-#### Types of Documentation
+### Types of Documentation
 
 * **Code Comments**: Explain complex logic and business rules.
 * **API Documentation**: How to use your functions and classes.
 * **Architecture Documentation**: How the system is designed and why.
 * **User Documentation**: How end users interact with your software.
 
-#### Writing Effective Documentation
+### Writing Effective Documentation
 
 * **Start with the user**: What do they need to know?
 * **Use examples**: Show, don't just tell.
 * **Keep it current**: Outdated docs are worse than no docs.
 * **Make it discoverable**: Place documents where people can easily find them.
 
-### Section 10: Design Patterns
+## Section 10: Design Patterns
 
 **Design patterns** are reusable solutions to common problems in software design. They're not code you can copy and paste, but rather **templates** for solving recurring design challenges. Understanding patterns helps you communicate effectively with other developers and choose the most appropriate solutions.
 
@@ -895,11 +944,11 @@ The key is using patterns appropriately. Don't overuse them, understand the prob
 
 For a comprehensive guide to design patterns with detailed examples and best practices, see [Fundamentals of Software Design](/blog/2025/11/05/fundamentals-of-software-design/).
 
-### Section 11: Software Maturity Attributes
+## Section 11: Software Maturity Attributes
 
 **Software maturity** refers to how well your software handles real-world challenges beyond just working correctly. These attributes determine whether your software will succeed in production environments.
 
-#### Reliability
+### Reliability
 
 **Reliability** is the ability of software to perform its required functions under stated conditions for a specified period of time.
 
@@ -909,7 +958,7 @@ For a comprehensive guide to design patterns with detailed examples and best pra
 * **Error handling**: Graceful degradation when things go wrong.
 * **Recovery mechanisms**: Ability to restore service after failures.
 
-#### Performance
+### Performance
 
 **Performance** measures how efficiently software uses system resources and responds to user requests.
 
@@ -919,7 +968,7 @@ For a comprehensive guide to design patterns with detailed examples and best pra
 * **Throughput**: Number of requests processed per unit time.
 * **Resource utilization**: CPU, memory, and disk usage.
 
-#### Scalability
+### Scalability
 
 **Scalability** is the ability of software to handle increased load by adding resources.
 
@@ -928,7 +977,7 @@ For a comprehensive guide to design patterns with detailed examples and best pra
 * **Horizontal**: Add more servers/machines.
 * **Vertical**: Add more power to existing machines.
 
-#### Maintainability
+### Maintainability
 
 **Maintainability** is the ease with which software can be modified to correct faults, improve performance, or adapt to changing requirements.
 
@@ -939,7 +988,7 @@ For a comprehensive guide to design patterns with detailed examples and best pra
 * **Documentation**: Clear explanations of how and why.
 * **Testing**: Comprehensive test coverage.
 
-#### Security
+### Security
 
 **Security** protects software and data from unauthorized access, modification, or destruction.
 
@@ -950,7 +999,7 @@ For a comprehensive guide to design patterns with detailed examples and best pra
 * **Data encryption**: Protect sensitive information.
 * **Input validation**: Prevent injection attacks.
 
-#### Usability
+### Usability
 
 **Usability** measures how easily users can accomplish their goals with the software.
 
@@ -961,7 +1010,7 @@ For a comprehensive guide to design patterns with detailed examples and best pra
 * **Documentation**: Easy-to-follow instructions.
 * **Accessibility**: Usable by people with disabilities.
 
-#### Measuring Maturity
+### Measuring Maturity
 
 **Maturity Assessment:**
 
@@ -973,11 +1022,11 @@ For a comprehensive guide to design patterns with detailed examples and best pra
 
 These maturity attributes work together to create software that not only works but thrives in real-world conditions. Focus on improving one attribute at a time, and remember that perfect software doesn't exist, but better software does.
 
-### Section 12: System Design Fundamentals
+## Section 12: System Design Fundamentals
 
 **System design** is about building software that can handle real-world demands. It's not about writing perfect code; it's about creating systems that work when thousands of users hit your application simultaneously.
 
-#### Scalability Principles
+### Scalability Principles
 
 **Horizontal vs. Vertical Scaling:**
 
@@ -1006,11 +1055,11 @@ server {
 }
 ```
 
-#### Reliability Patterns
+### Reliability Patterns
 
 **Redundancy:**
 
-Never rely on a single point of failure. If your database goes down, your entire application will also go down—design for failure.
+Never rely on a single point of failure. If your database goes down, your entire application will also go down. Design for failure.
 
 **Circuit Breaker Pattern:**
 
@@ -1053,7 +1102,7 @@ class CircuitBreaker:
             self.state = 'OPEN'
 ```
 
-#### Data Storage Strategies
+### Data Storage Strategies
 
 **Database Sharding:**
 
@@ -1096,7 +1145,7 @@ def get_user_cached(user_id):
     return user
 ```
 
-#### Performance Optimization
+### Performance Optimization
 
 **Database Query Optimization:**
 
@@ -1109,18 +1158,17 @@ def get_user_cached(user_id):
 Serve static content from servers closer to your users.
 
 ```html
-<!-- Instead of serving images from your server -->
+
 <img src="https://yourserver.com/images/logo.png" alt="Logo">
 
-<!-- Serve from CDN -->
 <img src="https://cdn.yoursite.com/images/logo.png" alt="Logo">
 ```
 
-### Section 13: Software Architecture Patterns
+## Section 13: Software Architecture Patterns
 
-**Architecture** is the blueprint for how your software components interact with each other. It's not about choosing the "best" architecture; it's about selecting the right one for your specific context. Remember that [there's always a design](https://jeffbailey.us/a-software-development-philosophy#theres-always-a-design/) — an unplanned design is terrible, but it's still a design. For advanced architectural patterns and distributed systems, see [fundamentals of distributed systems](https://jeffbailey.us/blog/2025/10/11/fundamentals-of-distributed-systems/).
+**Architecture** is the blueprint for how your software components interact with each other. It's not about choosing the "best" architecture; it's about selecting the right one for your specific context. Remember that [there's always a design][philosophy-theres-always-a-design]. An unplanned design is terrible, but it's still a design. For advanced architectural patterns and distributed systems, see [fundamentals of distributed systems][fundamentals-of-distributed-systems].
 
-#### Monolithic Architecture
+### Monolithic Architecture
 
 A **monolith** is like a single building that contains everything. All your code lives in one application, one database, and one deployment.
 
@@ -1151,7 +1199,7 @@ app/
 * **Technology lock-in**: Hard to use different languages or frameworks for different parts.
 * **Team coordination**: Multiple teams working on the same codebase create conflicts.
 
-#### Microservices Architecture
+### Microservices Architecture
 
 **Microservices** break your application into small, independent services. Each service owns its data and can be developed, deployed, and scaled independently.
 
@@ -1198,7 +1246,7 @@ def get_product(product_id):
 * **Network latency**: Services communicate over the network.
 * **Data consistency**: Harder to maintain consistency across services.
 
-#### Architectural Patterns
+### Architectural Patterns
 
 **Layered Architecture:**
 
@@ -1270,7 +1318,7 @@ class UserService:
         return user
 ```
 
-#### Choosing Your Architecture
+### Choosing Your Architecture
 
 **Start Simple:**
 
@@ -1278,7 +1326,7 @@ class UserService:
 * **Extract services** when you have clear boundaries and team separation.
 * **Don't over-engineer** from the start.
 
-This approach follows my principle of [investing lightly](https://jeffbailey.us/a-software-development-philosophy#invest-lightly/) — limiting keystrokes and producing thoughtful, low-maintenance software architectures.
+This approach follows my principle of [investing lightly][philosophy-invest-lightly]: limiting keystrokes and producing thoughtful, low-maintenance software architectures.
 
 ```mermaid
 graph TB
@@ -1316,38 +1364,38 @@ graph TB
 * **Simple domain**: No clear service boundaries.
 * **Rapid iteration**: Need to move fast without architectural overhead.
 
-### Section 14: Modern Development Practices
+## Section 14: Modern Development Practices
 
 The software development landscape is **constantly evolving**.
 
 *Here are the **trends** shaping how we build software today.*
 
-#### Cloud-Native Development
+### Cloud-Native Development
 
 * **Microservices**: Break large applications into small, independent services.
 * **Containers**: Package applications with their dependencies.
 * **Serverless**: Run code without managing servers.
 * **Infrastructure as Code**: Define infrastructure with code.
 
-#### AI-Assisted Development
+### AI-Assisted Development
 
 * **Code Generation**: AI tools that write code from prompts and specifications.
 * **Code Review**: Automated suggestions for improvements.
 * **Testing**: AI-generated test cases.
 * **Documentation**: Auto-generated documentation from code.
 
-#### Security-First Development
+### Security-First Development
 
 * **Secure by Design**: Build security in from the start.
 * **Dependency Management**: Keep third-party libraries up to date.
 * **Code Scanning**: Automated security vulnerability detection.
 * **Threat Modeling**: Think about potential attacks.
 
-### Section 15: The Learning Mindset
+## Section 15: The Learning Mindset
 
 Software development is a field where you **never stop learning**. The technologies change, the problems evolve, and the solutions get better.
 
-#### Continuous Learning Strategies
+### Continuous Learning Strategies
 
 * **Build projects**: Apply what you learn in real projects.
 * **Read code**: Study well-written open source projects.
@@ -1355,49 +1403,49 @@ Software development is a field where you **never stop learning**. The technolog
 * **Join communities**: Learn from other developers.
 * **Experiment**: Try new technologies and approaches.
 
-#### Common Learning Pitfalls
+### Common Learning Pitfalls
 
 * **Tutorial Hell**: Following tutorials without building anything.
 * **Shiny Object Syndrome**: Jumping between technologies too quickly.
 * **Imposter Syndrome**: Feeling like you don't belong.
 * **Analysis Paralysis**: Overthinking instead of building.
 
-### Section 16: Building Your Development Career
+## Section 16: Building Your Development Career
 
 Software development offers excellent career opportunities, despite the rise of AI, but success requires more than just technical skills.
 
-#### Essential Non-Technical Skills
+### Essential Non-Technical Skills
 
 * **Communication**: Explain technical concepts to non-technical people.
 * **Collaboration**: Work effectively in teams.
 * **Problem-Solving**: Break down complex problems.
 * **Time Management**: Balance multiple priorities.
-* **Continuous Learning**: Stay current with technology trends and [learn effectively](https://jeffbailey.us/learning-earning-and-growing/ "Learning, Earning, and Growing").
+* **Continuous Learning**: Stay current with technology trends and [learn effectively][learning-earning-and-growing].
 
-#### Career Growth Paths
+### Career Growth Paths
 
 * **Individual Contributor (IC)** – Progression often moves from **senior developer** to **technical lead** or **architect**, then into advanced roles such as **principal engineer** or **distinguished engineer/architect**.
 * **Management**: Engineering manager, director, CTO.
-* **Specialization**: Security, performance, mobile, AI/ML. Consider whether you want to be a [full-stack developer or specialized software developer](https://jeffbailey.us/full-stack-developer-vs-specialized-software-developer/ "Full Stack Developer VS Specialized Software Developer").
+* **Specialization**: Security, performance, mobile, AI/ML. Consider whether you want to be a [full-stack developer or specialized software developer][full-stack-developer-vs-specialized-software-developer].
 * **Entrepreneurship**: Start your own company and develop a new product or service.
 
-#### Finding Your Next Job
+### Finding Your Next Job
 
  It will be challenging to master the fundamentals of software development if you can't find a job, so it's essential to learn this skill quickly.
 
 **Key Strategies:**
 
-* **Optimize your resume for ATS systems** - Most resumes get filtered out before a human ever sees them. Learn how to [optimize your resume to get past ATS and land interviews](https://jeffbailey.us/how-do-i-optimize-my-resume/ "How Do I Optimize My Resume to Get Past ATS and Land Interviews?").
+* **Optimize your resume for ATS systems** - Most resumes get filtered out before a human ever sees them. Learn how to [optimize your resume to get past ATS and land interviews][how-do-i-optimize-my-resume].
 * **Build a strong online presence** by maintaining an active GitHub profile, contributing to open-source projects, and showcasing your work.
 * **Network strategically** by attending meetups, conferences, and joining online communities. Many opportunities come through referrals.
-* **Practice technical interviews** by using coding challenges to prepare for them. <!-- Draft-only link removed: learn-java-coding-challenges -->
+* **Practice technical interviews** by using coding challenges to prepare for them. 
 * **Research companies thoroughly** - Understand their tech stack, culture, and recent developments before applying.
 
-#### Salary and Compensation
+### Salary and Compensation
 
-Understanding your worth and [negotiating your salary](https://jeffbailey.us/salary-negotiation-for-programmers/ "Salary Negotiation Guide for Software Developers") is crucial for career success. Research market rates, understand your value, and approach negotiations with confidence.
+Understanding your worth and [negotiating your salary][salary-negotiation-for-programmers] is crucial for career success. Research market rates, understand your value, and approach negotiations with confidence.
 
-### Conclusion
+## Conclusion
 
 💡 *Software development is fundamentally about making good decisions under uncertainty. Technical skills matter, but thinking skills matter more.*
 
@@ -1405,9 +1453,9 @@ Mastering software development fundamentals isn't about **memorizing syntax** or
 
 The best developers I know aren't the ones who know the most languages or frameworks. They're the ones who can take a **complex problem**, **break it down** into manageable pieces, and **build a solution** that works in the real world.
 
-### Call to Action
+## Call to Action
 
-Ready to become a **rock star developer** and master the fundamentals of software development? Start by picking **one fundamental skill** and focusing on it for the next month. Whether it's writing better tests, improving your debugging skills, or learning a new programming language, **consistent practice** consistently beats sporadic learning. Consider contributing to [open source projects](https://jeffbailey.us/blog/2025/03/06/fundamentals-of-open-source/) to see these fundamentals applied in real-world codebases.
+Ready to become a **rock star developer** and master the fundamentals of software development? Start by picking **one fundamental skill** and focusing on it for the next month. Whether it's writing better tests, improving your debugging skills, or learning a new programming language, **consistent practice** consistently beats sporadic learning. Consider contributing to [open source projects][fundamentals-of-open-source] to see these fundamentals applied in real-world codebases.
 
 Here are some resources to help you get started:
 
@@ -1416,19 +1464,19 @@ Here are some resources to help you get started:
 * **Community**: [Stack Overflow], [GitHub], [Dev.to]
 * **Books**: [Clean Code], [The Pragmatic Programmer], [Design Patterns]
 
-### Related Articles
+## Related Articles
 
 *Related fundamentals articles:*
 
-**Software Engineering:** [Fundamentals of Software Design](https://jeffbailey.us/blog/2025/11/05/fundamentals-of-software-design/) teaches you how to design maintainable code that's easier to test and modify. [Fundamentals of Software Architecture](https://jeffbailey.us/blog/2025/10/19/fundamentals-of-software-architecture/) helps you understand how to structure larger systems and make architectural decisions. [Fundamentals of Software Testing](https://jeffbailey.us/blog/2025/11/30/fundamentals-of-software-testing/) shows how to verify your code works correctly and catch bugs early.
+**Software Engineering:** [Fundamentals of Software Design][fundamentals-of-software-design] teaches you how to design maintainable code that's easier to test and modify. [Fundamentals of Software Architecture][fundamentals-of-software-architecture] helps you understand how to structure larger systems and make architectural decisions. [Fundamentals of Software Testing][fundamentals-of-software-testing] shows how to verify your code works correctly and catch bugs early.
 
-**Engineering Practices:** [Fundamentals of Backend Engineering](https://jeffbailey.us/blog/2025/10/14/fundamentals-of-backend-engineering/) shows how to build server-side systems and APIs. [Fundamentals of Frontend Engineering](https://jeffbailey.us/blog/2025/11/26/fundamentals-of-frontend-engineering/) teaches you how to build user interfaces and client-side applications.
+**Engineering Practices:** [Fundamentals of Backend Engineering][fundamentals-of-backend-engineering] shows how to build server-side systems and APIs. [Fundamentals of Frontend Engineering][fundamentals-of-frontend-engineering] teaches you how to build user interfaces and client-side applications.
 
-**Product Development:** [Fundamentals of Software Product Development](https://jeffbailey.us/blog/2025/11/28/fundamentals-of-software-product-development/) shows how software development fits into building products that solve user problems.
+**Product Development:** [Fundamentals of Software Product Development][fundamentals-of-software-product-development] shows how software development fits into building products that solve user problems.
 
-**Communication:** [Fundamentals of Technical Writing](https://jeffbailey.us/blog/2025/10/12/fundamentals-of-technical-writing/) helps you write code comments, documentation, and user-facing text that serves your users.
+**Communication:** [Fundamentals of Technical Writing][fundamentals-of-technical-writing] helps you write code comments, documentation, and user-facing text that serves your users.
 
-**Collaboration:** [Fundamentals of Open Source](https://jeffbailey.us/blog/2025/03/06/fundamentals-of-open-source/) shows how to contribute to and maintain open source projects, which is excellent practice for software development skills.
+**Collaboration:** [Fundamentals of Open Source][fundamentals-of-open-source] shows how to contribute to and maintain open source projects, which is excellent practice for software development skills.
 
 ## Glossary
 
@@ -1469,6 +1517,37 @@ Here are some resources to help you get started:
 [IEEE Spectrum]: https://spectrum.ieee.org/top-programming-languages-2025
 [RedMonk]: https://redmonk.com/sogrady/2025/06/18/language-rankings-1-25
 [The Practical Test Pyramid]: https://martinfowler.com/articles/practical-test-pyramid.html
+
+[a-software-development-philosophy]: https://jeffbailey.us/a-software-development-philosophy/
+[philosophy-measure-then-commit]: https://jeffbailey.us/a-software-development-philosophy/#measure-then-commit
+[philosophy-use-the-right-tool]: https://jeffbailey.us/a-software-development-philosophy/#use-the-right-tool
+[martin-fowler-s-comprehensive-guide-to-branching-p]: https://martinfowler.com/articles/branching-patterns.html#Trunk-basedDevelopment
+[what-are-conventional-commits]: https://jeffbailey.us/blog/2025/09/28/what-are-conventional-commits/
+[fundamentals-of-databases]: https://jeffbailey.us/blog/2025/09/24/fundamentals-of-databases/
+[philosophy-single-responsibility]: https://jeffbailey.us/a-software-development-philosophy/#single-responsibility
+[philosophy-solutions-looking-for-a-problem]: https://jeffbailey.us/a-software-development-philosophy/#solutions-looking-for-a-problem
+[philosophy-test-for-life]: https://jeffbailey.us/a-software-development-philosophy/#test-for-life
+[fundamental-software-concepts]: https://jeffbailey.us/blog/2025/10/11/fundamental-software-concepts/
+[philosophy-all-the-logs-in-the-forest]: https://jeffbailey.us/a-software-development-philosophy/#all-the-logs-in-the-forest
+[philosophy-there-are-no-big-problems]: https://jeffbailey.us/a-software-development-philosophy/#there-are-no-big-problems
+[philosophy-drive-human-value]: https://jeffbailey.us/a-software-development-philosophy/#drive-human-value
+[philosophy-name-things-with-purpose]: https://jeffbailey.us/a-software-development-philosophy/#name-things-with-purpose
+[philosophy-be-empathetic]: https://jeffbailey.us/a-software-development-philosophy/#be-empathetic
+[philosophy-theres-always-a-design]: https://jeffbailey.us/a-software-development-philosophy/#theres-always-a-design
+[fundamentals-of-distributed-systems]: https://jeffbailey.us/blog/2025/10/11/fundamentals-of-distributed-systems/
+[philosophy-invest-lightly]: https://jeffbailey.us/a-software-development-philosophy/#invest-lightly
+[learning-earning-and-growing]: https://jeffbailey.us/blog/2022/06/02/learning-earning-and-growing/
+[full-stack-developer-vs-specialized-software-developer]: https://jeffbailey.us/blog/2020/05/08/full-stack-developer-vs-specialized-software-developer/
+[how-do-i-optimize-my-resume]: https://jeffbailey.us/blog/2025/08/20/how-do-i-optimize-my-resume/
+[salary-negotiation-for-programmers]: https://jeffbailey.us/blog/2020/10/02/salary-negotiation-for-programmers/
+[fundamentals-of-open-source]: https://jeffbailey.us/blog/2025/03/06/fundamentals-of-open-source/
+[fundamentals-of-software-design]: https://jeffbailey.us/blog/2025/11/05/fundamentals-of-software-design/
+[fundamentals-of-software-architecture]: https://jeffbailey.us/blog/2025/10/19/fundamentals-of-software-architecture/
+[fundamentals-of-software-testing]: https://jeffbailey.us/blog/2025/11/30/fundamentals-of-software-testing/
+[fundamentals-of-backend-engineering]: https://jeffbailey.us/blog/2025/10/14/fundamentals-of-backend-engineering/
+[fundamentals-of-frontend-engineering]: https://jeffbailey.us/blog/2025/11/26/fundamentals-of-frontend-engineering/
+[fundamentals-of-software-product-development]: https://jeffbailey.us/blog/2025/11/28/fundamentals-of-software-product-development/
+[fundamentals-of-technical-writing]: https://jeffbailey.us/blog/2025/10/12/fundamentals-of-technical-writing/
 
 
 ---
@@ -2332,7 +2411,7 @@ Agile development requires teams that collaborate, decide, and continually impro
 
 Agile teams work best when they include:
 
-**Cross-functional skills:** Teams need all skills—development, design, testing, product management—to deliver working software. Avoid reliance on external specialists.
+**Cross-functional skills:** Teams need all skills (development, design, testing, product management) to deliver working software. Avoid reliance on external specialists.
 
 **Right size:** Teams of five to nine people work well; smaller teams might lack skills, and larger teams face communication issues.
 

@@ -1,7 +1,7 @@
 # Domain Knowledge Reference
 
 Auto-generated from blog posts. Do not edit manually.
-Last updated: 2026-06-29
+Last updated: 2026-09-28
 
 ---
 
@@ -83,7 +83,7 @@ A good everyday analogy is a recipe:
 
 This definition reveals a problem in systems where teams run code without a clear algorithm. Logic is scattered across services, message queues, and jobs, making it hard to describe and debug.
 
-A disciplined approach solves this problem by writing algorithms in [pseudocode](https://jeffbailey.us/what-is-pseudocode/) for key behaviors, detailing the inputs, outputs, and steps, then reviewing them with teammates before choosing data structures and implementations.
+A disciplined approach solves this problem by writing algorithms in [pseudocode](https://jeffbailey.us/blog/2025/10/11/what-is-pseudocode/) for key behaviors, detailing the inputs, outputs, and steps, then reviewing them with teammates before choosing data structures and implementations.
 
 This practice is a diagnostic tool in messy systems: if a clear description can't be written, the problem or domain model isn't clear enough.
 
@@ -104,7 +104,7 @@ Selecting the wrong structure makes even clever algorithms slow and brittle, whi
 
 ### Big O notation as a thinking tool
 
-Big O notation is a form of asymptotic notation describing how an algorithm's time or space costs grow with input size. <!-- Draft-only link removed: learn-asymptotic-notations --> It’s part of a broader category that includes Omega and Theta notations. In practice, Big O is most common because it depicts worst-case performance, which is crucial for production systems.
+Big O notation is a form of asymptotic notation describing how an algorithm's time or space costs grow with input size.  It’s part of a broader category that includes Omega and Theta notations. In practice, Big O is most common because it depicts worst-case performance, which is crucial for production systems.
 
 Big O notation describes how an algorithm’s resource usage grows as the input size increases. It compares growth rates, not exact runtimes, so it doesn’t tell you how fast an algorithm runs on a specific machine or input — only how it scales. Because Big O ignores constant factors, an **O(n)** algorithm can still run faster than an **O(log n)** algorithm for small input sizes. Time complexity describes how the number of operations grows with the input size, while space complexity describes how much additional memory an algorithm requires.
 
@@ -123,25 +123,25 @@ Each pattern has distinct characteristics:
 *Example operation:* Hash map lookup
 
 *Behavior as `n` grows:* Stays roughly constant
---card--
+
 **O(log n)**
 
 *Example operation:* Binary search in a sorted array
 
 *Behavior as `n` grows:* Grows slowly
---card--
+
 **O(n)**
 
 *Example operation:* Single pass over a list
 
 *Behavior as `n` grows:* Grows linearly
---card--
+
 **O(n log n)**
 
 *Example operation:* Efficient general-purpose sorting
 
 *Behavior as `n` grows:* Grows faster than linear
---card--
+
 **O(n^2)**
 
 *Example operation:* Pairwise comparison of all items
@@ -673,7 +673,7 @@ This page is a **reference catalog** of algorithmic patterns and pattern familie
 
 Examples are in **Python**, but the recognition cues are language-agnostic.
 
-If you want the study-oriented explanation of *why* patterns work, and how to build intuition, read [How Algorithmic Patterns Work](https://jeffbailey.us/how-algorithmic-patterns-work/).
+If you want the study-oriented explanation of *why* patterns work, and how to build intuition, read [How Algorithmic Patterns Work](https://jeffbailey.us/blog/2025/12/12/how-algorithmic-patterns-work/).
 
 ## Prerequisites: What You Need to Know First
 
@@ -2773,7 +2773,7 @@ Before exploring this catalog, you should be comfortable with these basics:
 
 You don't need to *master* Big O notation or do formal proofs. This article emphasizes structure properties and language appearances, using light complexity labels to aid comparisons.
 
-See [Fundamentals of Data Structures](https://jeffbailey.us/blog/2025/12/06/fundamentals-of-data-structures/) for effective data structure use in software—performance, reliability, system design. See Learn Asymptotic Notations for learning asymptotic notations. <!-- Draft-only link removed: learn-asymptotic-notations -->
+See [Fundamentals of Data Structures](https://jeffbailey.us/blog/2025/12/06/fundamentals-of-data-structures/) for effective data structure use in software—performance, reliability, system design. See Learn Asymptotic Notations for learning asymptotic notations. 
 
 ## What You Will Learn
 
@@ -4006,7 +4006,6 @@ Focus on properties, not names. A structure that maps keys to values is a hash m
 
 When multiple structures seem to fit your problem, understanding their differences helps you choose the right one. These comparisons highlight key trade-offs:
 
---card--
 **Stacks vs Queues**
 
 **Stacks (LIFO):** Last-in-first-out. Use when you need reverse-order processing: function calls, undo operations, backtracking.
@@ -4014,7 +4013,7 @@ When multiple structures seem to fit your problem, understanding their differenc
 **Queues (FIFO):** First-in-first-out. Use when you need arrival-order processing: task scheduling, message queues, breadth-first search.
 
 **Key difference:** Stacks process most recent first; queues process oldest first.
---card--
+
 **Hash Maps vs Binary Search Trees**
 
 **Hash Maps:** O(1) average lookups, no ordering. Use for fast key-based access when order doesn't matter.
@@ -4022,7 +4021,7 @@ When multiple structures seem to fit your problem, understanding their differenc
 **BSTs:** O(log n) lookups, maintains sorted order. Use when you need ordered iteration or range queries.
 
 **Key difference:** Hash maps prioritize speed; BSTs prioritize ordering.
---card--
+
 **Arrays vs Linked Lists**
 
 **Arrays:** Fast index access (O(1)), cache-friendly, but slow middle insertions (O(n)). Use for sequential access patterns.
@@ -4030,7 +4029,7 @@ When multiple structures seem to fit your problem, understanding their differenc
 **Linked Lists:** Fast middle insertions when you have a pointer (O(1)), but slow access (O(n)). Use for frequent middle modifications.
 
 **Key difference:** Arrays optimize access; linked lists optimize middle insertions.
---card--
+
 **Hash Sets vs Hash Maps**
 
 **Hash Sets:** Store only keys, fast membership testing. Use when you only need to track presence: visited nodes, unique values.
@@ -4038,7 +4037,7 @@ When multiple structures seem to fit your problem, understanding their differenc
 **Hash Maps:** Store key-value pairs and provide fast key-based lookups. Use when you need associated data, such as user preferences and configurations.
 
 **Key difference:** Sets track membership; maps store associations.
---card--
+
 **Heaps vs Sorted Arrays**
 
 **Heaps:** O(1) access to min/max, O(log n) insert/extract. Use for priority queues when you only need the top element.
@@ -4046,7 +4045,7 @@ When multiple structures seem to fit your problem, understanding their differenc
 **Sorted Arrays:** O(log n) search, O(n) insert, but all elements accessible. Use when you need sorted iteration or frequent access to all elements.
 
 **Key difference:** Heaps optimize priority access; sorted arrays optimize sorted iteration.
---card--
+
 **Trees vs Graphs**
 
 **Trees:** Hierarchical, no cycles, single parent. Use for file systems, organization charts, and expression trees.
@@ -4080,7 +4079,6 @@ When choosing a data structure, follow this systematic process:
 
 The following cards compare the typical time and space complexities of common operations across fundamental data structures. Use this to verify that your chosen structure's operations match your performance needs:
 
---card--
 **Array/List**
 
 * Access: O(1)
@@ -4090,7 +4088,7 @@ The following cards compare the typical time and space complexities of common op
 * Space: O(n)
 
 *Note: Dynamic arrays grow occasionally, so appends are amortized O(1) but worst-case O(n) during resize.*
---card--
+
 **Stack**
 
 * Access: O(1) top
@@ -4098,7 +4096,7 @@ The following cards compare the typical time and space complexities of common op
 * Insert: O(1)
 * Delete: O(1)
 * Space: O(n)
---card--
+
 **Queue**
 * Access: O(1) front
 * Search: O(n)
@@ -4107,7 +4105,7 @@ The following cards compare the typical time and space complexities of common op
 * Space: O(n)
 
 *Assuming a proper queue implementation (linked list, deque, ring buffer). Naïve array-based queues that use `shift()` or `pop(0)` are O(n).*
---card--
+
 **Deque**
 
 * Access: O(1) ends
@@ -4115,42 +4113,42 @@ The following cards compare the typical time and space complexities of common op
 * Insert: O(1) ends
 * Delete: O(1) ends
 * Space: O(n)
---card--
+
 **Hash Map**
 * Access: O(1) avg
 * Search: O(1) avg
 * Insert: O(1) avg
 * Delete: O(1) avg
 * Space: O(n)
---card--
+
 **Hash Set**
 * Access: N/A
 * Search: O(1) avg
 * Insert: O(1) avg
 * Delete: O(1) avg
 * Space: O(n)
---card--
+
 **Binary Search Tree**
 * Access: O(log n) avg
 * Search: O(log n) avg
 * Insert: O(log n) avg
 * Delete: O(log n) avg
 * Space: O(n)
---card--
+
 **Heap**
 * Access: O(1) root
 * Search: O(n)
 * Insert: O(log n)
 * Delete: O(log n)
 * Space: O(n)
---card--
+
 **Linked List**
 * Access: O(n)
 * Search: O(n)
 * Insert: O(1) known pos
 * Delete: O(1) known pos
 * Space: O(n)
---card--
+
 **Graph**
 * Access: Varies
 * Search (traversal): O(V+E)
@@ -4367,7 +4365,7 @@ This catalog has covered the fundamental data structure types found in most prog
 
 ### The Unifying Framework: Choose Based on Operations
 
-All data structures answer one fundamental question: **which operations must be fast?** The three-axes mental model—**access pattern, update pattern, relationship pattern**—helps you see why each structure type exists and when to choose each one:
+All data structures answer one fundamental question: **which operations must be fast?** The three-axes mental model (**access pattern, update pattern, relationship pattern**) helps you see why each structure type exists and when to choose each one:
 
 * **Arrays** optimize index access at the cost of middle insertions
 * **Hash maps** optimize key lookups at the cost of ordering
@@ -4375,7 +4373,7 @@ All data structures answer one fundamental question: **which operations must be 
 * **Stacks** optimize last-in access at the cost of random access
 * **Heaps** optimize priority access at the cost of sorted iteration
 
-Understanding when each type fits—based on which operations dominate your use case—helps you choose the right structure type for each problem.
+Understanding when each type fits (based on which operations dominate your use case) helps you choose the right structure type for each problem.
 
 ### Key Takeaways
 
@@ -4413,8 +4411,6 @@ Recognize fundamental structure types in daily coding to build intuition.
 *Related fundamentals articles:*
 
 **Data Structures:** [Fundamentals of Data Structures](https://jeffbailey.us/blog/2025/12/06/fundamentals-of-data-structures/) covers how to use data structures effectively in software—performance, reliability, and system design. 
-
-<!-- [Fundamental Algorithmic Patterns]({{ "{{" }}< ref "fundamental-algorithmic-patterns" >{{ "}}" }}) shows how algorithms use data structures to solve problems. -->
 
 **Algorithms:** [Fundamentals of Algorithms](https://jeffbailey.us/blog/2025/12/04/fundamentals-of-algorithms/) explains how algorithms work with data structures to process information efficiently.
 

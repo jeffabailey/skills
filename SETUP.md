@@ -244,6 +244,7 @@ All skills live under `skills/`. The install commands above symlink every direct
 - `skills/review-jit-test-gen`
 - `skills/review-apply`
 - `skills/review-usability`
+- `skills/ai-sanitize`
 
 ---
 

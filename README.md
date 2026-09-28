@@ -20,6 +20,7 @@ This repository and the article [Fundamental Skills](https://jeffbailey.us/blog/
 | Skill | Purpose | Triggers |
 |-------|---------|----------|
 | `generate-commit` | Generate a conventional commit message from staged changes, review before committing. Detects the project's language/formatter and applies it. | "generate commit", "write a commit message", "commit my changes" |
+| `ai-sanitize` | Removes AI tells from prose, UI code, and graphics (performative phrasing, emdashes, gradients, glass, eyebrows, pills, emoji, broken ASCII art), extending the project's own style guide and design system. Edits in place or reports only. | "remove AI tells", "de-slop this", "make this UI look less AI-generated" |
 
 ### Project fitness review
 
@@ -310,6 +311,12 @@ scripts/
 skills/
   generate-commit/          # general-development skill (conventional commits)
     SKILL.md
+  ai-sanitize/              # general-development skill (removes AI tells)
+    SKILL.md
+    references/
+      prose.md              # Writing tells and rewrites
+      ui.md                 # Interface tells, detection patterns, fixes
+      graphics.md           # SVG, ASCII, diagram, chart, and image tells
   review-<domain>/          # one per domain (architecture, security, etc.)
     SKILL.md                # Skill definition (workflow + scoring rubric)
     references/

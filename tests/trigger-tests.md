@@ -218,3 +218,17 @@ Should NOT trigger:
 - "Check WCAG compliance of these templates" (that's review-accessibility)
 - "Check color contrast in the CSS" (that's review-accessibility)
 - "Full review" (that's review-full)
+
+## ai-sanitize
+
+Should trigger:
+- "Remove the AI tells from this draft"
+- "De-slop this landing page"
+- "This UI looks AI-generated, fix it"
+- "Make this README sound less like ChatGPT wrote it"
+- `/ai-sanitize`
+
+Should NOT trigger:
+- "Check WCAG compliance of these templates" (that's review-accessibility)
+- "Review the usability of https://example.com" (that's review-usability)
+- "Write a commit message" (that's generate-commit)

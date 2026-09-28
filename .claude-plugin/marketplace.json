@@ -9,7 +9,7 @@
     {
       "name": "jbb-skills",
       "source": "./",
-      "description": "Project fitness review skills plus commit and root-cause helpers."
+      "description": "Project fitness review skills plus commit, root-cause, and AI-tell cleanup helpers."
     }
   ]
 }

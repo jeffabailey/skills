@@ -340,3 +340,45 @@ For each test scenario:
 - The summary table has a "Prev" column
 - A "Prior Findings" table gives each earlier finding a status (Fixed, Still present, Deferred, or Not verifiable here) with evidence
 - The same top tasks are walked, and each fix is probed for regressions
+
+## ai-sanitize
+
+### Test: Rewrites prose tells without changing facts or voice
+
+**Given:** A Markdown draft with emdashes, "Here's the kicker", an "It's not X, it's Y" line, a closing "Curious what others think?", and the author's own profanity
+**When:** Run `/ai-sanitize draft.md`
+**Then:**
+- Every emdash, the kicker phrase, the contrast line, and the closing question are rewritten or removed
+- The profanity, facts, numbers, code blocks, and links are unchanged
+- The report lists each change with its `references/prose.md` item number
+
+### Test: Strips a generated UI composition using existing tokens
+
+**Given:** A React hero with a purple gradient blob, an uppercase eyebrow, pill buttons, glass cards, a pulsing "Active" badge, and a project `tailwind.config` with defined colors and radii
+**When:** Run `/ai-sanitize src/components/Hero.tsx`
+**Then:**
+- The blob, eyebrow, glass, and constant "Active" badge are removed
+- Remaining colors and radii come from the existing config; no new colors, fonts, or button variants appear
+- The page is rendered (or marked not verified) at desktop and phone widths
+
+### Test: Keeps intentional choices
+
+**Given:** A project whose documented brand uses a purple gradient, and a status badge whose state changes
+**When:** Run `/ai-sanitize`
+**Then:** Both appear under "Kept on purpose" with the reason, and neither is edited
+
+### Test: Report mode edits nothing
+
+**Given:** Any target with tells
+**When:** Run `/ai-sanitize report src/`
+**Then:**
+- `git status` shows no modified files
+- The report has a "Proposed changes" table with location, tell, and fix
+
+### Test: Verifies ASCII art and SVG by rendering
+
+**Given:** A README with a hand-drawn ASCII banner that misspells the project name, and an SVG icon row with mixed stroke widths
+**When:** Run `/ai-sanitize README.md assets/icons/`
+**Then:**
+- The banner is removed or regenerated with a real tool, and the fix is checked by rendering
+- Icons are normalized to one stroke width and size, or the finding says not verified if rendering was unavailable

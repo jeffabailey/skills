@@ -1,7 +1,7 @@
 {
   "name": "jbb-skills",
   "version": "1.0.1",
-  "description": "Project fitness review skills (architecture, security, reliability, testing, performance, algorithms, data, accessibility, usability, process, maintainability) plus commit and root-cause helpers.",
+  "description": "Project fitness review skills (architecture, security, reliability, testing, performance, algorithms, data, accessibility, usability, process, maintainability) plus commit, root-cause, and AI-tell cleanup helpers.",
   "author": {
     "name": "Jeff Bailey",
     "url": "https://jeffbailey.us"

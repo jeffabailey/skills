@@ -36,19 +36,19 @@ Feature: The init skill stays consistent with the rest of the fitness bundle
     Then the audit passes
     And the audit covered the fitness-config-init guide
 
-  @skip @ADR-008 @compat
+  @ADR-008 @compat
   Scenario: The published example config still passes the stricter validation
     Given the published example config
     When the maintainer validates the published example config
     Then the validation passes
 
-  @skip @ADR-008 @compat
+  @ADR-008 @compat
   Scenario: An override that only sets the security cutoff remains valid
     Given Kenji's project "fieldnotes" has an override in "services/search" that only sets the security cutoff to 5
     When Kenji validates the fitness config file in "fieldnotes/services/search"
     Then the validation passes
 
-  @skip @ADR-008 @requires_external
+  @ADR-008 @requires_external
   Scenario: The resolver's validation rejects everything the published config format rejects
     Given a set of sample configs the published config format rejects
     When each sample is validated by the resolver

@@ -555,41 +555,100 @@ def _is_number(value) -> bool:
     return isinstance(value, (int, float)) and not isinstance(value, bool)
 
 
-def _is_whole_weight(value) -> bool:
-    return type(value) is int and 0 <= value <= 100
+def _is_pair(value) -> bool:
+    return isinstance(value, list) and len(value) == 2 and all(_is_number(v) for v in value)
 
 
-def _is_range(value) -> bool:
-    return (isinstance(value, list) and len(value) == 2
-            and all(_is_number(v) for v in value) and value[0] <= value[1])
+def _version_violations(config: dict) -> list[str]:
+    version = config.get("version")
+    if type(version) is int and version == _SUPPORTED_SCHEMA_VERSION:
+        return []
+    return [f"'version' must be the integer {_SUPPORTED_SCHEMA_VERSION}, got {version!r}"]
 
 
-def _section_key_errors(name: str, section) -> list[str]:
+def _weight_sum_violations(weights: dict) -> list[str]:
+    """Sum-to-100 binds a file only when it lists every domain; a partial
+    override is summed after merging, by validate_effective."""
+    if not set(DEFAULT_WEIGHTS) <= set(weights):
+        return []
+    total = _sum_weights(weights)
+    if abs(total - 100) <= _WEIGHTS_SUM_TOLERANCE:
+        return []
+    return [f"weights add up to {total:g}; they must add up to 100"]
+
+
+def _weights_violations(weights: dict) -> list[str]:
+    unknown = [f"weights.{name} is not a known domain ({', '.join(DEFAULT_WEIGHTS)})"
+               for name in weights if name not in DEFAULT_WEIGHTS]
+    out_of_range = [f"weights.{name} must be a number 0-100, got {value!r}"
+                    for name, value in weights.items()
+                    if name in DEFAULT_WEIGHTS and not (_is_number(value) and 0 <= value <= 100)]
+    return unknown + out_of_range + _weight_sum_violations(weights)
+
+
+def _pair_violations(name: str, section: dict) -> list[str]:
+    return [f"{name}.{key} must be a [low, high] pair of numbers, got {section[key]!r}"
+            for key in _SECTION_DEFAULTS[name] if key in section and not _is_pair(section[key])]
+
+
+def _cutoff_violations(security: dict) -> list[str]:
+    if "confidenceThreshold" not in security:
+        return []
+    cutoff = security["confidenceThreshold"]
+    if _is_number(cutoff) and 1 <= cutoff <= 10:
+        return []
+    return [f"security.confidenceThreshold must be a number 1-10, got {cutoff!r}"]
+
+
+_SECTION_RULES: dict[str, Callable[[dict], list[str]]] = {
+    "weights": _weights_violations,
+    "statusThresholds": lambda section: _pair_violations("statusThresholds", section),
+    "security": _cutoff_violations,
+    "scoring": lambda section: _pair_violations("scoring", section),
+}
+
+
+def validate_config(config) -> list[str]:
+    """Strict per-file rules (ADR-008 Decision 1), mirroring the schema.
+
+    Pure. Returns every violation as a message line (empty = valid); never
+    raises. Partial override files stay valid: only the sections and weight
+    domains present are checked, and the sum only when all domains are listed.
+    """
+    if not isinstance(config, dict):
+        return ["A fitness config must be a JSON object"]
+    section_lines = [
+        line for name, rule in _SECTION_RULES.items() if name in config
+        for line in (rule(config[name]) if isinstance(config[name], dict)
+                     else [f"'{name}' must be an object"])]
+    return _version_violations(config) + section_lines
+
+
+def _section_completeness(name: str, section) -> list[str]:
+    if section is None:
+        return [f"'{name}' section is missing"]
     if not isinstance(section, dict):
-        return [f"'{name}' is missing or not an object"]
+        return []
     missing = [key for key in _SECTION_DEFAULTS[name] if key not in section]
-    unknown = sorted(set(section) - set(_SECTION_DEFAULTS[name]))
+    unknown = [] if name == "weights" else sorted(set(section) - set(_SECTION_DEFAULTS[name]))
     return ([f"'{name}' is missing: {', '.join(missing)}"] if missing else []) + (
         [f"'{name}' has unknown keys: {', '.join(unknown)}"] if unknown else [])
 
 
-def _weight_value_errors(weights: dict) -> list[str]:
-    errors = [f"weights.{domain} must be a whole number 0-100, got {value!r}"
-              for domain, value in weights.items() if not _is_whole_weight(value)]
-    total = _sum_weights(weights)
-    if total != 100:
-        errors.append(f"weights add up to {total:g}; they must add up to 100")
-    return errors
-
-
-def _range_and_cutoff_errors(proposal: dict) -> list[str]:
-    errors = [f"{name}.{key} must be a [low, high] pair, got {proposal[name][key]!r}"
-              for name in _RANGE_SECTIONS for key in _SECTION_DEFAULTS[name]
-              if not _is_range(proposal[name][key])]
-    cutoff = proposal["security"]["confidenceThreshold"]
-    if not (_is_number(cutoff) and 1 <= cutoff <= 10):
-        errors.append(f"security.confidenceThreshold must be 1-10, got {cutoff!r}")
-    return errors
+def _completeness_violations(proposal: dict) -> list[str]:
+    """Write-bound rules (ADR-008 Decision 2): every section and key present,
+    weights whole numbers, ranges low-first."""
+    sections = [line for name in _SECTION_DEFAULTS
+                for line in _section_completeness(name, proposal.get(name))]
+    weights = proposal.get("weights") if isinstance(proposal.get("weights"), dict) else {}
+    fractional = [f"weights.{name} must be a whole number, got {value!r}"
+                  for name, value in weights.items()
+                  if name in DEFAULT_WEIGHTS and _is_number(value) and type(value) is not int]
+    reversed_ranges = [f"{name}.{key} must list the low end first, got {value!r}"
+                       for name in _RANGE_SECTIONS if isinstance(proposal.get(name), dict)
+                       for key, value in proposal[name].items()
+                       if key in _SECTION_DEFAULTS[name] and _is_pair(value) and value[0] > value[1]]
+    return sections + fractional + reversed_ranges
 
 
 def validate_proposal(proposal) -> list[str]:
@@ -599,14 +658,10 @@ def validate_proposal(proposal) -> list[str]:
     all 10 domains as whole numbers adding up to 100. Returns error lines
     (empty when the proposal may be written).
     """
+    violations = validate_config(proposal)
     if not isinstance(proposal, dict):
-        return ["Proposal must be a JSON object"]
-    version = proposal.get("version")
-    errors = [] if type(version) is int and version == 1 else ["'version' must be the integer 1"]
-    key_errors = [e for name in _SECTION_DEFAULTS for e in _section_key_errors(name, proposal.get(name))]
-    if key_errors:
-        return errors + key_errors
-    return errors + _weight_value_errors(proposal["weights"]) + _range_and_cutoff_errors(proposal)
+        return violations
+    return violations + _completeness_violations(proposal)
 
 
 def render_canonical(config: dict) -> str:
@@ -696,30 +751,8 @@ def anchored_chain(target: Path, anchor: Path,
 
 
 # ---------------------------------------------------------------------------
-# Validation (existing behavior preserved).
+# Legacy single-file merge.
 # ---------------------------------------------------------------------------
-
-def validate_config(data: dict) -> bool:
-    """Basic validation without jsonschema. Returns True if valid."""
-    if not isinstance(data.get("version"), int):
-        print("Error: 'version' must be an integer", file=sys.stderr)
-        return False
-    if "weights" in data:
-        w = data["weights"]
-        if not isinstance(w, dict):
-            print("Error: 'weights' must be an object", file=sys.stderr)
-            return False
-        total = sum(v for v in w.values() if isinstance(v, (int, float)))
-        if abs(total - 100) > 0.01:
-            print(f"Error: weights sum to {total}, should be 100", file=sys.stderr)
-            return False
-    if "security" in data and "confidenceThreshold" in data["security"]:
-        t = data["security"]["confidenceThreshold"]
-        if not (1 <= t <= 10):
-            print(f"Error: confidenceThreshold must be 1–10, got {t}", file=sys.stderr)
-            return False
-    return True
-
 
 def merge_defaults(data: dict) -> dict:
     """Merge loaded config with defaults (legacy single-file mode)."""
@@ -748,7 +781,9 @@ def cmd_validate(path: Path) -> int:
     if data is None:
         print(f"Error: {path} not found or invalid JSON", file=sys.stderr)
         return 1
-    if not validate_config(data):
+    violations = validate_config(data)
+    if violations:
+        _print_validation_errors([f"Error: {line}" for line in violations])
         print(f"Error: invalid config: {path}", file=sys.stderr)
         return 1
     print("Valid:", path)

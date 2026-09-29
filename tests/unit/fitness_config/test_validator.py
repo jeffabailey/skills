@@ -321,3 +321,119 @@ def test_any_incomplete_proposal_is_rejected_with_a_reason(config, flaw, domain,
     errors = fitness_config.validate_proposal(broken)
     assert errors, f"{flaw} accepted: {broken}"
     assert all(isinstance(line, str) and line for line in errors)
+
+
+# ---------------------------------------------------------------------------
+# Behavior B9: per-file strict validation (ADR-008 Decision 1).
+# Driving port: validate_config(data) -> list[str]  (every violation, as data).
+# Universe: the config handed in (never mutated) and the violations reported.
+# Partial overrides stay valid on their own; the weights sum is checked only
+# when the file lists every domain (the merged sum is validate_effective's job).
+# ---------------------------------------------------------------------------
+
+import copy  # noqa: E402
+import importlib.util  # noqa: E402
+import sys  # noqa: E402
+
+if "fci_state_delta" not in sys.modules:
+    _spec = importlib.util.spec_from_file_location(
+        "fci_state_delta", Path(__file__).resolve().parents[2]
+        / "acceptance" / "fitness-config-init" / "steps" / "fci_state_delta.py")
+    sys.modules["fci_state_delta"] = importlib.util.module_from_spec(_spec)
+    _spec.loader.exec_module(sys.modules["fci_state_delta"])
+state_delta = sys.modules["fci_state_delta"]
+
+
+def is_(value) -> "state_delta.Predicate":
+    return state_delta.Predicate(f"== {value!r}", lambda before, after: after == value)
+
+
+VALIDATION_UNIVERSE = {"config", "violations"}
+SECTIONS = ["weights", "statusThresholds", "security", "scoring"]
+
+
+def run_validate_config(config) -> tuple[dict, dict]:
+    before = {"config": copy.deepcopy(config), "violations": None}
+    violations = fitness_config.validate_config(config)
+    return before, {"config": config, "violations": violations}
+
+
+def naming_each(words) -> state_delta.Predicate:
+    return state_delta.Predicate(
+        f"a violation naming each of {sorted(words)}",
+        lambda before, after: all(any(word in line for line in after) for word in words))
+
+
+@st.composite
+def partial_overrides(draw) -> dict:
+    """A complete config with any sections and any weight domains left out."""
+    config = draw(complete_configs())
+    kept_domains = draw(st.sets(st.sampled_from(DOMAINS)))
+    kept_sections = draw(st.sets(st.sampled_from(SECTIONS)))
+    trimmed = {**config, "weights": {domain: value for domain, value in config["weights"].items()
+                                     if domain in kept_domains}}
+    return {"version": 1, **{name: trimmed[name] for name in kept_sections}}
+
+
+@given(st.one_of(complete_configs(), partial_overrides()))
+def test_every_complete_config_and_partial_override_validates_alone(config):
+    before, after = run_validate_config(config)
+    state_delta.assert_state_delta(before, after, VALIDATION_UNIVERSE, {"violations": is_([])})
+
+
+def _set(config: dict, section: str, key: str, value) -> dict:
+    return {**config, section: {**config[section], key: value}}
+
+
+FLAWS = {
+    "unknown domain": lambda cfg, domain: (_set(cfg, "weights", f"{domain}-typo", 0), f"{domain}-typo"),
+    "yes-or-no weight": lambda cfg, domain: (_set(cfg, "weights", domain, True), domain),
+    "weight below 0": lambda cfg, domain: (_set(cfg, "weights", domain, -1), domain),
+    "weight above 100": lambda cfg, domain: (_set(cfg, "weights", domain, 101), domain),
+    "wordy cutoff": lambda cfg, domain: (_set(cfg, "security", "confidenceThreshold", "high"),
+                                         "confidenceThreshold"),
+    "cutoff out of range": lambda cfg, domain: (_set(cfg, "security", "confidenceThreshold", 11),
+                                                "confidenceThreshold"),
+    "three-number band": lambda cfg, domain: (_set(cfg, "statusThresholds", "healthy", [8, 9, 10]),
+                                              "healthy"),
+    "range as text": lambda cfg, domain: (_set(cfg, "scoring", "goodRange", "8-10"), "goodRange"),
+    "version 2": lambda cfg, domain: ({**cfg, "version": 2}, "version"),
+}
+
+
+@given(complete_configs(), st.sets(st.sampled_from(sorted(FLAWS)), min_size=1, max_size=4),
+       st.sampled_from(DOMAINS))
+def test_every_flaw_in_a_config_is_named_in_its_violations(config, flaws, domain):
+    named = set()
+    for flaw in sorted(flaws):
+        config, word = FLAWS[flaw](config, domain)
+        named.add(word)
+    before, after = run_validate_config(config)
+    state_delta.assert_state_delta(before, after, VALIDATION_UNIVERSE, {"violations": naming_each(named)})
+
+
+@given(complete_configs(), st.sampled_from(DOMAINS), st.integers(1, 50))
+def test_a_complete_weights_table_off_100_names_its_total_and_100(config, domain, extra):
+    unbalanced = _set(config, "weights", domain, config["weights"][domain] + extra)
+    total = sum(unbalanced["weights"].values())
+    before, after = run_validate_config(unbalanced)
+    state_delta.assert_state_delta(before, after, VALIDATION_UNIVERSE,
+                                   {"violations": naming_each({str(total), "100"})})
+
+
+json_values = st.recursive(
+    st.none() | st.booleans() | st.integers() | st.floats(allow_nan=False) | st.text(max_size=8),
+    lambda inner: st.lists(inner, max_size=3) | st.dictionaries(st.text(max_size=8), inner, max_size=3),
+    max_leaves=10)
+
+
+@given(complete_configs(), st.sampled_from([*SECTIONS, None]),
+       json_values)
+def test_any_json_in_any_slot_is_answered_with_violations_not_a_crash(config, section, junk):
+    candidate = junk if section is None else {**config, section: junk}
+    before, after = run_validate_config(candidate)
+    state_delta.assert_state_delta(before, after, VALIDATION_UNIVERSE, {
+        "violations": state_delta.Predicate(
+            "a list of message lines",
+            lambda was, now: isinstance(now, list) and all(isinstance(line, str) for line in now)),
+    })

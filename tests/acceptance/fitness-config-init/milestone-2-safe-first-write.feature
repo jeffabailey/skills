@@ -35,7 +35,7 @@ Feature: Only a valid config that Priya reviewed is ever saved
 
   # ---- Error paths: rejected proposals -------------------------------------
 
-  @skip @AC-03.3 @AC-02.1 @BR-5 @error
+  @AC-03.3 @AC-02.1 @BR-5 @error
   Scenario: A proposal whose weights add up to 101 is never saved
     Given Priya's project "ledgerd" has no fitness config
     When Priya checks a database-service proposal for "ledgerd" that adds up to 101
@@ -43,7 +43,7 @@ Feature: Only a valid config that Priya reviewed is ever saved
     And the reason says the weights must add up to 100
     And nothing has been saved in "ledgerd"
 
-  @skip @AC-03.3 @AC-02.1 @BR-1 @ADR-008 @error
+  @AC-03.3 @AC-02.1 @BR-1 @ADR-008 @error
   Scenario Outline: An incomplete or out-of-range proposal is rejected with the reason
     Given Priya's project "ledgerd" has no fitness config
     When Priya checks a database-service proposal for "ledgerd" that <flaw>
@@ -61,14 +61,14 @@ Feature: Only a valid config that Priya reviewed is ever saved
       | has no scoring section                          | scoring         |
       | has a healthy status band with three numbers    | healthy         |
 
-  @skip @AC-03.3 @error
+  @AC-03.3 @error
   Scenario: Something that is not a config at all is rejected
     Given Priya's project "ledgerd" has no fitness config
     When Priya checks the note "reliability: high" in place of a config for "ledgerd"
     Then the proposal is rejected as unreadable
     And nothing has been saved in "ledgerd"
 
-  @skip @AC-03.3 @BR-5 @error
+  @AC-03.3 @BR-5 @error
   Scenario: Saving an unbalanced proposal is refused even with a fingerprint in hand
     Given Priya's project "ledgerd" has no fitness config
     When Priya tries to save a database-service proposal for "ledgerd" that adds up to 101
@@ -148,7 +148,7 @@ Feature: Only a valid config that Priya reviewed is ever saved
 
   # ---- Stricter validation of hand-edited configs (ADR-008) --------------
 
-  @skip @AC-03.1 @ADR-008 @error
+  @AC-03.1 @ADR-008 @error
   Scenario: Validating a hand-edited config names every problem without crashing
     Given Priya's project "ledgerd" has a hand-edited fitness config with a "usability" weight and a security cutoff of "high"
     When Priya validates the fitness config file in "ledgerd"

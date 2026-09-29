@@ -12,6 +12,8 @@ Test count budget (per 2x distinct-behaviors rule):
   Behavior B2: walk_up_chain stops at stop boundary
   Behavior B3: walk_up_chain caps depth at 64 (with_status reports it)
   Behavior B4: anchored_chain never reads a config outside the anchor
+  Behavior B5: a save under a root config verifies the merged (effective)
+               config, and rolls back when that merge is not valid
 """
 
 from __future__ import annotations
@@ -23,7 +25,9 @@ from hypothesis import given
 from hypothesis import strategies as st
 
 from ._loader import fitness_config
-from .test_write_gate import is_, state_delta
+from .test_validator import complete_configs
+from .test_write_gate import (UNIVERSE, config_file, formatted, indents, is_, project_folder,
+                              state_delta, universe_snapshot)
 
 
 # ---------------------------------------------------------------------------
@@ -220,3 +224,28 @@ def test_anchored_chain_never_contains_a_config_outside_the_anchor(data, anchor_
         "chain": is_([] if outside else expected_chain),
     })
     assert (error is not None) == outside
+
+
+# ---------------------------------------------------------------------------
+# B5: the post-write check verifies the EFFECTIVE config of the folder --
+# the saved override merged with the configs above it (weights merge per
+# domain, so a root weight outside the ten domains leaks into the override's
+# folder). Universe: the saved config, its neighbour, and the save status.
+# ---------------------------------------------------------------------------
+
+@given(complete_configs(), complete_configs(), indents, st.integers(0, 20))
+def test_save_under_a_root_config_keeps_it_only_when_the_merged_config_is_valid(
+        override, root, indent, leaked_weight):
+    root_above = {**root, "weights": {**root["weights"], "legacyDomain": leaked_weight}}
+    text = formatted(override, indent)
+    checked = fitness_config.check_proposal(text, config_exists=False)
+    folder = project_folder(None)
+    before = universe_snapshot(folder)
+    outcome = fitness_config.save_new_proposal(text, checked.fingerprint, config_file(folder),
+                                               configs_above=[root_above])
+    after = universe_snapshot(folder, outcome)
+    merged_is_valid = leaked_weight == 0
+    state_delta.assert_state_delta(before, after, UNIVERSE, {
+        "fitness-config.json": is_(checked.canonical.encode("utf-8") if merged_is_valid else None),
+        "status": is_("created" if merged_is_valid else "verify-failed-rolled-back"),
+    })

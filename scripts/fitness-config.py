@@ -31,7 +31,7 @@ import secrets
 import sys
 from dataclasses import dataclass, field, replace
 from pathlib import Path
-from typing import Callable
+from typing import Callable, Sequence
 
 DEFAULT_WEIGHTS = {
     "architecture": 14,
@@ -721,9 +721,10 @@ def check_proposal(proposal_text: str, config_exists: bool) -> GateOutcome:
 
 
 def save_new_proposal(proposal_text: str, expected_fingerprint: str,
-                      config_file: ConfigFile) -> GateOutcome:
+                      config_file: ConfigFile, configs_above: Sequence[dict] = ()) -> GateOutcome:
     """Create path of the write gate (data-models 6.2): write the canonical
-    bytes only for the reviewed proposal, then verify them or roll back."""
+    bytes only for the reviewed proposal, then verify them -- merged with the
+    configs above (nearest-first) -- or roll back."""
     prepared = _prepare_proposal(proposal_text)
     if prepared.status == "invalid":
         return prepared
@@ -732,21 +733,23 @@ def save_new_proposal(proposal_text: str, expected_fingerprint: str,
     status, reason = config_file.create(prepared.canonical.encode("utf-8"))
     if status != "created":
         return replace(prepared, status=status, errors=(reason,) if reason else ())
-    return _verify_or_roll_back(prepared, config_file, prior=None)
+    return _verify_or_roll_back(prepared, config_file, prior=None, configs_above=configs_above)
 
 
-def _saved_problems(saved: bytes | None, fingerprint: str) -> list[str]:
-    """Why the bytes read back are not the reviewed, valid config (none = ok)."""
+def _saved_problems(saved: bytes | None, fingerprint: str,
+                    configs_above: Sequence[dict]) -> list[str]:
+    """Why the bytes read back are not the reviewed config, or why the folder's
+    effective config (saved merged with the configs above) is invalid."""
     text = None if saved is None else saved.decode("utf-8", errors="replace")
     if text is None or proposal_fingerprint(text) != fingerprint:
         return ["the saved file is not the reviewed proposal"]
-    # The saved config is complete, so it alone determines the effective config.
-    return validate_effective(build_effective_config(json.loads(text)), []).errors
+    merged = deep_merge_chain([json.loads(text), *configs_above])
+    return validate_effective(build_effective_config(merged), []).errors
 
 
 def _verify_or_roll_back(prepared: GateOutcome, config_file: ConfigFile,
-                         prior: bytes | None) -> GateOutcome:
-    problems = _saved_problems(config_file.read(), prepared.fingerprint)
+                         prior: bytes | None, configs_above: Sequence[dict]) -> GateOutcome:
+    problems = _saved_problems(config_file.read(), prepared.fingerprint, configs_above)
     if not problems:
         return replace(prepared, status="created")
     config_file.restore(prior)
@@ -951,14 +954,15 @@ def _print_gate_outcome(outcome: GateOutcome, show_canonical: bool) -> int:
 def cmd_init_from(target: Path, base: Path, proposal_text: str,
                   dry_run: bool, expected_fingerprint: str | None) -> int:
     """`init --path T --from - (--dry-run | --expect FP)`: the write gate."""
-    _, _, error, exit_code = _read_anchored_chain(target, base)
+    _, configs_above, error, exit_code = _read_anchored_chain(target, base)
     if error is not None:
         print(error, file=sys.stderr)
         return exit_code
     out_path = target / CONFIG_FILENAME
     if dry_run:
         return _print_gate_outcome(check_proposal(proposal_text, out_path.exists()), True)
-    outcome = save_new_proposal(proposal_text, expected_fingerprint, _config_file_at(out_path))
+    outcome = save_new_proposal(proposal_text, expected_fingerprint, _config_file_at(out_path),
+                                configs_above)
     return _print_gate_outcome(outcome, False)
 
 

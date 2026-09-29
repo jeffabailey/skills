@@ -41,11 +41,12 @@ Feature: Priya turns a reviewed weight proposal into the config her reviews will
     Then the starting weights are the built-in defaults
     And nothing has been saved in "ledgerd"
 
-  @skip @US-03 @AC-03.5 @FR-8
+  @US-03 @AC-03.5 @FR-8
   Scenario: Kenji's billing config is announced as an override of the fieldnotes root config
     Given Kenji's project "fieldnotes" has a root fitness config
     And Kenji has checked the billing proposal for "fieldnotes/services/billing"
     When Kenji saves the reviewed proposal for "fieldnotes/services/billing"
     Then the save reports the config was created
     And reviews of "fieldnotes/services/billing" will use the billing config merged with the fieldnotes root config
+    And the fitness config in "fieldnotes/services/billing" passes the resolver's validation
     And the fieldnotes root config is byte-for-byte unchanged

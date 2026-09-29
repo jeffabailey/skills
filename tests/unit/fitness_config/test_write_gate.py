@@ -35,7 +35,7 @@ from pathlib import Path
 from hypothesis import given
 from hypothesis import strategies as st
 
-from ._loader import fitness_config
+from ._loader import render, resolution, write_gate
 from .test_validator import complete_configs
 
 _STATE_DELTA = (Path(__file__).resolve().parents[2]
@@ -92,7 +92,7 @@ def config_file(folder: dict, write=lambda data: data, racer: bytes | None = Non
         else:
             folder[CONFIG] = prior
 
-    return fitness_config.ConfigFile(create=create, replace=replace, read=lambda: folder.get(CONFIG),
+    return write_gate.ConfigFile(create=create, replace=replace, read=lambda: folder.get(CONFIG),
                                      restore=restore)
 
 
@@ -115,7 +115,7 @@ def is_(value):
 
 def run_save(folder: dict, proposal_text: str, fingerprint: str, force: bool = False, **faults):
     before = universe_snapshot(folder)
-    outcome = fitness_config.save_new_proposal(proposal_text, fingerprint,
+    outcome = write_gate.save_new_proposal(proposal_text, fingerprint,
                                                config_file(folder, **faults), force=force)
     return before, universe_snapshot(folder, outcome), outcome
 
@@ -123,7 +123,7 @@ def run_save(folder: dict, proposal_text: str, fingerprint: str, force: bool = F
 @given(complete_configs(), indents)
 def test_reviewed_proposal_is_created_byte_for_byte_as_checked(config, indent):
     text = formatted(config, indent)
-    checked = fitness_config.check_proposal(text, config_exists=False)
+    checked = write_gate.check_proposal(text, config_exists=False)
     assert checked.status == "would-create"
     before, after, _ = run_save(project_folder(None), text, checked.fingerprint)
     state_delta.assert_state_delta(before, after, UNIVERSE, {
@@ -135,7 +135,7 @@ def test_reviewed_proposal_is_created_byte_for_byte_as_checked(config, indent):
 @given(complete_configs(), indents, st.text("0123456789abcdef", min_size=12, max_size=12))
 def test_fingerprint_that_is_not_the_proposals_writes_nothing(config, indent, other_fingerprint):
     text = formatted(config, indent)
-    if other_fingerprint == fitness_config.check_proposal(text, config_exists=False).fingerprint:
+    if other_fingerprint == write_gate.check_proposal(text, config_exists=False).fingerprint:
         return
     before, after, _ = run_save(project_folder(None), text, other_fingerprint)
     state_delta.assert_state_delta(before, after, UNIVERSE, {"status": is_("fingerprint-mismatch")})
@@ -144,7 +144,7 @@ def test_fingerprint_that_is_not_the_proposals_writes_nothing(config, indent, ot
 @given(complete_configs(), st.binary(max_size=64))
 def test_existing_config_is_never_overwritten_on_the_create_path(config, existing):
     text = formatted(config, 2)
-    fingerprint = fitness_config.check_proposal(text, config_exists=True).fingerprint
+    fingerprint = write_gate.check_proposal(text, config_exists=True).fingerprint
     before, after, _ = run_save(project_folder(existing), text, fingerprint)
     state_delta.assert_state_delta(before, after, UNIVERSE, {"status": is_("refused-exists")})
 
@@ -161,7 +161,7 @@ def test_invalid_proposal_writes_nothing(proposal_text):
 
 def reviewed(config: dict, indent) -> tuple[str, str]:
     text = formatted(config, indent)
-    return text, fitness_config.check_proposal(text, config_exists=False).fingerprint
+    return text, write_gate.check_proposal(text, config_exists=False).fingerprint
 
 
 faulty_writes = st.one_of(
@@ -201,13 +201,13 @@ folder_names = st.lists(st.sampled_from(["services", "billing", "api", "web"]), 
 def test_chain_origin_never_leaves_the_anchor(anchor_parts, target_parts):
     anchor = Path("/workspace", *anchor_parts, "ledgerd")
     target = anchor.joinpath(*target_parts)
-    origin, error = fitness_config.chain_origin(target, anchor)
+    origin, error = resolution.chain_origin(target, anchor)
     assert error is None
     if target == anchor:
         assert origin is None
     else:
         assert origin == target.parent and (origin == anchor or anchor in origin.parents)
-    outside, outside_error = fitness_config.chain_origin(anchor.parent / "elsewhere", anchor)
+    outside, outside_error = resolution.chain_origin(anchor.parent / "elsewhere", anchor)
     assert outside is None and outside_error
 
 
@@ -228,7 +228,7 @@ def test_forced_save_replaces_a_different_config_with_the_reviewed_bytes(config,
     folder = project_folder(different_config(config, other, old_indent))
     before, after, _ = run_save(folder, text, fingerprint, force=True)
     state_delta.assert_state_delta(before, after, UNIVERSE, {
-        CONFIG: is_(fitness_config.render_canonical(config).encode("utf-8")),
+        CONFIG: is_(render.render_canonical(config).encode("utf-8")),
         "status": is_("replaced"),
     })
 

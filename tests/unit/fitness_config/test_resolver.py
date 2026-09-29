@@ -24,7 +24,7 @@ import pytest
 from hypothesis import given
 from hypothesis import strategies as st
 
-from ._loader import fitness_config
+from ._loader import resolution, write_gate
 from .test_validator import complete_configs
 from .test_write_gate import (UNIVERSE, config_file, formatted, indents, is_, project_folder,
                               state_delta, universe_snapshot)
@@ -91,7 +91,7 @@ def test_walk_up_chain_returns_chain_in_precedence_order(
     else:
         target = start_dir
 
-    chain = fitness_config.walk_up_chain(target, stop=tmp_path)
+    chain = resolution.walk_up_chain(target, stop=tmp_path)
 
     assert chain == expected, f"case={case_id}: got {chain}, expected {expected}"
 
@@ -109,7 +109,7 @@ def test_walk_up_chain_stops_at_stop_boundary_and_excludes_ancestors_above(tmp_p
     target = inner / "leaf.txt"
     target.touch()
 
-    chain = fitness_config.walk_up_chain(target, stop=outer)
+    chain = resolution.walk_up_chain(target, stop=outer)
 
     assert chain == [outer / "fitness-config.json"]
 
@@ -148,7 +148,7 @@ def test_walk_up_chain_with_status_reports_depth_cap_status(
     target.touch()
 
     stop = Path(target.anchor) if use_unreachable_stop else tmp_path
-    status = fitness_config.walk_up_chain_with_status(target, stop=stop)
+    status = resolution.walk_up_chain_with_status(target, stop=stop)
 
     assert status.depth_capped is expected_depth_capped, (
         f"case={case_id}: depth_capped={status.depth_capped}"
@@ -170,7 +170,7 @@ def test_walk_up_chain_is_deterministic_across_repeated_calls(tmp_path: Path):
     target = leaf / "main.tf"
     target.touch()
 
-    runs = [fitness_config.walk_up_chain(target, stop=tmp_path) for _ in range(5)]
+    runs = [resolution.walk_up_chain(target, stop=tmp_path) for _ in range(5)]
 
     assert all(run == runs[0] for run in runs)
     assert runs[0] == [
@@ -214,7 +214,7 @@ def test_anchored_chain_never_contains_a_config_outside_the_anchor(data, anchor_
         return path in tree
 
     before = {"chain": [], "probed_outside_anchor": []}
-    chain, error = fitness_config.anchored_chain(target, anchor, has_config)
+    chain, error = resolution.anchored_chain(target, anchor, has_config)
     after = {"chain": chain, "probed_outside_anchor": probed_outside}
 
     expected_chain = [folder / "fitness-config.json" for folder in target.parents
@@ -238,10 +238,10 @@ def test_save_under_a_root_config_keeps_it_only_when_the_merged_config_is_valid(
         override, root, indent, leaked_weight):
     root_above = {**root, "weights": {**root["weights"], "legacyDomain": leaked_weight}}
     text = formatted(override, indent)
-    checked = fitness_config.check_proposal(text, config_exists=False)
+    checked = write_gate.check_proposal(text, config_exists=False)
     folder = project_folder(None)
     before = universe_snapshot(folder)
-    outcome = fitness_config.save_new_proposal(text, checked.fingerprint, config_file(folder),
+    outcome = write_gate.save_new_proposal(text, checked.fingerprint, config_file(folder),
                                                configs_above=[root_above])
     after = universe_snapshot(folder, outcome)
     merged_is_valid = leaked_weight == 0

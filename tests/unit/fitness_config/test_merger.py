@@ -18,7 +18,7 @@ from __future__ import annotations
 
 import pytest
 
-from ._loader import fitness_config
+from ._loader import resolution
 
 
 # ---------------------------------------------------------------------------
@@ -83,7 +83,7 @@ from ._loader import fitness_config
 def test_deep_merge_chain_merges_weights_per_domain(
     case_id: str, chain: list[dict], expected_weights: dict
 ):
-    merged = fitness_config.deep_merge_chain(chain)
+    merged = resolution.deep_merge_chain(chain)
 
     assert merged["weights"] == expected_weights, f"case={case_id}"
 
@@ -149,7 +149,7 @@ def test_deep_merge_chain_whole_replacement_keys(
     else:
         override = {"version": 1, key: override_block}
 
-    merged = fitness_config.deep_merge_chain([override, root])
+    merged = resolution.deep_merge_chain([override, root])
 
     assert merged[key] == expected, f"case={case_id}"
 
@@ -167,7 +167,7 @@ def test_deep_merge_chain_independent_top_level_keys_compose_correctly():
         "security": {"confidenceThreshold": 9},
     }
 
-    merged = fitness_config.deep_merge_chain([override, root])
+    merged = resolution.deep_merge_chain([override, root])
 
     assert merged["weights"] == {"architecture": 50, "security": 50}
     assert merged["security"] == {"confidenceThreshold": 9}
@@ -181,7 +181,7 @@ def test_deep_merge_chain_does_not_mutate_inputs():
     root_snapshot = {"version": 1, "weights": {"a": 1, "b": 2}}
     override_snapshot = {"version": 1, "weights": {"b": 20}}
 
-    fitness_config.deep_merge_chain([override, root])
+    resolution.deep_merge_chain([override, root])
 
     assert root == root_snapshot
     assert override == override_snapshot

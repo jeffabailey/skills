@@ -26,7 +26,7 @@ from pathlib import Path
 
 import pytest
 
-from ._loader import fitness_config
+from ._loader import audit, model, validation
 
 
 # ---------------------------------------------------------------------------
@@ -104,7 +104,7 @@ def _default_effective() -> dict:
 def test_validate_effective_enforces_sum_target(
     case_id: str, weights: dict, expected_ok: bool, expected_actual_sum_in_errors: str | None
 ):
-    result = fitness_config.validate_effective(
+    result = validation.validate_effective(
         _effective_with_weights(weights), source_chain=[]
     )
 
@@ -133,7 +133,7 @@ def test_validate_effective_names_every_file_in_chain_on_sum_violation():
         Path("fitness-config.json"),
     ]
 
-    result = fitness_config.validate_effective(
+    result = validation.validate_effective(
         _effective_with_weights(weights), source_chain=chain
     )
 
@@ -163,7 +163,7 @@ def test_validate_effective_returns_pure_result_with_ok_and_errors_fields():
         "scoring": dict(cfg["scoring"]),
     }
 
-    result = fitness_config.validate_effective(cfg, source_chain=[])
+    result = validation.validate_effective(cfg, source_chain=[])
 
     # ADT shape
     assert hasattr(result, "ok")
@@ -210,7 +210,7 @@ def test_validate_schema_versions_enforces_version_match(
         Path("fitness-config.json"),
     ]
 
-    result = fitness_config.validate_schema_versions(raw_configs, source_chain=chain)
+    result = validation.validate_schema_versions(raw_configs, source_chain=chain)
 
     assert result.ok is expected_ok, f"case={case_id}: errors={result.errors}"
     if expected_ok:
@@ -249,7 +249,7 @@ def test_validate_schema_versions_enforces_version_match(
 from hypothesis import given  # noqa: E402
 from hypothesis import strategies as st  # noqa: E402
 
-DOMAINS = list(fitness_config.DEFAULT_WEIGHTS)
+DOMAINS = list(model.DEFAULT_WEIGHTS)
 
 
 @st.composite
@@ -279,7 +279,7 @@ def complete_configs(draw) -> dict:
         "weights": draw(weights_summing_to_100()),
         "statusThresholds": draw(contiguous_status_bands()),
         "security": {"confidenceThreshold": draw(st.integers(1, 10))},
-        "scoring": {key: draw(score_ranges()) for key in fitness_config.DEFAULT_SCORING},
+        "scoring": {key: draw(score_ranges()) for key in model.DEFAULT_SCORING},
     }
 
 
@@ -315,7 +315,7 @@ INCOMPLETENESS = {
 
 @given(complete_configs())
 def test_every_complete_proposal_passes_the_write_gate_validation(config):
-    assert fitness_config.validate_proposal(config) == []
+    assert validation.validate_proposal(config) == []
 
 
 @given(
@@ -326,7 +326,7 @@ def test_every_complete_proposal_passes_the_write_gate_validation(config):
 )
 def test_any_incomplete_proposal_is_rejected_with_a_reason(config, flaw, domain, section):
     broken = INCOMPLETENESS[flaw](config, domain, section)
-    errors = fitness_config.validate_proposal(broken)
+    errors = validation.validate_proposal(broken)
     assert errors, f"{flaw} accepted: {broken}"
     assert all(isinstance(line, str) and line for line in errors)
 
@@ -362,7 +362,7 @@ SECTIONS = ["weights", "statusThresholds", "security", "scoring"]
 
 def run_validate_config(config) -> tuple[dict, dict]:
     before = {"config": copy.deepcopy(config), "violations": None}
-    violations = fitness_config.validate_config(config)
+    violations = validation.validate_config(config)
     return before, {"config": config, "violations": violations}
 
 
@@ -489,7 +489,7 @@ def run_audit_on_guide(guide_text: str) -> tuple[dict, dict]:
         before = {"guide": guide_text, "exit_code": None, "named_lines": set(), "scanned": None}
         out, err = io.StringIO(), io.StringIO()
         with contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
-            code = fitness_config.cmd_audit(Path(root))
+            code = audit.cmd_audit(Path(root))
         named = {int(n) for n in re.findall(r"fitness-config-init/SKILL\.md:(\d+):", err.getvalue())}
         scanned = re.search(r"scanned (\d+)", out.getvalue())
         after = {"guide": guide.read_text(encoding="utf-8"), "exit_code": code,
@@ -531,7 +531,7 @@ BAND_ORDER = ["critical", "needsAttention", "healthy"]
 
 def run_validate_proposal(proposal) -> tuple[dict, dict]:
     before = {"proposal": copy.deepcopy(proposal), "violations": None}
-    violations = fitness_config.validate_proposal(proposal)
+    violations = validation.validate_proposal(proposal)
     return before, {"proposal": proposal, "violations": violations}
 
 

@@ -124,7 +124,7 @@ def canonical_layout(context):
     assert list(parsed) == ["version", "weights", "statusThresholds", "security", "scoring"]
     assert list(parsed["weights"]) == list(DEFAULT_WEIGHTS)
     lines = text.split("\n")
-    assert lines[1].startswith('  "weights": {'), "expected two-space indentation"
+    assert lines[2].startswith('  "weights": {'), "expected two-space indentation"
     assert '"healthy": [9, 10]' in text or '"healthy": [8, 10]' in text, "ranges must be inline pairs"
     assert text.endswith("}\n") and "\r" not in text, "expected LF endings and a final newline"
 

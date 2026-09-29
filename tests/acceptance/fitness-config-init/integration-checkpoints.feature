@@ -11,7 +11,7 @@
 @milestone-integration @driving_port @real-io
 Feature: The init skill stays consistent with the rest of the fitness bundle
 
-  @skip @NFR-3 @ADR-009 @AC-03.2
+  @NFR-3 @ADR-009 @AC-03.2
   Scenario: The built-in starting config is the published example, byte for byte
     Given Ana's project "geo-notes" has no fitness config
     When Ana asks for the starting weights for "geo-notes"

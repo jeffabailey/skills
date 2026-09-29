@@ -853,10 +853,26 @@ def cmd_init_from(target: Path, base: Path, proposal_text: str,
     return _print_gate_outcome(outcome, False)
 
 
+def cmd_init_baseline(target: Path, base: Path) -> int:
+    """`init --path T --dry-run`: print the starting config; write nothing."""
+    raw_configs, error, exit_code = _read_anchored_chain(target, base)
+    if error is not None:
+        print(error, file=sys.stderr)
+        return exit_code
+    print("STATUS: baseline")
+    print(f"Baseline-Source: {'chain' if raw_configs else 'defaults'}")
+    sys.stdout.write(render_canonical(build_seed_config(raw_configs)))
+    return 0
+
+
 def _gate_usage_error(args) -> str | None:
     """Return a usage error for inconsistent write-gate flags, else None."""
     if args.proposal_source is None:
-        return "Error: --dry-run and --expect need --from -" if (args.dry_run or args.expect) else None
+        if args.expect:
+            return "Error: --expect needs --from -"
+        if args.dry_run and (args.command != "init" or args.resolve_path is None):
+            return "Error: --dry-run only works with init --path"
+        return None
     if args.command != "init" or args.resolve_path is None:
         return "Error: --from only works with init --path"
     if args.proposal_source != "-":
@@ -1139,6 +1155,8 @@ def main() -> int:
         if args.command == "init" and args.proposal_source is not None:
             return cmd_init_from(target, Path.cwd(), sys.stdin.read(),
                                  args.dry_run, args.expect)
+        if args.command == "init" and args.dry_run:
+            return cmd_init_baseline(target, Path.cwd())
         if args.command == "init":
             return cmd_init_path(target, base=Path.cwd())
         return 1

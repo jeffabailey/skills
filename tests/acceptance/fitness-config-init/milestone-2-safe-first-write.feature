@@ -16,7 +16,7 @@ Feature: Only a valid config that Priya reviewed is ever saved
 
   # ---- Happy path: what Priya sees before anything is saved ---------------
 
-  @skip @AC-03.2 @NFR-3 @ADR-010
+  @AC-03.2 @NFR-3 @ADR-010
   Scenario: The fingerprint Priya sees identifies exactly the config that will be saved
     Given Priya's project "ledgerd" has no fitness config
     When Priya checks the database-service proposal for "ledgerd"

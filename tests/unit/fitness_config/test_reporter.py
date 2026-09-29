@@ -239,3 +239,37 @@ def test_canonical_rendering_of_the_defaults_is_the_example_file():
     defaults = fitness_config.build_seed_config([])
     rendered = fitness_config.render_canonical(defaults)
     assert rendered == _EXAMPLE_CONFIG.read_text(encoding="utf-8")
+
+
+# ---------------------------------------------------------------------------
+# Behavior R6: fingerprint identity (AC-03.2). The dry run's observables
+# (status, canonical bytes, fingerprint) depend only on the config's meaning,
+# never on key order or whitespace, and the fingerprint separates exactly the
+# configs whose canonical bytes differ.
+# ---------------------------------------------------------------------------
+
+from .test_write_gate import state_delta  # noqa: E402
+
+_DRY_RUN_UNIVERSE = {"status", "canonical", "fingerprint"}
+
+
+def _dry_run_observables(proposal_text: str) -> dict:
+    outcome = fitness_config.check_proposal(proposal_text, config_exists=False)
+    return {"status": outcome.status, "canonical": outcome.canonical, "fingerprint": outcome.fingerprint}
+
+
+@given(complete_configs(), st.randoms(use_true_random=False), st.sampled_from([None, 1, 4, "\t"]))
+def test_semantically_equal_proposals_show_the_same_bytes_and_fingerprint(config, rng, indent):
+    canonical = fitness_config.render_canonical(config)
+    reformatted = json.dumps(_reordered(json.loads(canonical), rng), indent=indent)
+    before = _dry_run_observables(canonical)
+    state_delta.assert_state_delta(before, _dry_run_observables(reformatted), _DRY_RUN_UNIVERSE, {})
+    assert before["canonical"] == canonical  # render(parse(render(c))) == render(c)
+
+
+@given(complete_configs(), complete_configs())
+def test_fingerprints_match_exactly_when_the_saved_bytes_match(first, second):
+    first_bytes, second_bytes = map(fitness_config.render_canonical, (first, second))
+    same_fingerprint = (fitness_config.proposal_fingerprint(first_bytes)
+                        == fitness_config.proposal_fingerprint(second_bytes))
+    assert same_fingerprint == (first_bytes == second_bytes)

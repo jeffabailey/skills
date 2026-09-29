@@ -157,7 +157,7 @@ Note on principle 12's three-layer enforcement: ADR-006 explicitly rejects Proto
 | Attribute | Scenario | Measure |
 |---|---|---|
 | Correctness | Any proposal the gate accepts | The written file passes `validate <file>`, `validate --path`, and a JSON Schema check (dev-time test) in 100% of gate tests |
-| Correctness | Canonical rendering of the defaults | `init --path <empty> --dry-run` stdout is byte-identical to `fitness-config.example.json` |
+| Correctness | Canonical rendering of the defaults | `init --path <empty> --dry-run` stdout is header lines (`STATUS: baseline`, `Baseline-Source: defaults`) then a canonical JSON block that starts at a line that is exactly `{` and runs to the end. Only that block is byte-identical to `fitness-config.example.json`; the header is not part of the comparison |
 | Safety | Existing file with no `--force`, or a wrong `--expect` | Bytes and mtime unchanged in 100% of tests |
 | Safety | Fast mode | The project shows 0 or 1 changed path (`git status`) |
 | Performance | Fast scan on a 10k-file repo | Under 2 min. Bounded at 40 reads plus at most 3 resolver calls (each well under 1 s). |

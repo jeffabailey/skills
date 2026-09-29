@@ -147,7 +147,18 @@ Run from your project root. Add `.cursor/skills-source/` to `.gitignore` if you 
 
 ### Claude Code
 
-**User-level:**
+**Plugin (recommended):**
+
+This repository is an [Agent Plugin](https://agent-plugins.org/) (`plugin.json` at the root, skills under `skills/`). It also ships Claude Code plugin and marketplace manifests in `.claude-plugin/`, so you can install it for every Claude Code session:
+
+```bash
+claude plugin marketplace add jeffabailey/skills   # or a local clone path
+claude plugin install jbb-skills@jbb --scope user
+```
+
+Skills are namespaced by the plugin, e.g. `/jbb-skills:review-full`. After pulling changes, run `claude plugin marketplace update jbb && claude plugin update jbb-skills@jbb`.
+
+**User-level (symlinks):**
 
 ```bash
 bash ~/Projects/skills/scripts/install-skills.sh --clone ~/Projects/skills ~/.claude/skills
@@ -217,22 +228,24 @@ Review domains: architecture, security, reliability, testing, performance, algor
 
 ## Skill list
 
-All skills live under `src/`. The install commands above symlink every directory in `src/` (no hardcoded list). Current skills:
+All skills live under `skills/`. The install commands above symlink every directory in `skills/` (no hardcoded list). Current skills:
 
-- `src/review-architecture`
-- `src/review-security`
-- `src/review-reliability`
-- `src/review-testing`
-- `src/review-performance`
-- `src/review-algorithms`
-- `src/review-data`
-- `src/review-accessibility`
-- `src/review-process`
-- `src/review-maintainability`
-- `src/review-full`
-- `src/review-jit-test-gen`
-- `src/review-apply`
-- `src/review-usability`
+- `skills/review-architecture`
+- `skills/review-security`
+- `skills/review-reliability`
+- `skills/review-testing`
+- `skills/review-performance`
+- `skills/review-algorithms`
+- `skills/review-data`
+- `skills/review-accessibility`
+- `skills/review-process`
+- `skills/review-maintainability`
+- `skills/review-full`
+- `skills/review-jit-test-gen`
+- `skills/review-apply`
+- `skills/review-usability`
+- `skills/ai-sanitize`
+- `skills/fitness-config-init`
 
 ---
 

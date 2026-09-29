@@ -20,6 +20,8 @@ This repository and the article [Fundamental Skills](https://jeffbailey.us/blog/
 | Skill | Purpose | Triggers |
 |-------|---------|----------|
 | `generate-commit` | Generate a conventional commit message from staged changes, review before committing. Detects the project's language/formatter and applies it. | "generate commit", "write a commit message", "commit my changes" |
+| `ai-sanitize` | Removes AI tells from prose, UI code, and graphics (performative phrasing, emdashes, gradients, glass, eyebrows, pills, emoji, broken ASCII art), extending the project's own style guide and design system. Edits in place or reports only. | "remove AI tells", "de-slop this", "make this UI look less AI-generated" |
+| `fitness-config-init` | Creates a `fitness-config.json` with review weights that fit what the project is for. Scans the folder (or runs a full review first, if asked), proposes weights from a matching purpose profile, explains every change, and saves only the proposal you approve. | "create a fitness config", "tune review weights for this project", "initialize fitness config" |
 
 ### Project fitness review
 
@@ -48,7 +50,16 @@ See **[SETUP.md](SETUP.md)** for pipelines and IDE setup (Cursor, Claude Code, V
 
 ### Claude Code
 
-Skills are installed automatically via [mcp-configure](https://github.com/jeffabailey/ide). To install manually, use the install script (see [SETUP.md](SETUP.md)):
+This repository is an [Agent Plugin](https://agent-plugins.org/) (`plugin.json` at the root, skills under `skills/`). It also ships Claude Code plugin and marketplace manifests in `.claude-plugin/`, so you can install it for every Claude Code session:
+
+```bash
+claude plugin marketplace add jeffabailey/skills   # or a local clone path
+claude plugin install jbb-skills@jbb --scope user
+```
+
+Skills are namespaced by the plugin, e.g. `/jbb-skills:review-full`. After pulling changes, run `claude plugin marketplace update jbb && claude plugin update jbb-skills@jbb`.
+
+Alternatively, symlink the skills with the install script (see [SETUP.md](SETUP.md)):
 
 ```bash
 bash ~/Projects/skills/scripts/install-skills.sh --clone ~/Projects/skills ~/.claude/skills
@@ -291,16 +302,28 @@ Review skills should produce more findings, fewer false positives, consistent sc
 
 ## Structure
 
-All skills live under `src/`. Install commands symlink each directory in `src/` (no hardcoded list). See `src/` for the current set of skills; each skill is described in its own `SKILL.md`.
+All skills live under `skills/`. Install commands symlink each directory in `skills/` (no hardcoded list). See `skills/` for the current set of skills; each skill is described in its own `SKILL.md`.
 
 ```
 fitness-config.example.json   # Example config for custom thresholds
 fitness-config.schema.json    # JSON schema for validation
 scripts/
-  fitness-config.py           # validate, init, show (cross-platform)
-src/
+  fitness-config.py           # entry point: validate, init, show, audit (cross-platform)
+  fitness_config/             # resolver package the entry point runs; keep it beside the script
+skills/
   generate-commit/          # general-development skill (conventional commits)
     SKILL.md
+  ai-sanitize/              # general-development skill (removes AI tells)
+    SKILL.md
+    references/
+      prose.md              # Writing tells and rewrites
+      ui.md                 # Interface tells, detection patterns, fixes
+      graphics.md           # SVG, ASCII, diagram, chart, and image tells
+  fitness-config-init/      # general-development skill (purpose-fit fitness-config.json)
+    SKILL.md
+    references/
+      purpose-signals.md    # Fast-scan budget, signals per archetype, confidence levels
+      purpose-profiles.md   # Archetype weight profiles and adjustment rules
   review-<domain>/          # one per domain (architecture, security, etc.)
     SKILL.md                # Skill definition (workflow + scoring rubric)
     references/

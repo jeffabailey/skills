@@ -1,33 +1,20 @@
-"""Shared loader for the hyphenated fitness-config.py production module.
+"""Import the resolver package (scripts/fitness_config) for the unit tests.
 
-The production file lives at `scripts/fitness-config.py`. The hyphenated name
-prevents a normal `import fitness_config`, so every unit test module needs the
-same importlib boilerplate to load it. This helper extracts that boilerplate
-to a single place; tests do:
-
-    from tests.unit.fitness_config._loader import fitness_config
-
-The module is loaded once at import time, registered in sys.modules under the
-name `fitness_config` so subsequent imports from any test module reuse the
-same object (preserving identity for isinstance/`is` checks).
+The package sits beside the scripts/fitness-config.py entry point, outside
+any installed distribution, so the scripts directory goes on sys.path once
+here. Tests do `from ._loader import resolution, render, ...`.
 """
 
 from __future__ import annotations
 
-import importlib.util
 import sys
 from pathlib import Path
 
-# Resolve the skills repo root: this file lives at
-# tests/unit/fitness_config/_loader.py, so parents[3] is the repo root.
-_SCRIPT = Path(__file__).resolve().parents[3] / "scripts" / "fitness-config.py"
+_SCRIPTS = str(Path(__file__).resolve().parents[3] / "scripts")
+if _SCRIPTS not in sys.path:
+    sys.path.insert(0, _SCRIPTS)
 
-if "fitness_config" in sys.modules:
-    fitness_config = sys.modules["fitness_config"]
-else:
-    _spec = importlib.util.spec_from_file_location("fitness_config", _SCRIPT)
-    fitness_config = importlib.util.module_from_spec(_spec)
-    sys.modules["fitness_config"] = fitness_config
-    _spec.loader.exec_module(fitness_config)
+from fitness_config import (adapters, audit, model, render,  # noqa: E402
+                            resolution, validation, write_gate)
 
-__all__ = ["fitness_config"]
+__all__ = ["adapters", "audit", "model", "render", "resolution", "validation", "write_gate"]

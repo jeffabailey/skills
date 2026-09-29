@@ -1,0 +1,162 @@
+schema_version: 1
+
+journey:
+  name: "Tune a fitness config to the project's purpose"
+  goal: "Produce a valid, purpose-tuned fitness-config.json in the current folder, with every non-default value explained"
+  persona: "Priya Raman, maintainer of ledgerd (Postgres-backed ledger service, no UI)"
+  entry_point: "fitness-config-init skill (triggers: /fitness-config-init, 'create a fitness config', 'tune fitness weights for this project')"
+  emotional_arc:
+    start: "Skeptical: expects generic defaults"
+    middle: "Engaged: sees evidence and reasoning"
+    end: "Confident: valid file on disk, changes understood"
+
+steps:
+  - id: 1
+    name: "Invoke in a project folder"
+    command: "/fitness-config-init  (optional arg: fast | full)"
+    shared_artifacts:
+      - { name: target_folder, source: "agent working directory at invocation", displayed_as: "${target_folder}", consumers: [2, 7, 8] }
+    emotional_state: { entry: "curious, skeptical", exit: "oriented" }
+    integration_checkpoint: "Target folder exists and is readable"
+    failure_modes:
+      - "Folder unreadable or not a directory -> stop with path named"
+    gherkin: |
+      Scenario: Skill states which folder it will configure
+        Given Priya is in /Users/priya/src/ledgerd
+        When she invokes fitness-config-init
+        Then the first line names /Users/priya/src/ledgerd as the target folder
+
+  - id: 2
+    name: "Choose evidence mode"
+    command: "prompt: 1 fast (default) | 2 full review"
+    shared_artifacts:
+      - { name: evidence_mode, source: "user choice at runtime; default fast", displayed_as: "${evidence_mode}", consumers: [3, 4, 5] }
+    emotional_state: { entry: "oriented", exit: "in control" }
+    integration_checkpoint: "Full mode discloses that review-full writes docs/fitness-report.md before running"
+    failure_modes:
+      - "No answer or unrecognised answer -> fast scan"
+    gherkin: |
+      Scenario: Fast scan is used unless the user opts into a full review
+        Given Priya invokes fitness-config-init without naming a mode
+        When she accepts the default choice
+        Then the evidence mode is "fast"
+        And no review-full pass is started
+
+  - id: 3
+    name: "Gather evidence"
+    command: "fast: read README, manifests, top-level dirs, deploy config | full: fast + review-full scores and findings"
+    shared_artifacts:
+      - { name: evidence_list, source: "files read during scan", displayed_as: "${evidence_list}", consumers: [4, 5] }
+      - { name: review_scores, source: "review-full output (docs/fitness-report.md)", displayed_as: "${review_scores}", consumers: [5] }
+    emotional_state: { entry: "in control", exit: "watching" }
+    integration_checkpoint: "Every evidence item names a real file or directory in target_folder"
+    failure_modes:
+      - "Empty folder / no manifests -> purpose unknown (step 4)"
+      - "One review-full domain fails -> continue with fast evidence for that domain, say so"
+    gherkin: |
+      Scenario: Evidence cites real files in the project
+        Given ledgerd contains go.mod, migrations/ with 42 .sql files, and deploy/k8s/statefulset.yaml
+        When the fast purpose scan runs
+        Then each listed evidence item names a file or directory that exists in ledgerd
+
+  - id: 4
+    name: "Classify purpose"
+    command: "(agent reasoning)"
+    shared_artifacts:
+      - { name: project_purpose, source: "classification from evidence_list", displayed_as: "${project_purpose}", consumers: [5, 8] }
+      - { name: purpose_confidence, source: "classification", displayed_as: "${purpose_confidence}", consumers: [5] }
+    emotional_state: { entry: "watching", exit: "recognised ('yes, that is it')" }
+    integration_checkpoint: "Unknown or low confidence -> baseline values proposed, user told why"
+    failure_modes:
+      - "Misclassification -> user can correct purpose in one reply before proposal is final"
+    gherkin: |
+      Scenario: Project purpose is identified with its evidence
+        Given the fast scan of ledgerd found pgx, 42 migrations, a StatefulSet, and no UI files
+        When the skill classifies the project
+        Then it reports purpose "database-backed service (no UI)" with confidence "high"
+
+  - id: 5
+    name: "Propose config with rationale"
+    command: "(agent reasoning; baseline from default_config_source)"
+    shared_artifacts:
+      - { name: default_config_source, source: "fitness-config.example.json (DQ-3: or DEFAULT_* in scripts/fitness-config.py)", displayed_as: "${default_config_source}", consumers: [5, 6] }
+      - { name: proposed_config, source: "generated in session", displayed_as: "${proposed_config}", consumers: [6, 7] }
+      - { name: rationale_entries, source: "generated in session", displayed_as: "table 'why' column", consumers: [5, 8] }
+    emotional_state: { entry: "recognised", exit: "informed" }
+    integration_checkpoint: "Every value differing from baseline has exactly one rationale line citing evidence; weights sum to 100"
+    failure_modes:
+      - "Rationale missing for a changed value"
+      - "Weights sum != 100"
+    gherkin: |
+      Scenario: Every changed value is explained
+        Given the proposal for ledgerd raises reliability from 10 to 18
+        When Priya reads the proposal
+        Then the reliability row gives a reason that cites deploy/k8s/statefulset.yaml
+        And unchanged values are marked unchanged without a reason
+
+  - id: 6
+    name: "Compare with existing config"
+    command: "if exists: show diff, prompt Overwrite? [y/N]"
+    shared_artifacts:
+      - { name: existing_config, source: "${target_folder}/fitness-config.json", displayed_as: "diff left side", consumers: [6] }
+    emotional_state: { entry: "informed", exit: "safe (nothing changes without yes)" }
+    integration_checkpoint: "Any answer other than y/yes leaves the file byte-identical"
+    failure_modes:
+      - "Existing file is malformed JSON -> raw-text notice, still requires confirm"
+      - "Proposal identical to existing -> 'no changes', nothing written"
+    gherkin: |
+      Scenario: Existing config survives a declined overwrite
+        Given ledgerd already has fitness-config.json with reliability 12
+        When Priya answers "n" to the overwrite prompt
+        Then fitness-config.json is unchanged
+
+  - id: 7
+    name: "Validate then write"
+    command: "check against fitness-config.schema.json AND fitness-config.py validate; write only if both pass"
+    shared_artifacts:
+      - { name: config_path, source: "${target_folder}/fitness-config.json", displayed_as: "${config_path}", consumers: [5, 6, 7, 8] }
+      - { name: validation_result, source: "fitness-config.py validate output", displayed_as: "${validation_result}", consumers: [7] }
+    emotional_state: { entry: "safe", exit: "relieved" }
+    integration_checkpoint: "Written file passes 'fitness-config.py validate --path <folder>'"
+    failure_modes:
+      - "Validation fails -> nothing written, errors shown with proposal"
+      - "python3 unavailable -> DQ-6"
+    gherkin: |
+      Scenario: Only a valid config reaches disk
+        Given the proposal for ledgerd passes schema and resolver checks
+        When the skill writes the file
+        Then /Users/priya/src/ledgerd/fitness-config.json exists
+        And "fitness-config.py validate --path ." run in ledgerd reports it valid
+
+  - id: 8
+    name: "Show resolution and next step"
+    command: "fitness-config.py show --path <folder>"
+    shared_artifacts:
+      - { name: resolution_chain, source: "fitness-config.py show --path output (Config: line)", displayed_as: "${resolution_chain}", consumers: [8] }
+    emotional_state: { entry: "relieved", exit: "confident" }
+    integration_checkpoint: "Chain shown matches what review-full will use"
+    failure_modes:
+      - "Folder is a subdirectory with an ancestor config -> tell user this is an override applied only to reviews scoped to this folder (ADR-005)"
+    gherkin: |
+      Scenario: User sees which config future reviews will use
+        Given the skill wrote fitness-config.json in ledgerd
+        When the summary is shown
+        Then it states the resolver chain for ledgerd
+        And it suggests running review-full next
+
+integration_validation:
+  shared_artifact_consistency:
+    - artifact: proposed_config
+      must_match_across: [5, 6, 7]
+      failure_message: "Diffed or written config differs from the proposal the user reviewed"
+    - artifact: config_path
+      must_match_across: [5, 6, 7, 8]
+      failure_message: "File written somewhere other than the path shown to the user"
+    - artifact: default_config_source
+      must_match_across: [5, 6]
+      failure_message: "'default' column does not match the baseline used to decide what needs rationale"
+
+changelog:
+  - date: "2026-09-28"
+    feature: "fitness-config-init"
+    change: "Initial journey"

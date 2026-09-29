@@ -1,14 +1,14 @@
 #!/usr/bin/env bash
 # Validates skill directory structure and conventions.
 # Runs without external dependencies (no act required).
-# Discovers all skills under src/ dynamically; no hardcoded skill names.
+# Discovers all skills under skills/ dynamically; no hardcoded skill names.
 set -euo pipefail
 source "$(dirname "$0")/lib.sh"
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-SKILLS_ROOT="$ROOT/src"
+SKILLS_ROOT="$ROOT/skills"
 
-# Discover skills: directories under src/ that contain SKILL.md
+# Discover skills: directories under skills/ that contain SKILL.md
 SKILLS=()
 for d in "$SKILLS_ROOT"/*/; do
   [ -d "$d" ] || continue

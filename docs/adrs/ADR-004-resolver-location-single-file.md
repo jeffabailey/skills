@@ -1,6 +1,6 @@
 # ADR-004: Resolver Lives in `scripts/fitness-config.py` as a Single File
 
-**Status**: Accepted
+**Status**: Superseded by [ADR-012](ADR-012-resolver-package-split.md) (single-file layout only; the CLI entry point and skill-invocation contract still stand)
 **Date**: 2026-04-25
 **Wave**: DESIGN — fitness-config-per-directory
 **Persona**: Morgan (nw-solution-architect)
@@ -29,7 +29,7 @@ Quality attributes:
 
 **v1 keeps `scripts/fitness-config.py` as a single file.** The new resolver, merger, validator, and reporter functions live inside it as logical groupings (function clusters with comment-banner separators), not as separate modules.
 
-Skill prompts (`src/review-*/SKILL.md`, `.github/fitness-review-prompt.md`) call the script as a CLI subprocess: `python3 <skills>/scripts/fitness-config.py show --path <target>`. They do NOT import functions from the script and do NOT inline resolver logic.
+Skill prompts (`skills/review-*/SKILL.md`, `.github/fitness-review-prompt.md`) call the script as a CLI subprocess: `python3 <skills>/scripts/fitness-config.py show --path <target>`. They do NOT import functions from the script and do NOT inline resolver logic.
 
 The internal logical groupings inside the script are:
 
@@ -65,6 +65,8 @@ def cmd_show(...): ...
 # === Entry point ==========================================
 def main(): ...
 ```
+
+> **Resolver location (2026-09-29):** superseded by ADR-012. The logic now lives in the `scripts/fitness_config/` package; `scripts/fitness-config.py` is a thin entry-point stub, so every invocation below is unchanged.
 
 Future work: if the file grows past ~600 LOC OR a second consumer (a non-CLI Python entry point) emerges, split into `scripts/fitness_config/` package and adopt `import-linter` for explicit dependency contracts.
 

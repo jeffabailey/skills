@@ -34,7 +34,7 @@ FITNESS_CONFIG_SCRIPT = REPO_ROOT / "scripts" / "fitness-config.py"
 
 
 # ---------------------------------------------------------------------------
-# Default config constants — keep aligned with scripts/fitness-config.py
+# Default config constants — keep aligned with scripts/fitness_config/model.py
 # ---------------------------------------------------------------------------
 
 DEFAULT_WEIGHTS = {

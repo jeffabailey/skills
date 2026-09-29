@@ -19,12 +19,13 @@ Test count budget (per 2x distinct-behaviors rule):
 
 from __future__ import annotations
 
+import hashlib
 import json
 from pathlib import Path
 
 import pytest
 
-from ._loader import fitness_config
+from ._loader import model, render, resolution, write_gate
 
 
 _FULL_WEIGHTS = {
@@ -38,9 +39,9 @@ def _effective_with(weights: dict) -> dict:
     return {
         "version": 1,
         "weights": weights,
-        "statusThresholds": dict(fitness_config.DEFAULT_STATUS),
-        "security": dict(fitness_config.DEFAULT_SECURITY),
-        "scoring": dict(fitness_config.DEFAULT_SCORING),
+        "statusThresholds": dict(model.DEFAULT_STATUS),
+        "security": dict(model.DEFAULT_SECURITY),
+        "scoring": dict(model.DEFAULT_SCORING),
     }
 
 
@@ -83,11 +84,11 @@ def test_render_show_output_renders_chain_shape_variants(
     expect_defaults_message: bool,
 ):
     chain = [Path(p) for p in chain_subpaths]
-    weights = _FULL_WEIGHTS if chain else dict(fitness_config.DEFAULT_WEIGHTS)
+    weights = _FULL_WEIGHTS if chain else dict(model.DEFAULT_WEIGHTS)
     effective = _effective_with(weights)
     target = Path("infrastructure/modules/postgresql/main.tf") if chain else Path("anywhere/file.txt")
 
-    text = fitness_config.render_show_output(
+    text = render.render_show_output(
         target=target, source_chain=chain, effective=effective
     )
 
@@ -122,7 +123,7 @@ def test_render_show_output_emits_sentinel_json_block_with_chain_and_effective()
     ]
     effective = _effective_with(_FULL_WEIGHTS)
 
-    text = fitness_config.render_show_output(
+    text = render.render_show_output(
         target=Path("infrastructure/modules/postgresql/main.tf"),
         source_chain=chain,
         effective=effective,
@@ -148,9 +149,9 @@ def test_render_show_output_emits_sentinel_json_block_with_chain_and_effective()
 
 def test_render_show_output_inline_weights_line_total_all_domains_and_sort_order():
     chain = [Path("fitness-config.json")]
-    effective = _effective_with(dict(fitness_config.DEFAULT_WEIGHTS))
+    effective = _effective_with(dict(model.DEFAULT_WEIGHTS))
 
-    text = fitness_config.render_show_output(
+    text = render.render_show_output(
         target=Path("repo/file.py"),
         source_chain=chain,
         effective=effective,
@@ -166,7 +167,7 @@ def test_render_show_output_inline_weights_line_total_all_domains_and_sort_order
     inline = inline_lines[0]
 
     # All 10 default domains present in the inline line.
-    for domain in fitness_config.DEFAULT_WEIGHTS.keys():
+    for domain in model.DEFAULT_WEIGHTS.keys():
         assert domain in inline, f"{domain} missing from inline weights line"
 
     # Deterministic sort: descending by value, alphabetical tie-break.
@@ -192,7 +193,214 @@ def test_render_show_output_is_byte_identical_across_two_calls():
     effective = _effective_with(_FULL_WEIGHTS)
     target = Path("infrastructure/modules/postgresql/main.tf")
 
-    first = fitness_config.render_show_output(target=target, source_chain=chain, effective=effective)
-    second = fitness_config.render_show_output(target=target, source_chain=chain, effective=effective)
+    first = render.render_show_output(target=target, source_chain=chain, effective=effective)
+    second = render.render_show_output(target=target, source_chain=chain, effective=effective)
 
     assert first == second, "render_show_output produced non-deterministic output"
+
+
+# ---------------------------------------------------------------------------
+# Behavior R5: canonical renderer (data-models section 2). The rendered text
+# is the byte-exact write payload: canonical key order, 2-space indent,
+# inline two-element ranges, LF, trailing newline. Input key order and
+# formatting never change the bytes, so the fingerprint is stable.
+# ---------------------------------------------------------------------------
+
+from hypothesis import given  # noqa: E402
+from hypothesis import strategies as st  # noqa: E402
+
+from .test_validator import complete_configs  # noqa: E402
+
+_EXAMPLE_CONFIG = Path(__file__).resolve().parents[3] / "fitness-config.example.json"
+
+
+def _reordered(value, rng):
+    """Same config, keys shuffled at every level."""
+    if isinstance(value, dict):
+        keys = list(value)
+        rng.shuffle(keys)
+        return {key: _reordered(value[key], rng) for key in keys}
+    return value
+
+
+@given(complete_configs(), st.randoms(use_true_random=False))
+def test_canonical_rendering_roundtrips_and_ignores_input_key_order(config, rng):
+    rendered = render.render_canonical(config)
+    assert json.loads(rendered) == config
+    assert render.render_canonical(_reordered(config, rng)) == rendered
+    assert list(json.loads(rendered)) == ["version", "weights", "statusThresholds", "security", "scoring"]
+    assert rendered.endswith("}\n") and "\r" not in rendered
+    assert render.proposal_fingerprint(rendered) == hashlib.sha256(rendered.encode()).hexdigest()[:12]
+
+
+def test_canonical_rendering_of_the_defaults_is_the_example_file():
+    # bypass: golden-master fitness function (data-models section 2) -- one
+    # fixed input by definition; the property above covers the input domain.
+    defaults = resolution.build_seed_config([])
+    rendered = render.render_canonical(defaults)
+    assert rendered == _EXAMPLE_CONFIG.read_text(encoding="utf-8")
+
+
+# ---------------------------------------------------------------------------
+# Behavior R6: fingerprint identity (AC-03.2). The dry run's observables
+# (status, canonical bytes, fingerprint) depend only on the config's meaning,
+# never on key order or whitespace, and the fingerprint separates exactly the
+# configs whose canonical bytes differ.
+# ---------------------------------------------------------------------------
+
+from .test_write_gate import state_delta  # noqa: E402
+
+_DRY_RUN_UNIVERSE = {"status", "canonical", "fingerprint"}
+
+
+def _dry_run_observables(proposal_text: str) -> dict:
+    outcome = write_gate.check_proposal(proposal_text, current=None)
+    return {"status": outcome.status, "canonical": outcome.canonical, "fingerprint": outcome.fingerprint}
+
+
+@given(complete_configs(), st.randoms(use_true_random=False), st.sampled_from([None, 1, 4, "\t"]))
+def test_semantically_equal_proposals_show_the_same_bytes_and_fingerprint(config, rng, indent):
+    canonical = render.render_canonical(config)
+    reformatted = json.dumps(_reordered(json.loads(canonical), rng), indent=indent)
+    before = _dry_run_observables(canonical)
+    state_delta.assert_state_delta(before, _dry_run_observables(reformatted), _DRY_RUN_UNIVERSE, {})
+    assert before["canonical"] == canonical  # render(parse(render(c))) == render(c)
+
+
+@given(complete_configs(), complete_configs())
+def test_fingerprints_match_exactly_when_the_saved_bytes_match(first, second):
+    first_bytes, second_bytes = map(render.render_canonical, (first, second))
+    same_fingerprint = (render.proposal_fingerprint(first_bytes)
+                        == render.proposal_fingerprint(second_bytes))
+    assert same_fingerprint == (first_bytes == second_bytes)
+
+
+# ---------------------------------------------------------------------------
+# Behavior R7: review before replace (AC-04.1, AC-04.4, data-models 6.1).
+# The dry run against a current config lists value changes by dot-joined leaf
+# path (a two-element range is one leaf), canonical order first, then keys the
+# format does not know shown as removed.  An equal current config shows no
+# changes; applying the listed changes to the current config yields exactly
+# the proposal.
+# ---------------------------------------------------------------------------
+
+_REVIEW_UNIVERSE = {"status", "canonical", "fingerprint", "review"}
+_TUNING_VALUES = 16  # every leaf of a complete config except its schema version
+
+unknown_notes = st.dictionaries(st.sampled_from(["$comment", "owner", "tunedBy"]),
+                                st.text(max_size=12), max_size=2)
+
+
+def _review_observables(proposal_text: str, current: bytes | None) -> dict:
+    outcome = write_gate.check_proposal(proposal_text, current)
+    return {"status": outcome.status, "canonical": outcome.canonical,
+            "fingerprint": outcome.fingerprint, "review": outcome.review}
+
+
+@given(complete_configs(), st.randoms(use_true_random=False), st.sampled_from([None, 2, "\t"]))
+def test_a_current_config_equal_to_the_proposal_shows_no_changes(config, rng, indent):
+    text = render.render_canonical(config)
+    current = json.dumps(_reordered(config, rng), indent=indent).encode("utf-8")
+    state_delta.assert_state_delta(
+        _review_observables(text, None), _review_observables(text, current), _REVIEW_UNIVERSE, {
+            "status": state_delta.Predicate("unchanged", lambda _, now: now == "unchanged"),
+            "review": state_delta.Predicate(
+                "no changes", lambda _, now: now == (f"({_TUNING_VALUES} values unchanged)",)),
+        })
+
+
+def _apply_changes(config: dict, changes) -> dict:
+    result = json.loads(json.dumps(config))
+    for path, _, after in changes:
+        *parents, leaf = path.split(".")
+        section = result
+        for key in parents:
+            section = section.setdefault(key, {})
+        if after is render.MISSING:
+            section.pop(leaf)
+        else:
+            section[leaf] = after
+    return result
+
+
+@given(complete_configs(), complete_configs(), unknown_notes, unknown_notes)
+def test_applying_the_listed_changes_to_the_current_config_yields_the_proposal(
+        current, proposal, top_notes, weight_notes):
+    current = {**top_notes, **current, "weights": {**current["weights"], **weight_notes}}
+    diff = render.value_diff(current, proposal)
+    assert _apply_changes(current, diff.changes) == proposal
+    removed = [after is render.MISSING for _, _, after in diff.changes]
+    assert removed == sorted(removed), "keys the format does not know come last"
+    changed_tuning_values = [path for path, _, after in diff.changes
+                             if after is not render.MISSING and path != "version"]
+    assert diff.unchanged == _TUNING_VALUES - len(changed_tuning_values)
+
+
+# ---------------------------------------------------------------------------
+# Mutation-testing gaps (DELIVER phase 5).
+#   B8c: the config sources list every chain entry once, numbered nearest
+#        first: override, intermediates, root. Entries under the base print
+#        relative to it; entries outside it print absolute.
+#   B8d: the weights total says OK exactly when the weights add up to 100
+#        within the 0.01 tolerance, fractional weights included.
+#   B8e: a text value in the review shows as written, not \u-escaped.
+# ---------------------------------------------------------------------------
+
+import re  # noqa: E402
+
+from .test_validator import weights_summing_to_100  # noqa: E402
+
+_SHOW_BASE = Path("/work/ledgerd")
+_SOURCE_LINE = re.compile(r"^    (\d+)\. (.+)  \((override|intermediate|root)\)$")
+_folder = st.text(alphabet="abcdefgh", min_size=1, max_size=6)
+
+
+@st.composite
+def chain_entries(draw) -> list[tuple[Path, str]]:
+    """(path handed to the reporter, how the report must show it), nearest first."""
+    folders = draw(st.lists(_folder, min_size=1, max_size=6, unique=True))
+    entries = []
+    for folder in folders:
+        if draw(st.booleans()):
+            entries.append((_SHOW_BASE / folder / "fitness-config.json", f"{folder}/fitness-config.json"))
+        else:
+            outside = Path("/elsewhere") / folder / "fitness-config.json"
+            entries.append((outside, str(outside)))
+    return entries
+
+
+def _roles(count: int) -> list[str]:
+    if count == 1:
+        return ["root"]
+    return ["override", *(["intermediate"] * (count - 2)), "root"]
+
+
+@given(chain_entries())
+def test_config_sources_list_every_chain_entry_once_nearest_first(entries):
+    chain = [path for path, _ in entries]
+    text = render.render_show_output(Path("target.tf"), chain,
+                                     _effective_with(dict(model.DEFAULT_WEIGHTS)), base=_SHOW_BASE)
+
+    sources = [match.groups() for match in map(_SOURCE_LINE.match, text.splitlines()) if match]
+    expected = [(str(number), shown, role) for number, ((_, shown), role)
+                in enumerate(zip(entries, _roles(len(entries))), start=1)]
+    assert sources == expected
+    assert text.splitlines()[2].startswith(f"Config: {entries[0][1]}")
+
+
+@given(weights_summing_to_100(), st.sampled_from(sorted(model.DEFAULT_WEIGHTS)),
+       st.sampled_from([0, 0.004, -0.004, 0.25, -3, 7, 100, -100]))
+def test_the_weights_total_is_ok_exactly_when_it_is_100_within_tolerance(weights, domain, shift):
+    shifted = {**weights, domain: weights[domain] + shift}
+    text = render.render_show_output(Path("target.tf"), [], _effective_with(shifted))
+
+    total_line = next(line for line in text.splitlines() if line.startswith("    total"))
+    within_tolerance = abs(shift) <= 0.01
+    assert total_line.endswith("   OK" if within_tolerance else "   ERROR"), (shift, total_line)
+
+
+@given(complete_configs(), st.text(alphabet=st.characters(whitelist_categories=("L",)),
+                                   min_size=1, max_size=8))
+def test_a_text_value_in_the_review_shows_as_written(config, note):
+    diff = render.value_diff({**config, "owner": note}, config)
+    assert f'owner "{note}" -> (removed)' in render.render_value_diff(diff)

@@ -5,24 +5,21 @@ from __future__ import annotations
 import json
 import os
 import secrets
-import sys
 from pathlib import Path
 from typing import Callable
 
-from .resolution import anchored_chain
 from .write_gate import ConfigFile
 
 
-def load_legacy_config(path: Path) -> dict | None:
-    """The legacy verbs' read (`validate [path]`, `show [path]`): None when the file
-    is missing or malformed, printing "Invalid JSON: ..." for the latter (NFR-3)."""
+def load_legacy_config(path: Path) -> tuple[dict | None, str | None]:
+    """The legacy verbs' read (`validate [path]`, `show [path]`): (config, None), or
+    (None, "Invalid JSON: ...") when malformed; (None, None) when missing (NFR-3)."""
     if not path.exists():
-        return None
+        return None, None
     try:
-        return read_config(path)
+        return read_config(path), None
     except json.JSONDecodeError as e:
-        print(f"Invalid JSON: {e}", file=sys.stderr)
-        return None
+        return None, f"Invalid JSON: {e}"
 
 
 def read_config(path: Path) -> dict | None:
@@ -45,19 +42,6 @@ def read_chain_configs(chain: list[Path]) -> tuple[list[dict] | None, str | None
         if cfg is not None:
             raw_configs.append(cfg)
     return raw_configs, None
-
-
-def read_anchored_chain(target: Path, base: Path):
-    """Adapter: read the configs above target, never above the anchor (base).
-
-    Returns (chain, raw_configs, error, exit_code): exit 2 for a target
-    outside the anchor, 1 for an unreadable chain file.
-    """
-    chain, error = anchored_chain(target.resolve(strict=False), base.resolve(), Path.is_file)
-    if error is not None:
-        return [], None, error, 2
-    raw_configs, read_error = read_chain_configs(chain)
-    return chain, raw_configs, read_error, 1
 
 
 def _publish_via_temp(path: Path, data: bytes,

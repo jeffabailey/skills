@@ -113,7 +113,7 @@ def build_seed_config(raw_configs: list[dict]) -> dict:
     return build_effective_config(deep_merge_chain(raw_configs))
 
 
-def chain_origin(target: Path, anchor: Path) -> tuple[Path | None, str | None]:
+def _chain_origin(target: Path, anchor: Path) -> tuple[Path | None, str | None]:
     """Where `init --path` starts its walk-up (ADR-009 anchor guard).
 
     Target == anchor: no chain. A target outside the anchor is an error.
@@ -134,7 +134,7 @@ def anchored_chain(target: Path, anchor: Path,
     Only folders from target's parent up to the anchor are probed through
     `has_config`; nothing above the anchor is ever consulted.
     """
-    origin, error = chain_origin(target, anchor)
+    origin, error = _chain_origin(target, anchor)
     if origin is None:
         return [], error
     folders = [origin, *origin.parents][: len(origin.relative_to(anchor).parts) + 1]

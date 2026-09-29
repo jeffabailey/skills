@@ -183,6 +183,9 @@ def test_walk_up_chain_is_deterministic_across_repeated_calls(tmp_path: Path):
 # B4 (ADR-009 anchor guard): anchored_chain(target, anchor, has_config) is the
 # chain `init --path` reads. Universe: the chain it returns plus every config
 # path it probed outside the anchor. Strict: the probe slot must stay empty.
+# The expected chain starts at target's parent, so it also pins that the
+# target's own config is never in its chain, that target == anchor reads
+# nothing, and that a target outside the anchor is an error.
 # ---------------------------------------------------------------------------
 
 _folder_names = st.lists(st.sampled_from(["services", "billing", "api"]), max_size=3)

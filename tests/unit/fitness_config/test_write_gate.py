@@ -11,12 +11,12 @@ The universe is the fake project folder the injected writer controls, plus
 the gate's reported status. Every test asserts the state delta over that
 whole universe (strict: every slot not expected to change must be unchanged).
 
-Behaviors (budget 2 x 11 = 22; 11 properties here):
+Behaviors (budget 2 x 10 = 20; 10 properties here):
   G1 a reviewed proposal is created byte-for-byte as checked
   G2 a fingerprint that is not the proposal's writes nothing
   G3 an existing config is never overwritten on the create path
   G4 an invalid proposal writes nothing
-  G5 the chain starts inside the anchor (target == anchor reads nothing above)
+  (the anchor guard on the chain the gate reads is test_resolver.py B4)
   G6 a write that does not verify is rolled back to the prior state
   G7 a config created concurrently after the check is kept and the save refused
   G8 an OS write failure leaves the folder as it was and reports write-failed
@@ -35,7 +35,7 @@ from pathlib import Path
 from hypothesis import given
 from hypothesis import strategies as st
 
-from ._loader import render, resolution, write_gate
+from ._loader import render, write_gate
 from .test_validator import complete_configs
 
 _STATE_DELTA = (Path(__file__).resolve().parents[2]
@@ -192,23 +192,6 @@ def test_os_write_failure_leaves_the_folder_as_it_was(config, indent, reason):
     before, after, outcome = run_save(project_folder(None), text, fingerprint, os_error=reason)
     state_delta.assert_state_delta(before, after, UNIVERSE, {"status": is_("write-failed")})
     assert reason in outcome.errors
-
-
-folder_names = st.lists(st.sampled_from(["services", "billing", "api", "web"]), max_size=3)
-
-
-@given(folder_names, folder_names)
-def test_chain_origin_never_leaves_the_anchor(anchor_parts, target_parts):
-    anchor = Path("/workspace", *anchor_parts, "ledgerd")
-    target = anchor.joinpath(*target_parts)
-    origin, error = resolution.chain_origin(target, anchor)
-    assert error is None
-    if target == anchor:
-        assert origin is None
-    else:
-        assert origin == target.parent and (origin == anchor or anchor in origin.parents)
-    outside, outside_error = resolution.chain_origin(anchor.parent / "elsewhere", anchor)
-    assert outside is None and outside_error
 
 
 # ---------------------------------------------------------------------------

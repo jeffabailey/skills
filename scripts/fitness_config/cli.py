@@ -11,12 +11,13 @@ import json
 import sys
 from pathlib import Path
 
-from .adapters import config_file_at, load_legacy_config, read_anchored_chain, read_chain_configs
+from .adapters import config_file_at, load_legacy_config, read_chain_configs
 from .audit import cmd_audit
 from .model import CONFIG_FILENAME
 from .render import render_canonical, render_show_output
-from .resolution import (WALK_UP_DEPTH_CAP, build_effective_config, build_seed_config,
-                         deep_merge_chain, merge_defaults, walk_up_chain_with_status)
+from .resolution import (WALK_UP_DEPTH_CAP, anchored_chain, build_effective_config,
+                         build_seed_config, deep_merge_chain, merge_defaults,
+                         walk_up_chain_with_status)
 from .validation import validate_config, validate_effective, validate_schema_versions
 from .write_gate import GateOutcome, check_proposal, save_reviewed_proposal
 
@@ -28,6 +29,13 @@ EXIT_USAGE = 2
 def _print_errors(errors: list[str]) -> None:
     for line in errors:
         print(line, file=sys.stderr)
+
+
+def _load_legacy(path: Path) -> dict | None:
+    config, parse_error = load_legacy_config(path)
+    if parse_error is not None:
+        print(parse_error, file=sys.stderr)
+    return config
 
 
 def _write_json(path: Path, config: dict) -> None:
@@ -42,7 +50,7 @@ def _write_json(path: Path, config: dict) -> None:
 
 def cmd_validate(path: Path) -> int:
     """Legacy `validate [path]`: strict per-file rules; errors name the file (NFR-3)."""
-    data = load_legacy_config(path)
+    data = _load_legacy(path)
     if data is None:
         print(f"Error: {path} not found or invalid JSON", file=sys.stderr)
         return EXIT_FAILED
@@ -67,7 +75,7 @@ def cmd_init(path: Path) -> int:
 
 def cmd_show(path: Path) -> int:
     """Legacy `show [path]`: one file over the defaults, as JSON."""
-    data = load_legacy_config(path) or {}
+    data = _load_legacy(path) or {}
     print(json.dumps(merge_defaults(data), indent=2))
     return EXIT_OK
 
@@ -152,6 +160,28 @@ def cmd_validate_path(target: Path, base: Path) -> int:
 # Seeding and the write gate: init --path TARGET [--dry-run | --from - ...]
 # ---------------------------------------------------------------------------
 
+def _read_anchored_configs(target: Path, base: Path
+                           ) -> tuple[list[Path], list[dict], tuple[str, int] | None]:
+    """The configs above target, never above the anchor (base), nearest-first.
+
+    Returns (chain, configs, None), or a failure (message, exit code): a target
+    outside the anchor is a usage error, an unreadable chain file a failure.
+    """
+    chain, outside = anchored_chain(target.resolve(strict=False), base.resolve(), Path.is_file)
+    if outside is not None:
+        return [], [], (outside, EXIT_USAGE)
+    configs, unreadable = read_chain_configs(chain)
+    if unreadable is not None:
+        return chain, [], (unreadable, EXIT_FAILED)
+    return chain, configs, None
+
+
+def _report_failure(failure: tuple[str, int]) -> int:
+    message, exit_code = failure
+    print(message, file=sys.stderr)
+    return exit_code
+
+
 def cmd_init_path(target: Path, base: Path) -> int:
     """`init --path T`: seed T/fitness-config.json from the anchored chain's
     effective config (or the defaults, said on stdout); never overwrite."""
@@ -159,10 +189,9 @@ def cmd_init_path(target: Path, base: Path) -> int:
     if out_path.exists():
         print(f"Error: {out_path} already exists", file=sys.stderr)
         return EXIT_FAILED
-    _, raw_configs, error, exit_code = read_anchored_chain(target, base)
-    if error is not None:
-        print(error, file=sys.stderr)
-        return exit_code
+    _, raw_configs, failure = _read_anchored_configs(target, base)
+    if failure is not None:
+        return _report_failure(failure)
     _write_json(out_path, build_seed_config(raw_configs))
     if not raw_configs:
         print("No root fitness-config.json found; seeded with documented default weights.")
@@ -172,10 +201,9 @@ def cmd_init_path(target: Path, base: Path) -> int:
 
 def cmd_init_baseline(target: Path, base: Path) -> int:
     """`init --path T --dry-run`: print the starting config; write nothing."""
-    chain, raw_configs, error, exit_code = read_anchored_chain(target, base)
-    if error is not None:
-        print(error, file=sys.stderr)
-        return exit_code
+    chain, raw_configs, failure = _read_anchored_configs(target, base)
+    if failure is not None:
+        return _report_failure(failure)
     print("STATUS: baseline")
     print(f"Baseline-Source: {'chain' if raw_configs else 'defaults'}")
     for config_path in chain:
@@ -203,10 +231,9 @@ def _print_gate_outcome(outcome: GateOutcome, show_canonical: bool) -> int:
 def cmd_init_from(target: Path, base: Path, proposal_text: str,
                   dry_run: bool, expected_fingerprint: str | None, force: bool = False) -> int:
     """`init --path T --from - (--dry-run | --expect FP [--force])`: the write gate."""
-    _, configs_above, error, exit_code = read_anchored_chain(target, base)
-    if error is not None:
-        print(error, file=sys.stderr)
-        return exit_code
+    _, configs_above, failure = _read_anchored_configs(target, base)
+    if failure is not None:
+        return _report_failure(failure)
     config_file = config_file_at(target / CONFIG_FILENAME)
     if dry_run:
         return _print_gate_outcome(check_proposal(proposal_text, config_file.read()),

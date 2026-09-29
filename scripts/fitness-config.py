@@ -27,6 +27,7 @@ import hashlib
 import json
 import os
 import re
+import secrets
 import sys
 from dataclasses import dataclass, field, replace
 from pathlib import Path
@@ -546,9 +547,20 @@ _SECTION_DEFAULTS = {
 _RANGE_SECTIONS = ("statusThresholds", "scoring")
 _INLINE_PAIR = re.compile(r"\[\s+([^\[\]\s,]+),\s+([^\[\]\s,]+)\s+\]")
 
-# Driven port of the write gate: create the config file exclusively.
-# Returns False (writing nothing) when a config already exists.
-CreateFile = Callable[[bytes], bool]
+
+@dataclass(frozen=True)
+class ConfigFile:
+    """Driven port (ADR-010): the one config file the write gate may touch.
+
+    create(data) -> (status, reason): "created", "refused-exists" (a file is
+    already there) or "write-failed" (the OS refused; reason says why).
+    read() -> the bytes now on disk, or None.  restore(prior) puts the prior
+    bytes back (None removes the file).
+    """
+
+    create: Callable[[bytes], tuple[str, str | None]]
+    read: Callable[[], bytes | None]
+    restore: Callable[[bytes | None], None]
 
 
 def _is_number(value) -> bool:
@@ -709,16 +721,36 @@ def check_proposal(proposal_text: str, config_exists: bool) -> GateOutcome:
 
 
 def save_new_proposal(proposal_text: str, expected_fingerprint: str,
-                      create_file: CreateFile) -> GateOutcome:
-    """Create path of the write gate: write the canonical bytes only when the
-    proposal is complete and its fingerprint is the one the user reviewed."""
+                      config_file: ConfigFile) -> GateOutcome:
+    """Create path of the write gate (data-models 6.2): write the canonical
+    bytes only for the reviewed proposal, then verify them or roll back."""
     prepared = _prepare_proposal(proposal_text)
     if prepared.status == "invalid":
         return prepared
     if prepared.fingerprint != expected_fingerprint:
         return replace(prepared, status="fingerprint-mismatch")
-    created = create_file(prepared.canonical.encode("utf-8"))
-    return replace(prepared, status="created" if created else "refused-exists")
+    status, reason = config_file.create(prepared.canonical.encode("utf-8"))
+    if status != "created":
+        return replace(prepared, status=status, errors=(reason,) if reason else ())
+    return _verify_or_roll_back(prepared, config_file, prior=None)
+
+
+def _saved_problems(saved: bytes | None, fingerprint: str) -> list[str]:
+    """Why the bytes read back are not the reviewed, valid config (none = ok)."""
+    text = None if saved is None else saved.decode("utf-8", errors="replace")
+    if text is None or proposal_fingerprint(text) != fingerprint:
+        return ["the saved file is not the reviewed proposal"]
+    # The saved config is complete, so it alone determines the effective config.
+    return validate_effective(build_effective_config(json.loads(text)), []).errors
+
+
+def _verify_or_roll_back(prepared: GateOutcome, config_file: ConfigFile,
+                         prior: bytes | None) -> GateOutcome:
+    problems = _saved_problems(config_file.read(), prepared.fingerprint)
+    if not problems:
+        return replace(prepared, status="created")
+    config_file.restore(prior)
+    return replace(prepared, status="verify-failed-rolled-back", errors=tuple(problems))
 
 
 def chain_origin(target: Path, anchor: Path) -> tuple[Path | None, str | None]:
@@ -860,18 +892,47 @@ def _read_anchored_chain(target: Path, base: Path):
     return chain, raw_configs, read_error, 1
 
 
-def _exclusive_creator(path: Path) -> CreateFile:
-    """Adapter for the CreateFile port: exclusive create, fsync'd."""
-    def create_file(data: bytes) -> bool:
+def _publish_via_temp(path: Path, data: bytes,
+                      publish: Callable[[str, Path], None]) -> None:
+    """Write data to a temp file beside path, fsync, then publish it; the
+    temp file never outlives the call, so a failure leaves no partial file."""
+    temp = path.parent / f".{path.name}.{secrets.token_hex(4)}.tmp"
+    handle = os.open(temp, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o666)
+    try:
+        with os.fdopen(handle, "wb") as stream:
+            stream.write(data)
+            stream.flush()
+            os.fsync(stream.fileno())
+        publish(str(temp), path)
+    finally:
+        temp.unlink(missing_ok=True)
+
+
+def _config_file_at(path: Path) -> ConfigFile:
+    """Adapter for the ConfigFile port: create is exclusive (os.link refuses
+    an existing file); restore puts prior bytes back or removes the file."""
+    def create(data: bytes) -> tuple[str, str | None]:
         try:
-            with path.open("xb") as handle:
-                handle.write(data)
-                handle.flush()
-                os.fsync(handle.fileno())
+            _publish_via_temp(path, data, os.link)
         except FileExistsError:
-            return False
-        return True
-    return create_file
+            return "refused-exists", None
+        except OSError as exc:
+            return "write-failed", f"Error: could not write {path}: {exc.strerror or exc}"
+        return "created", None
+
+    def read() -> bytes | None:
+        try:
+            return path.read_bytes()
+        except OSError:
+            return None
+
+    def restore(prior: bytes | None) -> None:
+        if prior is None:
+            path.unlink(missing_ok=True)
+        else:
+            _publish_via_temp(path, prior, os.replace)
+
+    return ConfigFile(create=create, read=read, restore=restore)
 
 
 _GATE_SUCCESS = {"would-create", "would-replace", "created"}
@@ -897,7 +958,7 @@ def cmd_init_from(target: Path, base: Path, proposal_text: str,
     out_path = target / CONFIG_FILENAME
     if dry_run:
         return _print_gate_outcome(check_proposal(proposal_text, out_path.exists()), True)
-    outcome = save_new_proposal(proposal_text, expected_fingerprint, _exclusive_creator(out_path))
+    outcome = save_new_proposal(proposal_text, expected_fingerprint, _config_file_at(out_path))
     return _print_gate_outcome(outcome, False)
 
 

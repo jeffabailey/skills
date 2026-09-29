@@ -77,7 +77,7 @@ Feature: Only a valid config that Priya reviewed is ever saved
 
   # ---- Error paths: reviewed-proposal guarantee ----------------------------
 
-  @skip @AC-03.2 @ADR-010 @error
+  @AC-03.2 @ADR-010 @error
   Scenario: A proposal that differs from the one Priya reviewed is never saved
     Given Priya's project "ledgerd" has no fitness config
     And Priya has checked the database-service proposal for "ledgerd"
@@ -85,7 +85,7 @@ Feature: Only a valid config that Priya reviewed is ever saved
     Then the save is refused because it is not the proposal Priya reviewed
     And nothing has been saved in "ledgerd"
 
-  @skip @ADR-010 @error
+  @ADR-010 @error
   Scenario: A proposal cannot be saved without the fingerprint from a check
     Given Priya's project "ledgerd" has no fitness config
     When Priya saves the database-service proposal for "ledgerd" without a reviewed fingerprint
@@ -93,7 +93,7 @@ Feature: Only a valid config that Priya reviewed is ever saved
     And Priya is told a save needs the fingerprint of a reviewed proposal
     And nothing has been saved in "ledgerd"
 
-  @skip @AC-03.4 @BR-4 @error
+  @AC-03.4 @BR-4 @error
   Scenario: An existing config is never replaced without Priya's go-ahead
     Given Priya's project "ledgerd" already has the fitness config she tuned in June
     And Priya has checked the database-service proposal for "ledgerd"
@@ -103,14 +103,14 @@ Feature: Only a valid config that Priya reviewed is ever saved
 
   # ---- Error paths: the project around the config -------------------------
 
-  @skip @AC-03.3 @error
+  @AC-03.3 @error
   Scenario: A damaged config higher up stops the check and names the damaged file
     Given Kenji's project "fieldnotes" has a damaged root fitness config
     When Kenji checks the billing proposal for "fieldnotes/services/billing"
     Then the check is refused and names the damaged fieldnotes root config
     And nothing has been saved in "fieldnotes"
 
-  @skip @AC-03.3 @AC-03.6 @infrastructure-failure @error
+  @AC-03.3 @AC-03.6 @infrastructure-failure @error
   Scenario: A folder Priya cannot write to is left without a partial config
     Given Priya's project "ledgerd" has no fitness config
     And Priya has checked the database-service proposal for "ledgerd"

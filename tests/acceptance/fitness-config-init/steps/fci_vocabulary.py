@@ -258,6 +258,8 @@ def save_outcome(context, outcome):
         return
     require_status(save, outcome)
     assert save.run.exit_code == 0, save.run.describe()
+    # data-models 6: a save reports its status; only a dry run shows the config.
+    assert save.canonical_text is None, save.run.describe()
 
 
 @then("the save is refused because a config already exists")

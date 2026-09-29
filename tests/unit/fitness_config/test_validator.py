@@ -407,6 +407,7 @@ FLAWS = {
     "range as text": lambda cfg, domain: (_set(cfg, "scoring", "goodRange", "8-10"), "goodRange"),
     "one-number range": lambda cfg, domain: (_set(cfg, "scoring", "badRange", [3]), "badRange"),
     "version 2": lambda cfg, domain: ({**cfg, "version": 2}, "version"),
+    "version 0": lambda cfg, domain: ({**cfg, "version": 0}, "version"),
 }
 
 
@@ -566,6 +567,12 @@ def test_any_gap_or_overlap_in_the_status_bands_is_rejected_naming_status(config
 #   B7b: the version-mismatch fix advice fits the chain: older configs only,
 #        newer configs only, or both.
 #   B6b: an effective sum off 100 is blamed first on the nearest chain file.
+#   B7c: the chain version check sees every entry: non-object entries hide
+#        nothing, a version that is not an integer is a mismatch, and every
+#        integer version is listed.
+#   B9b: a complete weights table off 100 is named even beside an unknown
+#        domain, and a total of 200 is not mistaken for 100.
+#   B10c: a gap or overlap in the status bands shows each band as given.
 #   B10b: an audited file the audit cannot read (not UTF-8, or a folder in
 #        place of SKILL.md) is skipped, never a crash.
 # ---------------------------------------------------------------------------
@@ -653,3 +660,52 @@ def test_an_effective_sum_off_100_names_the_nearest_chain_file_first(folders, sh
 
     assert result.ok is False
     assert result.errors[0].startswith(f"Effective weights from {chain[0]} sum to")
+
+
+@st.composite
+def version_chains(draw) -> list:
+    """Chain entries, nearest first: configs declaring an integer version,
+    configs declaring something else, and entries that are not objects."""
+    entries = draw(st.lists(st.one_of(
+        st.integers(-1, 3).map(lambda version: {"version": version}),
+        st.one_of(st.text(max_size=3), st.floats(allow_nan=False), st.none())
+        .map(lambda version: {"version": version}),
+        st.one_of(st.integers(), st.lists(st.integers(), max_size=2), st.text(max_size=3)),
+    ), min_size=1, max_size=6))
+    return entries
+
+
+@given(version_chains())
+def test_the_chain_version_check_sees_every_entry(entries):
+    chain = [Path(f"level{depth}") / "fitness-config.json" for depth in range(len(entries))]
+    configs = [entry for entry in entries if isinstance(entry, dict)]
+    integer_declared = [(path, entry["version"]) for path, entry in zip(chain, entries)
+                        if isinstance(entry, dict) and type(entry["version"]) is int]
+    supported = all(type(cfg["version"]) is int and cfg["version"] == model.SUPPORTED_SCHEMA_VERSION
+                    for cfg in configs)
+
+    result = validation.validate_schema_versions(entries, chain)
+
+    assert result.ok is supported
+    if not supported:
+        for path, version in integer_declared:
+            assert f"  - {path} declares version {version}" in result.errors, result.errors
+
+
+@given(complete_configs(), st.sampled_from(DOMAINS), st.one_of(st.integers(1, 50), st.just(100)))
+def test_a_complete_weights_table_off_100_is_named_beside_an_unknown_domain(config, domain, extra):
+    unbalanced = _set(config, "weights", domain, config["weights"][domain] + extra)
+    with_typo = _set(unbalanced, "weights", f"{domain}-typo", 0)
+    total = sum(unbalanced["weights"].values())
+    before, after = run_validate_config(with_typo)
+    state_delta.assert_state_delta(before, after, VALIDATION_UNIVERSE,
+                                   {"violations": naming_each({f"add up to {total}", f"{domain}-typo"})})
+
+
+@given(complete_configs(), st.sampled_from(BAND_ORDER), st.sampled_from([0, 1]),
+       st.sampled_from([-1, 1]))
+def test_a_gap_or_overlap_in_the_status_bands_shows_each_band_as_given(config, band, edge, shift):
+    bands = _move_band_edge(config["statusThresholds"], band, edge, shift)
+    before, after = run_validate_proposal({**config, "statusThresholds": bands})
+    shown = [f"{name} {low}-{high}" for name, (low, high) in ((name, bands[name]) for name in BAND_ORDER)]
+    state_delta.assert_state_delta(before, after, PROPOSAL_UNIVERSE, {"violations": naming_each(shown)})

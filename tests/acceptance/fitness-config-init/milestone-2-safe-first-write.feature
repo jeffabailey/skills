@@ -260,3 +260,4 @@ Feature: Only a valid config that Priya reviewed is ever saved
       | init --dry-run                               | --dry-run |
       | init --path . --from + --dry-run             | --from    |
       | init --path . --from proposal.json --dry-run | --from    |
+      | audit --path .                               | audit     |

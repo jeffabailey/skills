@@ -437,3 +437,74 @@ def test_any_json_in_any_slot_is_answered_with_violations_not_a_crash(config, se
             "a list of message lines",
             lambda was, now: isinstance(now, list) and all(isinstance(line, str) for line in now)),
     })
+
+
+# ---------------------------------------------------------------------------
+# Behavior B10: the config audit covers the fitness-config-init guide (BR-2).
+# Driving port: cmd_audit(repo_root) -> exit code, offenders named on stderr.
+# Universe: the guide on disk (never touched), the exit code, the guide lines
+# the audit names, and how many files it says it scanned.
+# ---------------------------------------------------------------------------
+
+import contextlib  # noqa: E402
+import io  # noqa: E402
+import re  # noqa: E402
+import tempfile  # noqa: E402
+
+AUDIT_UNIVERSE = {"guide", "exit_code", "named_lines", "scanned"}
+INIT_GUIDE = Path("skills") / "fitness-config-init" / "SKILL.md"
+
+prose_lines = st.text(alphabet="abcdefghijklmnopqrstuvwxyz ,", max_size=60)
+
+
+@st.composite
+def inline_weight_objects(draw) -> str:
+    gap = draw(st.sampled_from(["", " ", "  ", "\t"]))
+    return f'{{ "weights"{gap}:{gap}{{ "{draw(st.sampled_from(DOMAINS))}": {draw(st.integers(1, 100))} }} }}'
+
+
+@st.composite
+def direct_config_reads(draw) -> str:
+    name = "fitness-config" + ".json"
+    return draw(st.sampled_from([
+        f'cfg = json.load(open("{name}"))',
+        f"with open('{name}') as handle:",
+        f"data = json.loads(Path('{name}').read_text())",
+    ]))
+
+
+def run_audit_on_guide(guide_text: str) -> tuple[dict, dict]:
+    with tempfile.TemporaryDirectory() as root:
+        guide = Path(root) / INIT_GUIDE
+        guide.parent.mkdir(parents=True)
+        guide.write_text(guide_text, encoding="utf-8")
+        before = {"guide": guide_text, "exit_code": None, "named_lines": set(), "scanned": None}
+        out, err = io.StringIO(), io.StringIO()
+        with contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
+            code = fitness_config.cmd_audit(Path(root))
+        named = {int(n) for n in re.findall(r"fitness-config-init/SKILL\.md:(\d+):", err.getvalue())}
+        scanned = re.search(r"scanned (\d+)", out.getvalue())
+        after = {"guide": guide.read_text(encoding="utf-8"), "exit_code": code,
+                 "named_lines": named, "scanned": int(scanned.group(1)) if scanned else None}
+    return before, after
+
+
+@given(st.lists(prose_lines, max_size=12), st.one_of(inline_weight_objects(), direct_config_reads()),
+       st.data())
+def test_any_init_guide_with_a_weight_table_or_direct_config_read_fails_the_audit(prose, offence, data):
+    position = data.draw(st.integers(0, len(prose)))
+    lines = [*prose[:position], offence, *prose[position:]]
+    before, after = run_audit_on_guide("\n".join(lines) + "\n")
+    state_delta.assert_state_delta(before, after, AUDIT_UNIVERSE, {
+        "exit_code": is_(1),
+        "named_lines": is_({position + 1}),
+    })
+
+
+@given(st.lists(prose_lines, max_size=12))
+def test_a_clean_init_guide_is_scanned_and_passes_the_audit(prose):
+    before, after = run_audit_on_guide("\n".join(prose) + "\n")
+    state_delta.assert_state_delta(before, after, AUDIT_UNIVERSE, {
+        "exit_code": is_(0),
+        "scanned": is_(1),
+    })

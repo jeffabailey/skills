@@ -17,19 +17,19 @@ Feature: The init skill stays consistent with the rest of the fitness bundle
     When Ana asks for the starting weights for "geo-notes"
     Then the starting config is byte-for-byte the published example config
 
-  @skip @BR-2 @error
+  @BR-2 @error
   Scenario: The config audit catches a weight table written into the init skill guide
     Given a skills checkout whose fitness-config-init guide contains an inline weight table
     When the maintainer runs the config audit on that checkout
     Then the audit fails and names the fitness-config-init guide
 
-  @skip @error
+  @error
   Scenario: The config audit catches the init skill guide reading the config file directly
     Given a skills checkout whose fitness-config-init guide reads fitness-config.json directly
     When the maintainer runs the config audit on that checkout
     Then the audit fails and names the fitness-config-init guide
 
-  @skip @NFR-4
+  @NFR-4
   Scenario: The shipped skills repository passes the config audit, including the init skill guide
     Given the skills repository as shipped
     When the maintainer runs the config audit on the repository

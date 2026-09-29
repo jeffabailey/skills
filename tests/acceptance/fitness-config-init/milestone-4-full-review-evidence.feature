@@ -11,7 +11,7 @@
 @US-05 @milestone-4
 Feature: Kenji uses a full review to ground the proposal in real findings
 
-  @skip @AC-05.2 @FR-9 @static-artifact
+  @AC-05.2 @FR-9 @static-artifact
   Scenario: The skill guide warns that a full review writes a report into the project
     Given the fitness-config-init skill guide
     When an agent host loads the skill guide

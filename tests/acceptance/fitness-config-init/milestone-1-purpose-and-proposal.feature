@@ -18,7 +18,7 @@ Feature: The skill reads what a project is for and proposes weights that fit it
 
   # ---- Executable: the profile catalogue the agent starts from ------------
 
-  @skip @AC-02.1 @BR-1 @ADR-007 @static-artifact
+  @AC-02.1 @BR-1 @ADR-007 @static-artifact
   Scenario: Every archetype profile is a complete, balanced weighting
     Given the purpose profile catalogue shipped with the skill
     When the skill loads its profile catalogue
@@ -27,7 +27,7 @@ Feature: The skill reads what a project is for and proposes weights that fit it
     And every profile gives each domain a whole-number weight of at least 1
     And every profile's weights add up to 100
 
-  @skip @AC-02.1 @AC-03.1 @ADR-007 @ADR-008 @static-artifact @real-io
+  @AC-02.1 @AC-03.1 @ADR-007 @ADR-008 @static-artifact @real-io
   Scenario: The resolver would accept every archetype profile as a new config
     Given the purpose profile catalogue shipped with the skill
     And Ana's project "geo-notes" has no fitness config
@@ -35,7 +35,7 @@ Feature: The skill reads what a project is for and proposes weights that fit it
     Then the resolver would accept every profile as a new config
     And nothing has been saved in "geo-notes"
 
-  @skip @AC-02.3 @ADR-007 @static-artifact
+  @AC-02.3 @ADR-007 @static-artifact
   Scenario: The database-backend profile favours reliability and data over accessibility
     Given the purpose profile catalogue shipped with the skill
     And Priya's project "ledgerd" has no fitness config
@@ -44,20 +44,20 @@ Feature: The skill reads what a project is for and proposes weights that fit it
     Then the "database-backend" profile weighs reliability and data above their starting weights
     And the "database-backend" profile weighs accessibility below its starting weight
 
-  @skip @AC-02.4 @ADR-007 @static-artifact
+  @AC-02.4 @ADR-007 @static-artifact
   Scenario: The web-frontend profile puts accessibility first
     Given the purpose profile catalogue shipped with the skill
     When the skill loads its profile catalogue
     Then accessibility is the highest weight in the "web-frontend" profile
 
-  @skip @US-01 @AC-01.3 @AC-01.6 @NFR-2 @static-artifact
+  @US-01 @AC-01.3 @AC-01.6 @NFR-2 @static-artifact
   Scenario: The purpose signal guide defines confidence and keeps the fast scan small
     Given the purpose signal guide shipped with the skill
     When the skill loads its purpose signal guide
     Then it defines what high, medium and low confidence mean
     And it limits the fast scan to 40 files
 
-  @skip @US-01 @US-03 @NFR-4 @static-artifact
+  @US-01 @US-03 @NFR-4 @static-artifact
   Scenario: The skill guide is discoverable and runs the resolver shipped beside it
     Given the fitness-config-init skill guide
     When an agent host loads the skill guide
@@ -67,7 +67,7 @@ Feature: The skill reads what a project is for and proposes weights that fit it
     And it runs the resolver from "${CLAUDE_SKILL_DIR}/../../scripts/fitness-config.py"
     And it points to its purpose profile and purpose signal references
 
-  @skip @US-02 @US-03 @BR-2 @static-artifact @error
+  @US-02 @US-03 @BR-2 @static-artifact @error
   Scenario: The skill guide carries no weight numbers and saves only reviewed proposals
     Given the fitness-config-init skill guide
     When an agent host loads the skill guide

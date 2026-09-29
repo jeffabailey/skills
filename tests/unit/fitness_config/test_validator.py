@@ -563,7 +563,8 @@ def test_any_gap_or_overlap_in_the_status_bands_is_rejected_naming_status(config
 # Mutation-testing gaps (DELIVER phase 5).
 #   B8b: a complete proposal with exactly one completeness flaw gets exactly
 #        one violation, naming that flaw (a missing key is not also "unknown";
-#        a reversed scoring range is caught even though the bands still tile).
+#        an unknown weight domain is reported once; a reversed scoring range
+#        is caught even though the bands still tile).
 #   B7b: the version-mismatch fix advice fits the chain: older configs only,
 #        newer configs only, or both.
 #   B6b: an effective sum off 100 is blamed first on the nearest chain file.
@@ -589,7 +590,10 @@ def exactly_one_violation_naming(*words) -> state_delta.Predicate:
 @st.composite
 def proposals_with_one_completeness_flaw(draw) -> tuple[dict, tuple[str, ...]]:
     config = draw(complete_configs())
-    flaw = draw(st.sampled_from(["missing key", "unknown key", "reversed range"]))
+    flaw = draw(st.sampled_from(["missing key", "unknown key", "unknown domain", "reversed range"]))
+    if flaw == "unknown domain":
+        domain = draw(st.sampled_from(DOMAINS))
+        return _set(config, "weights", f"{domain}-typo", 0), (f"weights.{domain}-typo", "not a known domain")
     if flaw == "missing key":
         section = draw(st.sampled_from(FIXED_KEY_SECTIONS))
         key = draw(st.sampled_from(sorted(config[section])))

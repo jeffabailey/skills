@@ -41,6 +41,7 @@ Feature: Invalid configs and broken merges are caught with clear errors before a
     When Devin validates the effective config at "infrastructure/modules/postgresql/"
     Then the validate command exits with success
     And the output confirms the effective merged config is valid
+    And the output names "infrastructure/modules/postgresql/fitness-config.json" as the nearest config
 
   @AC-05.5
   Scenario: Validate without --path preserves the legacy single-file behavior
@@ -103,6 +104,19 @@ Feature: Invalid configs and broken merges are caught with clear errors before a
     When Devin validates the effective config at "infrastructure/modules/does-not-exist"
     Then the validate command exits with a non-zero status
     And the error names the missing target path
+
+  Scenario: Validate accepts a file target that does not exist yet inside an existing folder
+    Given the repo has a valid root fitness-config.json
+    And the path "planned-module.py" is absent from the repo
+    When Devin validates the effective config at "planned-module.py"
+    Then the validate command exits with success
+
+  Scenario: Validate with no config anywhere accepts the built-in defaults
+    Given the repo has no root fitness-config.json
+    And the path "planned-module.py" is absent from the repo
+    When Devin validates the effective config at "planned-module.py"
+    Then the validate command exits with success
+    And the output says the built-in defaults are valid
 
   @infrastructure-failure
   Scenario: Walk-up reports a pathological-tree error past the depth guard

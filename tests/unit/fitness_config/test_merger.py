@@ -18,7 +18,7 @@ from __future__ import annotations
 
 import pytest
 
-from ._loader import fitness_config
+from ._loader import resolution
 
 
 # ---------------------------------------------------------------------------
@@ -83,7 +83,7 @@ from ._loader import fitness_config
 def test_deep_merge_chain_merges_weights_per_domain(
     case_id: str, chain: list[dict], expected_weights: dict
 ):
-    merged = fitness_config.deep_merge_chain(chain)
+    merged = resolution.deep_merge_chain(chain)
 
     assert merged["weights"] == expected_weights, f"case={case_id}"
 
@@ -149,7 +149,7 @@ def test_deep_merge_chain_whole_replacement_keys(
     else:
         override = {"version": 1, key: override_block}
 
-    merged = fitness_config.deep_merge_chain([override, root])
+    merged = resolution.deep_merge_chain([override, root])
 
     assert merged[key] == expected, f"case={case_id}"
 
@@ -167,7 +167,7 @@ def test_deep_merge_chain_independent_top_level_keys_compose_correctly():
         "security": {"confidenceThreshold": 9},
     }
 
-    merged = fitness_config.deep_merge_chain([override, root])
+    merged = resolution.deep_merge_chain([override, root])
 
     assert merged["weights"] == {"architecture": 50, "security": 50}
     assert merged["security"] == {"confidenceThreshold": 9}
@@ -181,7 +181,57 @@ def test_deep_merge_chain_does_not_mutate_inputs():
     root_snapshot = {"version": 1, "weights": {"a": 1, "b": 2}}
     override_snapshot = {"version": 1, "weights": {"b": 20}}
 
-    fitness_config.deep_merge_chain([override, root])
+    resolution.deep_merge_chain([override, root])
 
     assert root == root_snapshot
     assert override == override_snapshot
+
+
+# ---------------------------------------------------------------------------
+# B5b (mutation-testing gap): the chain may hold entries that are valid JSON
+# but not objects (a file containing `[]` or `7`); the merge ignores them
+# wherever they sit, and the version is the nearest declared one.
+# ---------------------------------------------------------------------------
+
+from hypothesis import given  # noqa: E402
+from hypothesis import strategies as st  # noqa: E402
+
+from ._loader import model  # noqa: E402
+
+_partial_configs = st.fixed_dictionaries({}, optional={
+    "version": st.integers(0, 3),
+    "weights": st.dictionaries(st.sampled_from(sorted(model.DEFAULT_WEIGHTS)), st.integers(0, 100)),
+    "statusThresholds": st.just(dict(model.DEFAULT_STATUS)),
+    "security": st.builds(lambda cutoff: {"confidenceThreshold": cutoff}, st.integers(1, 10)),
+    "scoring": st.just(dict(model.DEFAULT_SCORING)),
+})
+_non_objects = st.one_of(st.none(), st.integers(), st.text(max_size=3),
+                         st.lists(st.integers(), max_size=2))
+
+
+@given(st.lists(_partial_configs, max_size=4), st.data())
+def test_deep_merge_chain_ignores_non_object_entries_and_takes_the_nearest_version(chain, data):
+    with_junk = list(chain)
+    for _ in range(data.draw(st.integers(1, 3))):
+        with_junk.insert(data.draw(st.integers(0, len(with_junk))), data.draw(_non_objects))
+
+    merged = resolution.deep_merge_chain(with_junk)
+
+    assert merged == resolution.deep_merge_chain(chain)
+    declared = [cfg["version"] for cfg in chain if "version" in cfg]
+    assert merged.get("version") == (declared[0] if declared else None)
+
+
+# ---------------------------------------------------------------------------
+# B5c (mutation-testing gap): legacy `show [path]` lays one file over the
+# defaults -- all four sections, each the file's or the default, no version.
+# ---------------------------------------------------------------------------
+
+@given(_partial_configs)
+def test_merge_defaults_fills_every_section_and_drops_the_version(config):
+    shown = resolution.merge_defaults(config)
+
+    assert list(shown) == list(model.SECTION_DEFAULTS)
+    assert shown["weights"] == {**model.DEFAULT_WEIGHTS, **config.get("weights", {})}
+    for section in ("statusThresholds", "security", "scoring"):
+        assert shown[section] == config.get(section, model.SECTION_DEFAULTS[section])

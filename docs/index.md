@@ -55,10 +55,10 @@ When a domain is skipped, its weight redistributes proportionally across the rem
 
 ## Repository Structure
 
-All skills live under `src/`. Install scripts symlink each directory in `src/`.
+All skills live under `skills/`. Install scripts symlink each directory in `skills/`.
 
 ```
-src/
+skills/
   review-<domain>/
     SKILL.md                # Skill definition (workflow + scoring rubric)
     references/

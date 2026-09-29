@@ -92,6 +92,34 @@ jobs:
           python3 scripts/fitness-config.py init /tmp/fitness-config-test.json
           python3 scripts/fitness-config.py validate /tmp/fitness-config-test.json
 
+      - name: Audit skills for direct fitness-config reads
+        run: python3 scripts/fitness-config.py audit
+
+  python-tests:
+    name: Python tests (pytest, jsonschema)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Set up uv and Python
+        uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9 # v9.0.0
+        with:
+          python-version: "3.12"
+
+      # The pyproject dev group (hypothesis, jsonschema, pytest, pytest-bdd) is
+      # pinned by the committed uv.lock; --locked fails if the lock is stale.
+      - name: Install dev dependencies
+        run: uv sync --locked --group dev
+
+      # The schema-parity scenario skips when jsonschema is missing, so make
+      # its absence a build failure instead of a silent skip.
+      - name: Require jsonschema for schema-parity checks
+        run: uv run python -c "import jsonschema"
+
+      # All of tests/: unit, acceptance and test_engine_config.py.
+      - name: Run pytest
+        run: uv run pytest tests -q -rs
+
   engine-config-unit-tests:
     name: Engine config unit tests
     runs-on: ubuntu-latest
@@ -115,7 +143,7 @@ jobs:
         with:
           # --offline checks only local/relative links (no network) — this is a
           # required status check, so keep it secret-free and deterministic.
-          # Exclude src/*/references/wisdom.md: those are machine-synced blog
+          # Exclude skills/*/references/wisdom.md: those are machine-synced blog
           # exports whose Hugo cover-images (*.png) and site-absolute /blog/...
           # links are not repo-internal and would false-fail every sync PR.
           args: --offline --no-progress --exclude-path 'wisdom.md' './**/*.md'

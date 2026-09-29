@@ -281,6 +281,18 @@ def then_validate_confirms(context: dict):
     assert "valid" in text or "ok" in text
 
 
+@then(parsers.parse('the output names "{path}" as the nearest config'))
+def then_names_nearest(context: dict, path: str):
+    first_line = context["validate"].stdout.splitlines()[0]
+    assert first_line.startswith("Valid: merged config from "), first_line
+    assert first_line.endswith(path), first_line
+
+
+@then("the output says the built-in defaults are valid")
+def then_defaults_valid(context: dict):
+    assert "built-in defaults" in context["validate"].stdout, context["validate"].stdout
+
+
 @then("the output confirms the root config is valid")
 def then_root_valid(context: dict):
     text = context["validate"].stdout.lower()

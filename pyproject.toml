@@ -1,3 +1,16 @@
+[project]
+name = "skills"
+version = "0.0.0"
+requires-python = ">=3.10"
+
+[dependency-groups]
+dev = [
+    "hypothesis",
+    "jsonschema",
+    "pytest",
+    "pytest-bdd",
+]
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 python_files = ["test_*.py", "*_steps.py"]

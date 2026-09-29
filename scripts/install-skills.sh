@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Install skills by symlinking src/* into detected AI tool config directories
+# Install skills by symlinking skills/* into detected AI tool config directories
 #
 # Usage:
 #   install-skills.sh
@@ -32,15 +32,15 @@ symlink_skills() {
   local source_dir="$1"
   local dest_dir="$2"
   
-  if [[ ! -d "$source_dir/src" ]]; then
-    echo "Error: $source_dir/src not found" >&2
+  if [[ ! -d "$source_dir/skills" ]]; then
+    echo "Error: $source_dir/skills not found" >&2
     exit 1
   fi
   
   mkdir -p "$dest_dir"
   
   local count=0
-  for skill in "$source_dir/src"/*/; do
+  for skill in "$source_dir/skills"/*/; do
     [[ -d "$skill" ]] || continue
     local name
     name="$(basename "$skill")"
@@ -62,7 +62,7 @@ main() {
   else
     echo "Usage: $0 [SOURCE_DIR]" >&2
     echo "" >&2
-    echo "  SOURCE_DIR   Repo root containing src/ (default: script's parent dir)" >&2
+    echo "  SOURCE_DIR   Repo root containing skills/ (default: script's parent dir)" >&2
     exit 1
   fi
   

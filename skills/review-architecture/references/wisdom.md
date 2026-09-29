@@ -1,7 +1,7 @@
 # Domain Knowledge Reference
 
 Auto-generated from blog posts. Do not edit manually.
-Last updated: 2026-09-21
+Last updated: 2026-09-28
 
 ---
 
@@ -240,7 +240,7 @@ Study how companies like Amazon, Google, and Netflix have evolved their architec
 
 ### 5. Draw the Architecture
 
-Diagrams make boundaries and communication paths visible, so teammates can review them. The C4 model gives you four zoom levels, from system context down to code, and [Structurizr examples](https://jeffbailey.us/learn-structurizr/) shows how to define those views as code.
+Diagrams make boundaries and communication paths visible, so teammates can review them. The C4 model gives you four zoom levels, from system context down to code, and [Structurizr examples](https://jeffbailey.us/blog/2021/03/13/learn-structurizr/) shows how to define those views as code. [Structurizr vs Mermaid vs PlantUML](https://jeffbailey.us/blog/2026/09/20/structurizr-vs-mermaid-vs-plantuml/) helps you choose a diagram tool.
 
 ## When NOT to Focus on Architecture
 
@@ -474,7 +474,7 @@ But patterns are tools, not goals. Using a pattern doesn't automatically make co
 
 These patterns appear frequently because they solve everyday problems. Understanding them helps you recognize when to apply them and when simpler solutions suffice.
 
-*Dive deeper into design patterns with Learn Software Design Patterns.* <!-- Draft-only link removed: learn-software-design-patterns -->
+*Dive deeper into design patterns with Learn Software Design Patterns.* 
 
 ### When Not to Use Patterns
 
@@ -1208,7 +1208,7 @@ API standards and practices continue to evolve. Understanding upcoming changes h
 
 ### Trend: AI-Ready APIs and Agent Integration
 
-Many developers design APIs for AI agents, with unauthorized calls as the top security concern. Organizations benefit from APIs that support AI workflows. Learn more about how AI agents access tools through [What Is MCP?](/blog/2026/01/15/what-is-mcp/), coordinate with each other through [What Is the Agent2Agent Protocol (A2A)?](https://jeffbailey.us/what-is-the-agent2agent-protocol-a2a/), and acquire procedural knowledge through [Agent Skills](https://jeffbailey.us/what-are-agent-skills/)
+Many developers design APIs for AI agents, with unauthorized calls as the top security concern. Organizations benefit from APIs that support AI workflows. Learn more about how AI agents access tools through [What Is MCP?](/blog/2026/01/15/what-is-mcp/), coordinate with each other through [What Is the Agent2Agent Protocol (A2A)?](https://jeffbailey.us/blog/2026/01/18/what-is-the-agent2agent-protocol-a2a/), and acquire procedural knowledge through [Agent Skills](https://jeffbailey.us/blog/2026/01/24/what-are-agent-skills/)
 
 **What this means:** APIs should manage agent-specific patterns like tool calling, streaming, and rate limiting for automation. This transforms API design from human-readable to machine-parseable contracts that agents can discover and use independently.
 

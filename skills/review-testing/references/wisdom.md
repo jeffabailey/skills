@@ -1,7 +1,7 @@
 # Domain Knowledge Reference
 
 Auto-generated from blog posts. Do not edit manually.
-Last updated: 2026-04-20
+Last updated: 2026-09-28
 
 ---
 
@@ -111,9 +111,9 @@ Good tests reduce uncertainty, increase safety, and enable confident code change
 
 *For actionable steps, see:*
 
-* **How-to:** [Write effective unit tests](https://jeffbailey.us/how-to-write-effective-unit-tests/) (workflow & steps)
-* **Reference:** [Testing Checklist](https://jeffbailey.us/reference-testing-checklist/)
-* **How-to:** [Add tests to an existing codebase](https://jeffbailey.us/how-to-add-tests-to-existing-codebase/)
+* **How-to:** [Write effective unit tests](https://jeffbailey.us/blog/2025/11/30/how-to-write-effective-unit-tests/) (workflow & steps)
+* **Reference:** [Testing Checklist](https://jeffbailey.us/blog/2025/11/30/reference-testing-checklist/)
+* **How-to:** [Add tests to an existing codebase](https://jeffbailey.us/blog/2025/11/30/how-to-add-tests-to-existing-codebase/)
 
 With this foundation, let's examine the effective testing process.
 
@@ -1031,7 +1031,7 @@ Testing tools evolve with new tech like AI-assisted generation, contract testing
 
 **Tools that are evolving:**
 
-* **AI-assisted test generation** - Tools that generate test cases from code or requirements. [Just-in-Time Catching Test Generation](https://jeffbailey.us/what-is-just-in-time-catching-test-generation/) creates tests on-the-fly for each code change to catch bugs before they land.
+* **AI-assisted test generation** - Tools that generate test cases from code or requirements. [Just-in-Time Catching Test Generation](https://jeffbailey.us/blog/2026/02/14/what-is-just-in-time-catching-test-generation/) creates tests on-the-fly for each code change to catch bugs before they land.
 * **Contract testing** - Verifying that services communicate correctly without full integration tests
 * **Property-based testing** - Generating random inputs to find edge cases automatically
 * **Visual regression testing** - Automated checks for UI changes
@@ -1078,7 +1078,6 @@ If you can answer these questions confidently, you're ready to apply testing pri
 
 Try answering these without looking back. If any feel shaky, revisit the linked sections.
 
-<!-- markdownlint-disable MD033 -->
 1. **In your own words, what's the difference between testing behavior and testing implementation?**
 
    <details><summary>Show answer</summary>

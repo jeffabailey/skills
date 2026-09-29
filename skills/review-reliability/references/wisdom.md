@@ -1,7 +1,7 @@
 # Domain Knowledge Reference
 
 Auto-generated from blog posts. Do not edit manually.
-Last updated: 2026-09-21
+Last updated: 2026-09-28
 
 ---
 
@@ -598,7 +598,6 @@ Begin building reliability engineering fundamentals today. Choose one area to im
 
 Test your understanding of reliability engineering fundamentals and revisit your Quick Checks answers.
 
-<!-- markdownlint-disable MD033 -->
 1. **What's the difference between an SLI and an SLO?**
    <details><summary>Show answer</summary>
 
@@ -637,7 +636,7 @@ Test your understanding of reliability engineering fundamentals and revisit your
    Common pitfalls include aiming for perfect reliability without understanding the costs, setting SLOs without baseline data, ignoring error budgets, monitoring implementation details rather than user-visible SLIs, and not reviewing SLOs regularly.
    
    </details>
-   <!-- markdownlint-enable MD033 -->
+   
 
 ### Glossary
 
@@ -703,7 +702,7 @@ Mastering monitoring and observability fundamentals shifts you from reacting to 
 > Type: **Explanation** (understanding-oriented).  
 > Primary audience: **beginner to intermediate** engineers learning what to monitor and how to design observability systems
 
-> **Updated 2026-06-11:** Added [Wide Events: One Rich Event Per Request](#wide-events-one-rich-event-per-request)—a modern, OpenTelemetry-native way to simplify logging by capturing one richly attributed event per request instead of scattering context across many thin log lines—and threaded the idea through the OpenTelemetry, pitfalls, and future-trends sections. Also deepened the structured-events thread: the first-person view of observability, one event per service hop, and why raw (unaggregated) events are what let you ask new questions.
+> **Updated 2026-06-11:** Added [Wide Events: One Rich Event Per Request](#wide-events-one-rich-event-per-request) (a modern, OpenTelemetry-native way to simplify logging by capturing one richly attributed event per request instead of scattering context across many thin log lines) and threaded the idea through the OpenTelemetry, pitfalls, and future-trends sections. Also deepened the structured-events thread: the first-person view of observability, one event per service hop, and why raw (unaggregated) events are what let you ask new questions.
 
 **Prerequisites:** Basic software development literacy; assumes familiarity with APIs, databases, and application deployment—no monitoring or observability experience needed.
 
@@ -766,7 +765,7 @@ Monitoring and observability complement each other—monitoring detects known is
 
 **Monitoring and observability together:** You quickly detect problems via monitoring, then use observability to find root causes and resolve them efficiently.
 
-**A matter of perspective:** Monitoring is a third-person view—one system checking another from the outside, with no knowledge of what the code intended. Instrumentation for observability is first-person—the code reporting on itself from the inside as it executes each request. First-person reports map directly to user experience in a way that external checks cannot, which is why observability can explain *why* a specific request behaved the way it did.
+**A matter of perspective:** Monitoring is a third-person view (one system checking another from the outside, with no knowledge of what the code intended. Instrumentation for observability is first-person) the code reporting on itself from the inside as it executes each request. First-person reports map directly to user experience in a way that external checks cannot, which is why observability can explain *why* a specific request behaved the way it did.
 
 **Section Summary:** Monitoring watches known metrics and alerts on thresholds, while observability explores system behavior to understand unknown problems. Use monitoring for detection and observability for understanding; both are vital for production systems.
 
@@ -1001,7 +1000,7 @@ Understanding common patterns helps implement effective monitoring and observabi
 
 ### The Golden Signals
 
-**The golden signals** are four metrics—latency, traffic, errors, and saturation—that provide crucial information about system health.
+**The golden signals** are four metrics (latency, traffic, errors, and saturation) that provide crucial information about system health.
 
 **Latency:** Track request percentiles (P50, P95, P99) to understand user experience, not just averages.
 
@@ -1067,9 +1066,9 @@ Structured logs enable queries such as "show errors for user456 in the last hour
 
 ### Wide Events: One Rich Event Per Request
 
-**Wide events** capture everything about a single unit of work—usually one request—in one richly attributed event, rather than scattering that context across many thin log lines.
+**Wide events** capture everything about a single unit of work (usually one request) in one richly attributed event, rather than scattering that context across many thin log lines.
 
-Consider the two ways to record what happened during a request. The **deep** approach emits many small log lines, each carrying one or two fields: request started, user authenticated, cache missed, order placed, response sent. To answer "which restaurants had a cache miss *and* a slow response?" you must correlate—effectively JOIN—across several lines per request. At millions of requests, that correlation is slow or impossible, so teams give up and bolt on a new metric for each new question. The codebase fills with ad-hoc counters, each a pre-aggregated answer to exactly one question someone thought of in advance.
+Consider the two ways to record what happened during a request. The **deep** approach emits many small log lines, each carrying one or two fields: request started, user authenticated, cache missed, order placed, response sent. To answer "which restaurants had a cache miss *and* a slow response?" you must correlate (effectively JOIN) across several lines per request. At millions of requests, that correlation is slow or impossible, so teams give up and bolt on a new metric for each new question. The codebase fills with ad-hoc counters, each a pre-aggregated answer to exactly one question someone thought of in advance.
 
 The **wide** approach emits one event at the end of the request. It attaches every attribute that describes it—infrastructure (region, pod, deploy SHA), request (route, status, duration), user (id, plan), business (restaurant, order total), and dependencies (cache hit, query count):
 
@@ -1105,7 +1104,7 @@ Store these events in raw form, without aggregating them at write time. You can 
 **When to use wide events:**
 
 * Capturing request-scoped context in services where many dimensions matter (user, business, infra).
-* Answering ad-hoc, high-cardinality questions—by user, tenant, deploy, or feature flag—without pre-planning every dashboard.
+* Answering ad-hoc, high-cardinality questions (by user, tenant, deploy, or feature flag) without pre-planning every dashboard.
 * Reducing reliance on ad-hoc counters and cross-line log correlation.
 
 **Wide events trade-offs:**
@@ -1268,7 +1267,7 @@ Observability data is only valid if it improves decisions. Don't add new metrics
 
 When unsure, link new telemetry signals to a decision, runbook, or alert. Don't collect signals if you can't explain the action on change.
 
-This restraint applies to new *signals*—a fresh metric, a new log stream, a new pipeline—each of which carries real collection, storage, and cognitive cost. It does not contradict the "default to inclusion" guidance for [wide events](#wide-events-one-rich-event-per-request): adding one more *attribute* to an event you already emit is nearly free, because it is the same write and the same row. Be frugal with new signals; be generous with attributes on the events you already produce.
+This restraint applies to new *signals* (a fresh metric, a new log stream, a new pipeline) each of which carries real collection, storage, and cognitive cost. It does not contradict the "default to inclusion" guidance for [wide events](#wide-events-one-rich-event-per-request): adding one more *attribute* to an event you already emit is nearly free, because it is the same write and the same row. Be frugal with new signals; be generous with attributes on the events you already produce.
 
 ### Common Misconceptions
 
@@ -1600,13 +1599,12 @@ Begin building the fundamentals of monitoring and observability today. Select an
 
 * **Standards:** [OpenTelemetry](https://opentelemetry.io/) (vendor-neutral observability), [OpenTracing](https://opentracing.io/) (distributed tracing standard, merged into OpenTelemetry).
 
-* **Tools:** [Prometheus](https://prometheus.io/) (metrics), [Grafana](https://grafana.com/) (visualization), [Jaeger](https://www.jaegertracing.io/) (distributed tracing), [Elasticsearch](https://www.elastic.co/elasticsearch/) (log analysis), [Datadog](https://www.datadoghq.com/) (unified observability platform), [SigNoz](https://signoz.io/) (open-source observability platform), and Splunk Observability Cloud, formerly SignalFx (see the [SignalFx tutorial](https://jeffbailey.us/learn-signalfx/) for a hands-on walkthrough).
+* **Tools:** [Prometheus](https://prometheus.io/) (metrics), [Grafana](https://grafana.com/) (visualization), [Jaeger](https://www.jaegertracing.io/) (distributed tracing), [Elasticsearch](https://www.elastic.co/elasticsearch/) (log analysis), [Datadog](https://www.datadoghq.com/) (unified observability platform), [SigNoz](https://signoz.io/) (open-source observability platform), and Splunk Observability Cloud, formerly SignalFx (see the [SignalFx tutorial](https://jeffbailey.us/blog/2020/05/27/learn-signalfx/) for a hands-on walkthrough).
 
 ### Self-Assessment
 
 Test your understanding of monitoring and observability fundamentals:
 
-<!-- markdownlint-disable MD033 -->
 1. **What's the difference between monitoring and observability?**
    <details><summary>Show answer</summary>
 
@@ -1645,10 +1643,10 @@ OpenTelemetry is a vendor-neutral standard for observability instrumentation. It
 6. **What is a wide event, and how does it simplify logging?**
    <details><summary>Show answer</summary>
 
-   A wide event captures everything about one unit of work—usually a request—in a single richly attributed event, instead of scattering that context across many thin log lines. Because all attributes live on one row, you can filter and `GROUP BY` any dimension without correlating across lines or adding new instrumentation. In OpenTelemetry, a span with its attributes map is a wide event, which is why adopting OTEL spans with rich attributes is the practical way to log more, not just more.
+   A wide event captures everything about one unit of work (usually a request) in a single richly attributed event, instead of scattering that context across many thin log lines. Because all attributes live on one row, you can filter and `GROUP BY` any dimension without correlating across lines or adding new instrumentation. In OpenTelemetry, a span with its attributes map is a wide event, which is why adopting OTEL spans with rich attributes is the practical way to log more, not just more.
 
    </details>
-   <!-- markdownlint-enable MD033 -->
+   
 
 ## References
 
@@ -2921,7 +2919,7 @@ When working with specialists:
 
 ### Note on Verification
 
-Availability best practices evolve with technology. The fundamentals—redundancy, health checks, graceful degradation—remain constant, but their implementation changes. Verify your cloud provider's current recommendations and test your requirements.
+Availability best practices evolve with technology. The fundamentals (redundancy, health checks, graceful degradation) remain constant, but their implementation changes. Verify your cloud provider's current recommendations and test your requirements.
 
 [Google SRE Book]: https://sre.google/sre-book/table-of-contents/
 [AWS Well-Architected Framework - Reliability Pillar]: https://docs.aws.amazon.com/wellarchitected/latest/reliability-pillar/welcome.html
@@ -2945,8 +2943,6 @@ URL: https://jeffbailey.us/blog/2026/02/01/fundamentals-of-timeouts
 
 ## Introduction
 
-<!-- markdownlint-disable MD052 -->
-<!-- Link reference definitions (used reference-style in body and References). -->
 [tail-at-scale]: https://research.google/pubs/pub40801/
 [sre-book]: https://sre.google/sre-book/table-of-contents/
 [sre-cascading]: https://sre.google/sre-book/addressing-cascading-failures/

@@ -1,7 +1,7 @@
 # Domain Knowledge Reference
 
 Auto-generated from blog posts. Do not edit manually.
-Last updated: 2026-04-20
+Last updated: 2026-09-28
 
 ---
 
@@ -261,12 +261,12 @@ Most performance fixes are these when stepping back.
 
 ### Add parallelism with care
 
-Parallelism can cut latency but also increase load and tail behavior. [Amdahl's Law](https://jeffbailey.us/what-is-amdahls-law/) sets the ceiling: serial work caps how much extra parallelism helps, even before coordination costs.
+Parallelism can cut latency but also increase load and tail behavior. [Amdahl's Law](https://jeffbailey.us/blog/2026/03/30/what-is-amdahls-law/) sets the ceiling: serial work caps how much extra parallelism helps, even before coordination costs.
 
 If you add concurrency, verify you did not create:
 
-* [A thundering herd](https://jeffbailey.us/what-is-a-thundering-herd/).
-* [Retry storms](https://jeffbailey.us/what-is-a-retry-storm/).
+* [A thundering herd](https://jeffbailey.us/blog/2025/12/16/what-is-a-thundering-herd/).
+* [Retry storms](https://jeffbailey.us/blog/2025/12/16/what-is-a-retry-storm/).
 * A shared bottleneck that now saturates faster.
 
 ### Performance changes have failure modes
@@ -766,7 +766,7 @@ Every system has a **scalability ceiling**, a point where adding resources provi
 
 * **Coordination overhead** - More components require more coordination (consensus, locking, synchronization), adding latency and reducing efficiency.
 * **Shared bottlenecks** - Some resources can't be scaled (single database, shared file system, external API rate limits).
-* **[Amdahl's Law](https://jeffbailey.us/what-is-amdahls-law/)** — The non-parallelizable portion of work limits speedup. Even with infinite parallelization, sequential portions create limits.
+* **[Amdahl's Law](https://jeffbailey.us/blog/2026/03/30/what-is-amdahls-law/).** The non-parallelizable portion of work limits speedup. Even with infinite parallelization, sequential portions create limits.
 * **Network effects** - More components mean more network communication, increasing latency and reducing throughput.
 
 **Recognizing the ceiling:**

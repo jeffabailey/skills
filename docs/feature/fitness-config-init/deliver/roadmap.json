@@ -1,0 +1,344 @@
+{
+  "roadmap": {
+    "project_id": "fitness-config-init",
+    "created_at": "2026-09-29T03:48:52Z",
+    "total_steps": 11,
+    "goal": "Add the fitness-config-init skill that proposes a purpose-tuned fitness-config.json and writes it safely via the resolver."
+  },
+  "phases": [
+    {
+      "id": "01",
+      "name": "Walking skeleton and deterministic proposal gate",
+      "description": "Turn WS-1 green end-to-end (stdin proposal -> strict check -> canonical bytes -> fingerprint -> exclusive create), then lock canonical-bytes parity, the anchor-guarded baseline, and the strict validator with its rejections. Covers DISTILL implementation-order items 1-6.",
+      "default_agent": "nw-functional-software-crafter",
+      "default_deps_strategy": "sequential",
+      "steps": [
+        {
+          "id": "01-01",
+          "name": "Walking skeleton: reviewed proposal saved byte-for-byte into ledgerd",
+          "description": "Add init --path T --from - --dry-run and init --path T --from - --expect FP (create-only) to the resolver: strict validation plus completeness, canonical renderer, fingerprint, exclusive create, and the anchor guard for target == cwd.",
+          "deps": [],
+          "estimated_hours": 3,
+          "test_file": "tests/acceptance/fitness-config-init/walking-skeleton.feature",
+          "scenario_name": "Priya saves a reviewed database-service config into ledgerd, which had none",
+          "criteria": [
+            "Dry run on a folder without a config prints STATUS: would-create and Proposal: <fp>, then canonical JSON from a line exactly '{', writing nothing",
+            "Saving with --expect <fp> prints STATUS: created and the file bytes equal the canonical bytes shown by the dry run",
+            "The saved config passes validate --path . and strict validate fitness-config.json; show --path . prints Config: fitness-config.json",
+            "The workspace state delta shows exactly one new file; with target equal to anchor no config above the anchor is read",
+            "WS-1 passes and the fitness-config-per-directory suite stays green"
+          ],
+          "implementation_notes": "DISTILL order item 1 (WS-1 is already enabled). Paradigm: functional, matching scripts/fitness-config.py: completeness rules, canonical renderer and fingerprint are pure functions; stdin read, exclusive create and printing live at the CLI edge only. Dry-run stdout shape (user decision): status/header lines first (STATUS:, Proposal:), then the canonical JSON block starting at a line that is exactly '{'; that block is the byte-exact write payload. Completeness for writes (user decision): all 10 domains, integers only, sum 100, all four sections. No new files under scripts/. Dependency check (verified 2026-09-28): hypothesis is NOT installed (`uv run python -c \"import hypothesis\"` and system python3 both raise ModuleNotFoundError; jsonschema is also absent from the uv env). This step FIRST adds a dev dependency group to pyproject.toml with hypothesis, pytest, pytest-bdd and jsonschema, and sets requires-python (uv warns it is missing), before writing any property test. Create tests/unit/fitness_config/test_write_gate.py here with the create path (injected writer adapter). Pre-authored acceptance scenarios are layer-3 subprocess tests (DISTILL Tier A); they stay single-example and are not reframed.\nTEST PARADIGM (mandatory): Unit tests for this step MUST be written as property-based tests using Hypothesis @given strategies + state-delta matchers (assert_state_delta over a declared universe with strict=True). Single-example unit tests are FALLBACK only \u2014 document why in a `# bypass:` comment if used. Acceptance scenarios MUST be framed as Property: blocks (quantified preconditions + invariant outcomes) where the contract supports it; classic Scenario: is fallback. Integration and E2E tests REMAIN single-example \u2014 they verify wiring, not invariants. Universe declaration is mandatory even when only one slot is checked: the unchanged() predicate covers the rest.",
+          "files_to_modify": [
+            "scripts/fitness-config.py",
+            "pyproject.toml",
+            "tests/unit/fitness_config/test_validator.py",
+            "tests/unit/fitness_config/test_reporter.py",
+            "tests/unit/fitness_config/test_write_gate.py"
+          ]
+        },
+        {
+          "id": "01-02",
+          "name": "Fingerprint identity and canonical defaults parity with the example",
+          "description": "Prove the fingerprint identifies exactly the saved bytes and that the canonical rendering of the built-in defaults equals fitness-config.example.json; align architecture-design.md section 7 with the header-then-JSON dry-run shape.",
+          "deps": [
+            "01-01"
+          ],
+          "estimated_hours": 1,
+          "test_file": "tests/acceptance/fitness-config-init/milestone-2-safe-first-write.feature",
+          "scenario_name": "The fingerprint Priya sees identifies exactly the config that will be saved",
+          "criteria": [
+            "the fingerprint printed by the dry run equals the fingerprint of the bytes later saved",
+            "semantically equal proposals with different key order or whitespace yield the same canonical bytes and fingerprint",
+            "The canonical JSON block of init --path <empty> --dry-run is byte-identical to fitness-config.example.json",
+            "architecture-design.md section 7 says dry-run stdout is header lines then a canonical JSON block from a line exactly '{', and only that block matches the example"
+          ],
+          "implementation_notes": "DISTILL order item 2. Also activates integration-checkpoints.feature 'The built-in starting config is the published example, byte for byte'. Remove @skip one scenario at a time. Resolves acceptance-review upstream issue 1 in docs/feature/fitness-config-init/design/architecture-design.md (section 7 Correctness row). Functional paradigm; renderer and fingerprint stay pure. Unit properties: render(parse(render(c))) == render(c); fingerprint(c1) == fingerprint(c2) iff canonical bytes equal.\nTEST PARADIGM (mandatory): Unit tests for this step MUST be written as property-based tests using Hypothesis @given strategies + state-delta matchers (assert_state_delta over a declared universe with strict=True). Single-example unit tests are FALLBACK only \u2014 document why in a `# bypass:` comment if used. Acceptance scenarios MUST be framed as Property: blocks (quantified preconditions + invariant outcomes) where the contract supports it; classic Scenario: is fallback. Integration and E2E tests REMAIN single-example \u2014 they verify wiring, not invariants. Universe declaration is mandatory even when only one slot is checked: the unchanged() predicate covers the rest.",
+          "files_to_modify": [
+            "scripts/fitness-config.py",
+            "tests/unit/fitness_config/test_reporter.py",
+            "tests/acceptance/fitness-config-init/milestone-2-safe-first-write.feature",
+            "tests/acceptance/fitness-config-init/integration-checkpoints.feature",
+            "docs/feature/fitness-config-init/design/architecture-design.md"
+          ]
+        },
+        {
+          "id": "01-03",
+          "name": "Anchor-guarded starting weights and anchor regressions",
+          "description": "Add init --path T --dry-run (STATUS: baseline, Baseline-Source: defaults|chain, chain lines, canonical JSON) and the ADR-009 anchor guard for every init --path form, including refusing targets outside the anchor.",
+          "deps": [
+            "01-02"
+          ],
+          "estimated_hours": 2,
+          "test_file": "tests/acceptance/fitness-config-init/walking-skeleton.feature",
+          "scenario_name": "Priya sees the built-in starting weights for a project at its repository root",
+          "criteria": [
+            "at the anchor root, init --path . --dry-run prints STATUS: baseline and Baseline-Source: defaults, then the canonical defaults",
+            "For a subfolder, Baseline-Source: chain, chain header lines end in fitness-config.json, and the baseline equals the parent chain merged over defaults",
+            "A fitness-config.json above the anchor is never read by the dry run or by plain init --path",
+            "init --path ../<sibling> exits 2, writes nothing, and says the folder is outside the project",
+            "legacy positional init is unchanged"
+          ],
+          "implementation_notes": "DISTILL order items 3 and 4. Activates walking-skeleton WS-2 and milestone-2 'Starting weights for a subfolder come from the configs above it', 'Starting weights at the project root ignore a config outside the project', 'A default config set up at the project root ignores a config outside the project', 'No config is ever created for a folder outside the project'. Anchor guard per data-models.md 6.3: the walk never leaves the anchor; target == anchor gives an empty chain. Pure: anchor-bounded chain computation takes paths only; reuse build_seed_config and walk_up_chain_with_status. User-visible change: plain init --path ../x now exits 2 (acceptance-review issue 6). Unit properties: for any generated directory tree and anchor, the chain never contains a path outside the anchor.\nTEST PARADIGM (mandatory): Unit tests for this step MUST be written as property-based tests using Hypothesis @given strategies + state-delta matchers (assert_state_delta over a declared universe with strict=True). Single-example unit tests are FALLBACK only \u2014 document why in a `# bypass:` comment if used. Acceptance scenarios MUST be framed as Property: blocks (quantified preconditions + invariant outcomes) where the contract supports it; classic Scenario: is fallback. Integration and E2E tests REMAIN single-example \u2014 they verify wiring, not invariants. Universe declaration is mandatory even when only one slot is checked: the unchanged() predicate covers the rest.",
+          "files_to_modify": [
+            "scripts/fitness-config.py",
+            "tests/unit/fitness_config/test_resolver.py",
+            "tests/acceptance/fitness-config-init/walking-skeleton.feature",
+            "tests/acceptance/fitness-config-init/milestone-2-safe-first-write.feature"
+          ]
+        },
+        {
+          "id": "01-04",
+          "name": "Strict validator, proposal rejections and schema parity",
+          "description": "Extend validate_config per ADR-008 (names, numeric 0-100, no bool, version 1, two-number ranges, all violations, no crash) and reject invalid proposals with named reasons; settle partial-weights semantics and update ADR-008.",
+          "deps": [
+            "01-03"
+          ],
+          "estimated_hours": 3,
+          "test_file": "tests/acceptance/fitness-config-init/milestone-2-safe-first-write.feature",
+          "scenario_name": "A proposal whose weights add up to 101 is never saved",
+          "criteria": [
+            "Invalid proposals (sum 101, outline flaws, non-object stdin, unbalanced save) get STATUS: invalid, reasons name the domain or section, sum errors show 101 and 100",
+            "Validating a hand-edited config with a 'usability' weight and cutoff 'high' fails, names both problems, and prints no traceback",
+            "The example and a cutoff-only override still validate; the stdlib validator rejects every sample the JSON Schema rejects when jsonschema is installed",
+            "Partial override weights like {\"weights\": {\"data\": 30}} validate alone; sum-to-100 applies to the merged config; init-written configs are complete (10 domains, integers, sum 100)",
+            "ADR-008 Decision item 1 states the partial-weights and merged-sum rule"
+          ],
+          "implementation_notes": "DISTILL order items 5 and 6. Activates milestone-2 'A proposal whose weights add up to 101 is never saved', 'An incomplete or out-of-range proposal is rejected with the reason' (8 examples), 'Something that is not a config at all is rejected', 'Saving an unbalanced proposal is refused even with a fingerprint in hand', 'Validating a hand-edited config names every problem without crashing', and integration-checkpoints 'The resolver's validation rejects everything the published config format rejects', 'The published example config still passes the stricter validation', 'An override that only sets the security cutoff remains valid'. KNOWN_DOMAINS derived from DEFAULT_WEIGHTS keys (no second list). Validator returns all violations as data; printing stays at the CLI edge. Partial weights (user decision): per-file validate_config skips the sum check when the weights object is partial; validate_effective enforces sum 100 on the merged config; completeness rules (write-bound only) require all 10 domains, integers, sum 100. Keep fitness-config-per-directory suite and CI 'validate fitness-config.example.json' / 'init /tmp/...' green. Update docs/adrs/ADR-008-strict-stdlib-validator.md Decision item 1 accordingly (acceptance-review issue 5). Unit properties: any generated config with an out-of-domain key, bool, or out-of-range value yields a violation naming it; any complete valid config yields none.\nTEST PARADIGM (mandatory): Unit tests for this step MUST be written as property-based tests using Hypothesis @given strategies + state-delta matchers (assert_state_delta over a declared universe with strict=True). Single-example unit tests are FALLBACK only \u2014 document why in a `# bypass:` comment if used. Acceptance scenarios MUST be framed as Property: blocks (quantified preconditions + invariant outcomes) where the contract supports it; classic Scenario: is fallback. Integration and E2E tests REMAIN single-example \u2014 they verify wiring, not invariants. Universe declaration is mandatory even when only one slot is checked: the unchanged() predicate covers the rest.",
+          "files_to_modify": [
+            "scripts/fitness-config.py",
+            "tests/unit/fitness_config/test_validator.py",
+            "tests/acceptance/fitness-config-init/milestone-2-safe-first-write.feature",
+            "tests/acceptance/fitness-config-init/integration-checkpoints.feature",
+            "docs/adrs/ADR-008-strict-stdlib-validator.md"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "02",
+      "name": "Write-gate guarantees, override chain and CI",
+      "description": "Harden the write gate (fingerprint mismatch, missing --expect, existing file, damaged chain, OS write failure, post-write verify and rollback), announce overrides in the chain, and wire pytest plus the resolver audit into CI. Covers DISTILL items 7-8 and DEVOPS note 9.1.",
+      "default_agent": "nw-functional-software-crafter",
+      "default_deps_strategy": "sequential",
+      "steps": [
+        {
+          "id": "02-01",
+          "name": "Reviewed-proposal guarantees with verify and rollback",
+          "description": "Refuse any save that is not the reviewed proposal, refuse existing files without --force, stop on a damaged ancestor, leave no partial or temp file on OS write failure, and verify-then-roll-back after writing.",
+          "deps": [
+            "01-04"
+          ],
+          "estimated_hours": 3,
+          "test_file": "tests/acceptance/fitness-config-init/milestone-2-safe-first-write.feature",
+          "scenario_name": "A proposal that differs from the one Priya reviewed is never saved",
+          "criteria": [
+            "A fingerprint differing from --expect reports fingerprint-mismatch; --from without --expect or --dry-run exits non-zero with stderr mentioning --expect; nothing is written",
+            "An existing config without --force reports refused-exists with its bytes and mtime unchanged",
+            "A malformed ancestor config stops the check and names the damaged file",
+            "A read-only target folder exits non-zero with no success token, no traceback, and no leftover config or temp file",
+            "test_write_gate.py proves via an injected writer that verification failure restores prior bytes and reports verify-failed-rolled-back, and that a concurrent create is refused"
+          ],
+          "implementation_notes": "DISTILL order item 7. Activates milestone-2 'A proposal that differs from the one Priya reviewed is never saved', 'A proposal cannot be saved without the fingerprint from a check', 'An existing config is never replaced without Priya's go-ahead', 'A damaged config higher up stops the check and names the damaged file', 'A folder Priya cannot write to is left without a partial config'. Write-gate sequence per data-models.md 6.2 and ADR-010: recompute fingerprint, pre-check ancestors, temp file in the same dir then os.replace (exclusive create without --force), re-read, compare fingerprint, validate_effective, roll back on mismatch. The writer is the single impure adapter, passed in as a function so tests substitute it (Earned Trust: fault injection of silent no-op, partial write, concurrent create). Acceptance-review issue 3 and 4 behaviours are fixed here.\nTEST PARADIGM (mandatory): Unit tests for this step MUST be written as property-based tests using Hypothesis @given strategies + state-delta matchers (assert_state_delta over a declared universe with strict=True). Single-example unit tests are FALLBACK only \u2014 document why in a `# bypass:` comment if used. Acceptance scenarios MUST be framed as Property: blocks (quantified preconditions + invariant outcomes) where the contract supports it; classic Scenario: is fallback. Integration and E2E tests REMAIN single-example \u2014 they verify wiring, not invariants. Universe declaration is mandatory even when only one slot is checked: the unchanged() predicate covers the rest.",
+          "files_to_modify": [
+            "scripts/fitness-config.py",
+            "tests/unit/fitness_config/test_write_gate.py",
+            "tests/acceptance/fitness-config-init/milestone-2-safe-first-write.feature"
+          ]
+        },
+        {
+          "id": "02-02",
+          "name": "Override announced against the root config chain",
+          "description": "Saving a subfolder config under an existing root config reports both files in the chain so the user sees the new file is an override.",
+          "deps": [
+            "02-01"
+          ],
+          "estimated_hours": 1,
+          "test_file": "tests/acceptance/fitness-config-init/walking-skeleton.feature",
+          "scenario_name": "Kenji's billing config is announced as an override of the fieldnotes root config",
+          "criteria": [
+            "after saving services/billing/fitness-config.json in fieldnotes, show --path services/billing lists the billing config and the root config in precedence order",
+            "the effective config of the billing folder passes validate --path",
+            "only the billing config was added; the root config is unchanged"
+          ],
+          "implementation_notes": "DISTILL order item 8. Reuses render_show_output verbatim (FR-8); the resolver change should be minimal, likely only wiring the post-write effective-config check to the anchor-bounded chain. Functional paradigm; no new I/O adapters.\nTEST PARADIGM (mandatory): Unit tests for this step MUST be written as property-based tests using Hypothesis @given strategies + state-delta matchers (assert_state_delta over a declared universe with strict=True). Single-example unit tests are FALLBACK only \u2014 document why in a `# bypass:` comment if used. Acceptance scenarios MUST be framed as Property: blocks (quantified preconditions + invariant outcomes) where the contract supports it; classic Scenario: is fallback. Integration and E2E tests REMAIN single-example \u2014 they verify wiring, not invariants. Universe declaration is mandatory even when only one slot is checked: the unchanged() predicate covers the rest.",
+          "files_to_modify": [
+            "scripts/fitness-config.py",
+            "tests/unit/fitness_config/test_resolver.py",
+            "tests/acceptance/fitness-config-init/walking-skeleton.feature"
+          ]
+        },
+        {
+          "id": "02-03",
+          "name": "CI runs pytest with jsonschema and the resolver audit",
+          "description": "Add a PR-checks job that installs pytest, pytest-bdd, hypothesis and jsonschema and runs tests/unit and tests/acceptance, and add python3 scripts/fitness-config.py audit to the fitness-config job.",
+          "deps": [
+            "02-02"
+          ],
+          "estimated_hours": 1,
+          "test_file": "tests/acceptance/fitness-config-init/integration-checkpoints.feature",
+          "scenario_name": "The resolver's validation rejects everything the published config format rejects",
+          "criteria": [
+            ".github/workflows/pr-checks.yml has a job that installs pytest, pytest-bdd, hypothesis and jsonschema on Python 3.12 and runs pytest tests/unit tests/acceptance",
+            "in CI the schema-parity scenario runs instead of skipping, because jsonschema is installed",
+            "the fitness-config job runs python3 scripts/fitness-config.py audit and fails the build on a non-zero exit",
+            "the existing validate fitness-config.example.json and init /tmp/... steps are kept and still pass"
+          ],
+          "implementation_notes": "DEVOPS note 9.1 of architecture-design.md; acceptance-review issue 9. Pin actions by SHA like the existing jobs. Install from the pyproject dev group if 01-01 added one, else pip install explicitly. Local check: `uv run pytest tests/unit tests/acceptance` and `python3 scripts/fitness-config.py audit` both exit 0.\nEXEMPT FROM PARADIGM: CI workflow YAML has no runtime behaviour to quantify over. Compensate with property-based test at unit level on the adjacent slot: the validator/schema parity properties in tests/unit/fitness_config/test_validator.py, which this job now executes with jsonschema present.",
+          "files_to_modify": [
+            ".github/workflows/pr-checks.yml"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "03",
+      "name": "Skill guide, references and bundle listings",
+      "description": "Deliver the agent-facing skill (SKILL.md plus purpose-signals and purpose-profiles references), extend the audit to cover it, and list the new skill everywhere the bundle documents its skills. Covers DISTILL item 9 and housekeeping from architecture-design 9.2.",
+      "default_agent": "nw-functional-software-crafter",
+      "default_deps_strategy": "sequential",
+      "steps": [
+        {
+          "id": "03-01",
+          "name": "Skill guide, purpose references and audit coverage",
+          "description": "Write skills/fitness-config-init/SKILL.md (steps 0-5, 7-8 of the runtime flow), references/purpose-signals.md and references/purpose-profiles.md, and extend the resolver audit glob to the new guide.",
+          "deps": [
+            "02-03"
+          ],
+          "estimated_hours": 3,
+          "test_file": "tests/acceptance/fitness-config-init/milestone-1-purpose-and-proposal.feature",
+          "scenario_name": "Every archetype profile is a complete, balanced weighting",
+          "criteria": [
+            "purpose-profiles.md has six archetype rows over 10 domains, integers at least 1, sum 100, each accepted by the resolver as a new config",
+            "Database-backend profile weights reliability and data above accessibility; web-frontend puts accessibility first; purpose-signals.md defines confidence and caps the fast scan at 40 files",
+            "SKILL.md is discoverable, runs the resolver via ${CLAUDE_SKILL_DIR}/../../scripts/fitness-config.py with fallback, has no weight numbers, saves only via --expect, and warns full review writes a report",
+            "audit flags an inline weight table or direct config read in the init SKILL.md, and the real repository passes audit including the init guide",
+            "Manual M1 agent-eval scenarios are runnable against the six DISCUSS fixtures"
+          ],
+          "implementation_notes": "DISTILL order item 9. Activates milestone-1 static scenarios 'Every archetype profile is a complete, balanced weighting', 'The resolver would accept every archetype profile as a new config', 'The database-backend profile favours reliability and data over accessibility', 'The web-frontend profile puts accessibility first', 'The purpose signal guide defines confidence and keeps the fast scan small', 'The skill guide is discoverable and runs the resolver shipped beside it', 'The skill guide carries no weight numbers and saves only reviewed proposals'; milestone-4 'The skill guide warns that a full review writes a report into the project'; integration-checkpoints 'The config audit catches a weight table written into the init skill guide', 'The config audit catches the init skill guide reading the config file directly', 'The shipped skills repository passes the config audit, including the init skill guide'. Skill workflow per architecture-design sections 5-6 and ADR-007/009/011: step-0 probe (init --path T --dry-run, degraded mode on failure, nothing written), DQ-7 mode rule, bounded adjustment \u00b14 with evidence, ask purpose when confidence below high, rationale printed not persisted; relay the dry-run header lines and canonical JSON block verbatim. Existing config at this release: print the proposal and stop (confirm flow arrives in 04-01). The repo-wide audit scans every file, so never write the literal direct-read pattern (acceptance-review note). Markdown content is authored by the crafter; the resolver change is only the audit glob.\nTEST PARADIGM (mandatory): Unit tests for this step MUST be written as property-based tests using Hypothesis @given strategies + state-delta matchers (assert_state_delta over a declared universe with strict=True). Single-example unit tests are FALLBACK only \u2014 document why in a `# bypass:` comment if used. Acceptance scenarios MUST be framed as Property: blocks (quantified preconditions + invariant outcomes) where the contract supports it; classic Scenario: is fallback. Integration and E2E tests REMAIN single-example \u2014 they verify wiring, not invariants. Universe declaration is mandatory even when only one slot is checked: the unchanged() predicate covers the rest.\nThe audit-glob change takes the property-based unit test: for any generated guide text containing an inline weights object or a direct config read, audit reports a violation. EXEMPT FROM PARADIGM for the Markdown content of SKILL.md and the two references: skill prose is judged by static acceptance checks and manual agent evals. Compensate with property-based test at unit level on the adjacent slot: the audit detector above plus the completeness-rule properties from 01-04 that every profile row must satisfy.",
+          "files_to_modify": [
+            "skills/fitness-config-init/SKILL.md",
+            "skills/fitness-config-init/references/purpose-signals.md",
+            "skills/fitness-config-init/references/purpose-profiles.md",
+            "scripts/fitness-config.py",
+            "tests/unit/fitness_config/test_validator.py",
+            "tests/acceptance/fitness-config-init/milestone-1-purpose-and-proposal.feature",
+            "tests/acceptance/fitness-config-init/milestone-4-full-review-evidence.feature",
+            "tests/acceptance/fitness-config-init/integration-checkpoints.feature"
+          ]
+        },
+        {
+          "id": "03-02",
+          "name": "List fitness-config-init across bundle docs and plugin metadata",
+          "description": "Add the new skill to README.md, SETUP.md, tests/trigger-tests.md, tests/functional-tests.md (manual agent-eval procedure and six fixtures), and both plugin.json descriptions.",
+          "deps": [
+            "03-01"
+          ],
+          "estimated_hours": 1,
+          "test_file": "tests/acceptance/fitness-config-init/milestone-1-purpose-and-proposal.feature",
+          "scenario_name": "The skill guide is discoverable and runs the resolver shipped beside it",
+          "criteria": [
+            "README.md skills table and SETUP.md skill list include fitness-config-init with a one-line purpose",
+            "tests/trigger-tests.md has should-trigger and should-not-trigger phrases for fitness-config-init",
+            "tests/functional-tests.md records the @manual agent-eval procedure against the six DISCUSS fixtures, including the full-mode dirty-tree scope probe",
+            "plugin.json and .claude-plugin/plugin.json descriptions mention the new skill",
+            "skill-sources.json stays unchanged (utility skill); skill-structure-tests.sh and the internal link check pass"
+          ],
+          "implementation_notes": "Housekeeping from architecture-design 9.2. skill-sources.json needs no entry per the design (utility skill); confirm by checking whether any other utility skill is listed there before leaving it untouched. Keep the discoverability scenario green after edits.\nEXEMPT FROM PARADIGM: documentation listings and plugin metadata are Markdown/JSON prose with no behaviour to quantify. Compensate with property-based test at unit level on the adjacent slot: the audit-detector property from 03-01, which runs over the whole repository and guards these docs against inline weights or direct config reads.",
+          "files_to_modify": [
+            "README.md",
+            "SETUP.md",
+            "tests/trigger-tests.md",
+            "tests/functional-tests.md",
+            "plugin.json",
+            ".claude-plugin/plugin.json"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "04",
+      "name": "Releases R1-R3: replace review, full-review evidence, tuned thresholds",
+      "description": "R1 (US-04) value diff, unchanged detection and confirmed --force replace; R2 (US-05) full-mode evidence in the skill; R3 (US-06) contiguous status bands and cutoff range. Covers DISTILL items 10-12.",
+      "default_agent": "nw-functional-software-crafter",
+      "default_deps_strategy": "sequential",
+      "steps": [
+        {
+          "id": "04-01",
+          "name": "Review before replace: value diff, unchanged and confirmed --force",
+          "description": "Dry run against an existing file prints diff lines or unchanged; --force replaces atomically only for the reviewed fingerprint; a malformed current file is reported; SKILL.md step 6 asks Overwrite? [y/N].",
+          "deps": [
+            "03-02"
+          ],
+          "estimated_hours": 3,
+          "test_file": "tests/acceptance/fitness-config-init/milestone-3-review-before-replace.feature",
+          "scenario_name": "Priya sees exactly which values would change",
+          "criteria": [
+            "A dry run against the June config prints STATUS: would-replace and exactly the 5 changed leaves; a key unknown to the format is shown as removed",
+            "Without --force the June config stays byte-identical; with --expect <fp> --force it becomes the reviewed bytes, and a changed proposal gets fingerprint-mismatch",
+            "An identical proposal reports STATUS: unchanged on check and confirm, leaving the file untouched",
+            "A malformed current config gives STATUS: existing-malformed with proposal and fingerprint shown, and is not replaced without --force",
+            "SKILL.md step 6 shows the diff, asks Overwrite? [y/N] naming the file, and accepts only y or yes (manual M3 evals)"
+          ],
+          "implementation_notes": "DISTILL order item 10. Activates milestone-3 'Priya sees exactly which values would change', 'Confirming replaces the config with the reviewed proposal', 'Without the go-ahead the June config stays exactly as it was', 'The check reports nothing to do when the proposal matches the current config', 'Confirming an identical proposal leaves the file untouched', 'A broken current config is reported and the proposal is still shown', 'A broken current config is still not replaced without the go-ahead', 'A note the config format does not know is shown as removed', 'A replacement is refused if the proposal changed after Priya reviewed it'. Diff per data-models.md 6.1: dot-joined leaf paths, a two-element range is one leaf, canonical order then unknown keys. Value diff is a pure function; --force replace reuses the 02-01 writer adapter and rollback. Unit properties: diff(a, a) is empty; applying the diff to a yields b's leaves; replace rollback restores prior bytes for any injected verify failure.\nTEST PARADIGM (mandatory): Unit tests for this step MUST be written as property-based tests using Hypothesis @given strategies + state-delta matchers (assert_state_delta over a declared universe with strict=True). Single-example unit tests are FALLBACK only \u2014 document why in a `# bypass:` comment if used. Acceptance scenarios MUST be framed as Property: blocks (quantified preconditions + invariant outcomes) where the contract supports it; classic Scenario: is fallback. Integration and E2E tests REMAIN single-example \u2014 they verify wiring, not invariants. Universe declaration is mandatory even when only one slot is checked: the unchanged() predicate covers the rest.",
+          "files_to_modify": [
+            "scripts/fitness-config.py",
+            "skills/fitness-config-init/SKILL.md",
+            "tests/unit/fitness_config/test_reporter.py",
+            "tests/unit/fitness_config/test_write_gate.py",
+            "tests/acceptance/fitness-config-init/milestone-3-review-before-replace.feature"
+          ]
+        },
+        {
+          "id": "04-02",
+          "name": "Full-review evidence in the skill and contiguous threshold rules",
+          "description": "SKILL.md full mode (disclosed report, explicit folder scope, Scope-line probe, per-domain fallback) and the resolver completeness rule that status bands are contiguous and non-overlapping over 1-10 with the security cutoff in 1-10.",
+          "deps": [
+            "04-01"
+          ],
+          "estimated_hours": 2,
+          "test_file": "tests/acceptance/fitness-config-init/milestone-5-purpose-tuned-thresholds.feature",
+          "scenario_name": "Status bands with a gap or an overlap are rejected",
+          "criteria": [
+            "stricter status bands that still cover every score from 1 to 10 are accepted",
+            "bands with a gap or an overlap are rejected with a reason that mentions status (3 cases)",
+            "a security cutoff of 0 or 11 is rejected with a reason naming confidenceThreshold",
+            "SKILL.md full mode discloses the report and waits for yes, scopes review-full to the folder, discards narrowed-scope evidence, and falls back per failed domain (manual M4)",
+            "SKILL.md changes thresholds only with a stated reason and keeps starting thresholds for ordinary projects (manual M5 evals)"
+          ],
+          "implementation_notes": "DISTILL order items 11 and 12, batched because R2 is SKILL.md-only. Activates milestone-5 'Stricter status bands that still cover every score are accepted', 'Status bands with a gap or an overlap are rejected', 'A security cutoff outside 1 to 10 is rejected'. Contiguity is a write-bound completeness rule (ADR-008 item 2, BR-6); per-file validate keeps accepting partial overrides. Full-mode behaviour per architecture-design 6.2 and 9.3; review-full stays unchanged. Unit properties: any generated partition of 1-10 into ordered contiguous bands is accepted; inserting any gap or overlap is rejected.\nTEST PARADIGM (mandatory): Unit tests for this step MUST be written as property-based tests using Hypothesis @given strategies + state-delta matchers (assert_state_delta over a declared universe with strict=True). Single-example unit tests are FALLBACK only \u2014 document why in a `# bypass:` comment if used. Acceptance scenarios MUST be framed as Property: blocks (quantified preconditions + invariant outcomes) where the contract supports it; classic Scenario: is fallback. Integration and E2E tests REMAIN single-example \u2014 they verify wiring, not invariants. Universe declaration is mandatory even when only one slot is checked: the unchanged() predicate covers the rest.",
+          "files_to_modify": [
+            "scripts/fitness-config.py",
+            "skills/fitness-config-init/SKILL.md",
+            "tests/unit/fitness_config/test_validator.py",
+            "tests/acceptance/fitness-config-init/milestone-5-purpose-tuned-thresholds.feature"
+          ]
+        }
+      ]
+    }
+  ],
+  "implementation_scope": {
+    "source_directories": [
+      "scripts/",
+      "skills/fitness-config-init/"
+    ],
+    "test_directories": [
+      "tests/acceptance/fitness-config-init/",
+      "tests/unit/fitness_config/"
+    ],
+    "consumer_directories": [
+      ".github/workflows/",
+      "docs/adrs/",
+      "docs/feature/fitness-config-init/design/"
+    ],
+    "excluded_patterns": [
+      "__init__.py",
+      "__pycache__/**"
+    ]
+  },
+  "validation": {
+    "status": "approved",
+    "reviewer": "nw-software-crafter-reviewer",
+    "approved_at": "2026-09-29T03:57:44+00:00"
+  }
+}

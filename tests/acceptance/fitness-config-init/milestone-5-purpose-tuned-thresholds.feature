@@ -10,14 +10,14 @@
 @US-06 @milestone-5 @driving_port @real-io
 Feature: Strictness follows the stakes of the project
 
-  @skip @AC-06.3 @AC-06.2 @BR-6
+  @AC-06.3 @AC-06.2 @BR-6
   Scenario: Stricter status bands that still cover every score are accepted
     Given Priya's project "ledgerd" has no fitness config
     When Priya checks the database-service proposal for "ledgerd" with status bands healthy 9-10, needs attention 6-8, critical 1-5 and a security cutoff of 5
     Then the check reports the proposal would create a new config
     And nothing has been saved in "ledgerd"
 
-  @skip @AC-06.3 @BR-6 @error
+  @AC-06.3 @BR-6 @error
   Scenario Outline: Status bands with a gap or an overlap are rejected
     Given Priya's project "ledgerd" has no fitness config
     When Priya checks the database-service proposal for "ledgerd" with status bands healthy <healthy>, needs attention <attention>, critical <critical> and a security cutoff of 7
@@ -33,7 +33,7 @@ Feature: Strictness follows the stakes of the project
       | healthy | attention | critical |
       | 8-10    | 5-8       | 1-4      |
 
-  @skip @AC-06.2 @error
+  @AC-06.2 @error
   Scenario Outline: A security cutoff outside 1 to 10 is rejected
     Given Priya's project "ledgerd" has no fitness config
     When Priya checks the database-service proposal for "ledgerd" with status bands healthy 8-10, needs attention 5-7, critical 1-4 and a security cutoff of <cutoff>

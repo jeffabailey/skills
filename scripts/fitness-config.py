@@ -649,9 +649,22 @@ def _section_completeness(name: str, section) -> list[str]:
         [f"'{name}' has unknown keys: {', '.join(unknown)}"] if unknown else [])
 
 
+def _band_coverage_violations(bands) -> list[str]:
+    """BR-6: critical, needsAttention, healthy tile 1-10 in order, no gap, no overlap."""
+    order = ("critical", "needsAttention", "healthy")
+    if not isinstance(bands, dict) or not all(_is_pair(bands.get(key)) for key in order):
+        return []
+    starts = [bands[key][0] for key in order] + [11]
+    next_starts = [1] + [bands[key][1] + 1 for key in order]
+    if starts == next_starts:
+        return []
+    shown = ", ".join(f"{key} {bands[key][0]:g}-{bands[key][1]:g}" for key in order)
+    return [f"statusThresholds must cover every score 1-10 once, with no gap or overlap; got {shown}"]
+
+
 def _completeness_violations(proposal: dict) -> list[str]:
     """Write-bound rules (ADR-008 Decision 2): every section and key present,
-    weights whole numbers, ranges low-first."""
+    weights whole numbers, ranges low-first, status bands tiling 1-10."""
     sections = [line for name in _SECTION_DEFAULTS
                 for line in _section_completeness(name, proposal.get(name))]
     weights = proposal.get("weights") if isinstance(proposal.get("weights"), dict) else {}
@@ -662,7 +675,8 @@ def _completeness_violations(proposal: dict) -> list[str]:
                        for name in _RANGE_SECTIONS if isinstance(proposal.get(name), dict)
                        for key, value in proposal[name].items()
                        if key in _SECTION_DEFAULTS[name] and _is_pair(value) and value[0] > value[1]]
-    return sections + fractional + reversed_ranges
+    return sections + fractional + reversed_ranges + _band_coverage_violations(
+        proposal.get("statusThresholds"))
 
 
 def validate_proposal(proposal) -> list[str]:

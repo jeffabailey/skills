@@ -264,12 +264,20 @@ def score_ranges() -> st.SearchStrategy:
 
 
 @st.composite
+def contiguous_status_bands(draw) -> dict:
+    """Any split of 1-10 into critical < needsAttention < healthy, each non-empty (BR-6)."""
+    low_cut, high_cut = sorted(draw(st.lists(st.integers(1, 9), min_size=2, max_size=2, unique=True)))
+    return {"healthy": [high_cut + 1, 10], "needsAttention": [low_cut + 1, high_cut],
+            "critical": [1, low_cut]}
+
+
+@st.composite
 def complete_configs(draw) -> dict:
     """Every proposal the write gate must accept."""
     return {
         "version": 1,
         "weights": draw(weights_summing_to_100()),
-        "statusThresholds": {key: draw(score_ranges()) for key in fitness_config.DEFAULT_STATUS},
+        "statusThresholds": draw(contiguous_status_bands()),
         "security": {"confidenceThreshold": draw(st.integers(1, 10))},
         "scoring": {key: draw(score_ranges()) for key in fitness_config.DEFAULT_SCORING},
     }
@@ -508,3 +516,42 @@ def test_a_clean_init_guide_is_scanned_and_passes_the_audit(prose):
         "exit_code": is_(0),
         "scanned": is_(1),
     })
+
+
+# ---------------------------------------------------------------------------
+# Behavior B10: status bands cover 1-10 contiguously, without overlap (BR-6).
+# A write-bound completeness rule (ADR-008 Decision 2): validate_proposal
+# rejects a gap or an overlap naming the status bands; validate_config keeps
+# accepting the same bands in a partial override.
+# ---------------------------------------------------------------------------
+
+PROPOSAL_UNIVERSE = {"proposal", "violations"}
+BAND_ORDER = ["critical", "needsAttention", "healthy"]
+
+
+def run_validate_proposal(proposal) -> tuple[dict, dict]:
+    before = {"proposal": copy.deepcopy(proposal), "violations": None}
+    violations = fitness_config.validate_proposal(proposal)
+    return before, {"proposal": proposal, "violations": violations}
+
+
+@given(complete_configs())
+def test_any_contiguous_split_of_1_to_10_into_status_bands_is_accepted(config):
+    before, after = run_validate_proposal(config)
+    state_delta.assert_state_delta(before, after, PROPOSAL_UNIVERSE, {"violations": is_([])})
+
+
+def _move_band_edge(bands: dict, band: str, edge: int, shift: int) -> dict:
+    moved = list(bands[band])
+    moved[edge] += shift
+    return {**bands, band: moved}
+
+
+@given(complete_configs(), st.sampled_from(BAND_ORDER), st.sampled_from([0, 1]),
+       st.sampled_from([-1, 1]))
+def test_any_gap_or_overlap_in_the_status_bands_is_rejected_naming_status(config, band, edge, shift):
+    bands = _move_band_edge(config["statusThresholds"], band, edge, shift)
+    broken = {**config, "statusThresholds": bands}
+    before, after = run_validate_proposal(broken)
+    state_delta.assert_state_delta(before, after, PROPOSAL_UNIVERSE,
+                                   {"violations": naming_each({"statusThresholds"})})

@@ -57,9 +57,9 @@ Before a full review, warn and wait for a yes: "A full review runs every review 
 ### Step 2: Gather evidence
 
 - **Fast:** follow the scan order in `references/purpose-signals.md`. Stay within 40 file reads. Do not run project code or use the network. Do not change any file.
-- **Full:** run the `review-full` skill scoped to the target, then do the fast scan as well. Read `docs/fitness-report.md` afterwards:
+- **Full:** run the `review-full` skill with its scope set explicitly to the target folder (never the default of pending changes), then do the fast scan as well. Read `docs/fitness-report.md` afterwards:
   - If its `**Scope:**` line shows that only pending changes were reviewed (not the target folder), drop all full review evidence and tell the user: "The full review only covered pending changes, so its results were not used."
-  - If a domain failed or has no parsable row, use fast scan evidence for that domain and say so.
+  - If a domain failed or has no parsable row, use fast scan evidence for that domain only and say so. The other domains keep their full review evidence.
 
 Each evidence item is a path that a read or list tool returned, a short note on what it shows, and its source (`fast` or `review-full`).
 
@@ -77,8 +77,8 @@ If the user corrects the classification, use their answer without argument.
 
 1. Start from the archetype's row in `references/purpose-profiles.md`.
 2. Adjust using this project's evidence, following the rules in that file: no more than 4 points per domain from the profile, a cited reason for every move, whole numbers of at least 1, total of 100. Full review results only lower domains that do not apply; a low score never raises a weight.
-3. Build the complete proposal: the baseline JSON with the `weights` section replaced. Keep the other sections from the baseline.
-4. Print the rationale table, one row per weight in resolver order:
+3. Build the complete proposal: the baseline JSON with the `weights` section replaced. Keep `statusThresholds`, `security` and `scoring` from the baseline unless the evidence shows higher stakes (payments, credentials, personal data). Change a threshold only with a stated reason citing that evidence, and add a row for it to the table below. For an ordinary project, keep the starting thresholds and say there is no stakes signal to change them. The status bands must cover every score from 1 to 10 once, with no gap or overlap; the security cutoff stays between 1 and 10.
+4. Print the rationale table, one row per weight in resolver order, then one row per changed threshold:
 
    | key | baseline | proposed | reason |
    |---|---|---|---|

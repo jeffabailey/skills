@@ -8,7 +8,7 @@ import secrets
 from pathlib import Path
 from typing import Callable
 
-from .write_gate import ConfigFile
+from .write_gate import ConfigFile, GateStatus, PublishResult
 
 
 def load_legacy_config(path: Path) -> tuple[dict | None, str | None]:
@@ -64,13 +64,13 @@ def config_file_at(path: Path) -> ConfigFile:
     """Adapter for the ConfigFile port: create is exclusive (os.link refuses
     an existing file), replace swaps atomically (os.replace); restore puts
     prior bytes back or removes the file."""
-    def publish(data: bytes, publisher, success: str) -> tuple[str, str | None]:
+    def publish(data: bytes, publisher, success: str) -> PublishResult:
         try:
             _publish_via_temp(path, data, publisher)
         except FileExistsError:
-            return "refused-exists", None
+            return GateStatus.REFUSED_EXISTS, None
         except OSError as exc:
-            return "write-failed", f"Error: could not write {path}: {exc.strerror or exc}"
+            return GateStatus.WRITE_FAILED, f"Error: could not write {path}: {exc.strerror or exc}"
         return success, None
 
     def read() -> bytes | None:
@@ -85,6 +85,6 @@ def config_file_at(path: Path) -> ConfigFile:
         else:
             _publish_via_temp(path, prior, os.replace)
 
-    return ConfigFile(create=lambda data: publish(data, os.link, "created"),
-                      replace=lambda data: publish(data, os.replace, "replaced"),
+    return ConfigFile(create=lambda data: publish(data, os.link, GateStatus.CREATED),
+                      replace=lambda data: publish(data, os.replace, GateStatus.REPLACED),
                       read=read, restore=restore)

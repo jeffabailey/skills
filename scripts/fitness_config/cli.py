@@ -212,10 +212,6 @@ def cmd_init_baseline(target: Path, base: Path) -> int:
     return EXIT_OK
 
 
-_GATE_SUCCESS = {"would-create", "would-replace", "unchanged", "existing-malformed",
-                 "created", "replaced"}
-
-
 def _print_gate_outcome(outcome: GateOutcome, show_canonical: bool) -> int:
     print(f"STATUS: {outcome.status}")
     if outcome.fingerprint:
@@ -225,7 +221,7 @@ def _print_gate_outcome(outcome: GateOutcome, show_canonical: bool) -> int:
         print(line)
     if show_canonical and outcome.canonical:
         sys.stdout.write(outcome.canonical)
-    return EXIT_OK if outcome.status in _GATE_SUCCESS else EXIT_FAILED
+    return EXIT_OK if outcome.succeeded else EXIT_FAILED
 
 
 def cmd_init_from(target: Path, base: Path, proposal_text: str,

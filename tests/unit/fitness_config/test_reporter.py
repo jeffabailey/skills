@@ -273,3 +273,64 @@ def test_fingerprints_match_exactly_when_the_saved_bytes_match(first, second):
     same_fingerprint = (fitness_config.proposal_fingerprint(first_bytes)
                         == fitness_config.proposal_fingerprint(second_bytes))
     assert same_fingerprint == (first_bytes == second_bytes)
+
+
+# ---------------------------------------------------------------------------
+# Behavior R7: review before replace (AC-04.1, AC-04.4, data-models 6.1).
+# The dry run against a current config lists value changes by dot-joined leaf
+# path (a two-element range is one leaf), canonical order first, then keys the
+# format does not know shown as removed.  An equal current config shows no
+# changes; applying the listed changes to the current config yields exactly
+# the proposal.
+# ---------------------------------------------------------------------------
+
+_REVIEW_UNIVERSE = {"status", "canonical", "fingerprint", "review"}
+_TUNING_VALUES = 16  # every leaf of a complete config except its schema version
+
+unknown_notes = st.dictionaries(st.sampled_from(["$comment", "owner", "tunedBy"]),
+                                st.text(max_size=12), max_size=2)
+
+
+def _review_observables(proposal_text: str, current: bytes | None) -> dict:
+    outcome = fitness_config.check_proposal(proposal_text, current is not None, current)
+    return {"status": outcome.status, "canonical": outcome.canonical,
+            "fingerprint": outcome.fingerprint, "review": outcome.review}
+
+
+@given(complete_configs(), st.randoms(use_true_random=False), st.sampled_from([None, 2, "\t"]))
+def test_a_current_config_equal_to_the_proposal_shows_no_changes(config, rng, indent):
+    text = fitness_config.render_canonical(config)
+    current = json.dumps(_reordered(config, rng), indent=indent).encode("utf-8")
+    state_delta.assert_state_delta(
+        _review_observables(text, None), _review_observables(text, current), _REVIEW_UNIVERSE, {
+            "status": state_delta.Predicate("unchanged", lambda _, now: now == "unchanged"),
+            "review": state_delta.Predicate(
+                "no changes", lambda _, now: now == (f"({_TUNING_VALUES} values unchanged)",)),
+        })
+
+
+def _apply_changes(config: dict, changes) -> dict:
+    result = json.loads(json.dumps(config))
+    for path, _, after in changes:
+        *parents, leaf = path.split(".")
+        section = result
+        for key in parents:
+            section = section.setdefault(key, {})
+        if after is fitness_config.MISSING:
+            section.pop(leaf)
+        else:
+            section[leaf] = after
+    return result
+
+
+@given(complete_configs(), complete_configs(), unknown_notes, unknown_notes)
+def test_applying_the_listed_changes_to_the_current_config_yields_the_proposal(
+        current, proposal, top_notes, weight_notes):
+    current = {**top_notes, **current, "weights": {**current["weights"], **weight_notes}}
+    diff = fitness_config.value_diff(current, proposal)
+    assert _apply_changes(current, diff.changes) == proposal
+    removed = [after is fitness_config.MISSING for _, _, after in diff.changes]
+    assert removed == sorted(removed), "keys the format does not know come last"
+    changed_tuning_values = [path for path, _, after in diff.changes
+                             if after is not fitness_config.MISSING and path != "version"]
+    assert diff.unchanged == _TUNING_VALUES - len(changed_tuning_values)

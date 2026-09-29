@@ -1,9 +1,9 @@
-"""Property tests for the write gate, create path (ADR-010, data-models 6.2).
+"""Property tests for the write gate, create and replace paths (ADR-010, data-models 6.2).
 
 Driving port:
-  save_new_proposal(proposal_text, expected_fingerprint, config_file) -> GateOutcome
+  save_new_proposal(proposal_text, expected_fingerprint, config_file, force=) -> GateOutcome
   check_proposal(proposal_text, config_exists) -> GateOutcome
-Driven port (injected): ConfigFile(create, read, restore) -- the one file the
+Driven port (injected): ConfigFile(create, replace, read, restore) -- the one file the
 gate may touch. Faults are injected by substituting its functions: a silent
 no-op, a partial or tampered write, a concurrent create, an OS failure.
 
@@ -11,7 +11,7 @@ The universe is the fake project folder the injected writer controls, plus
 the gate's reported status. Every test asserts the state delta over that
 whole universe (strict: every slot not expected to change must be unchanged).
 
-Behaviors (budget 2 x 8 = 16; 8 properties here):
+Behaviors (budget 2 x 11 = 22; 11 properties here):
   G1 a reviewed proposal is created byte-for-byte as checked
   G2 a fingerprint that is not the proposal's writes nothing
   G3 an existing config is never overwritten on the create path
@@ -20,6 +20,9 @@ Behaviors (budget 2 x 8 = 16; 8 properties here):
   G6 a write that does not verify is rolled back to the prior state
   G7 a config created concurrently after the check is kept and the save refused
   G8 an OS write failure leaves the folder as it was and reports write-failed
+  G9 with --force a reviewed proposal replaces a different config byte-for-byte
+  G10 a proposal equal to the current config writes nothing, forced or not
+  G11 a replace that does not verify restores the prior bytes
 """
 
 from __future__ import annotations
@@ -72,10 +75,16 @@ def config_file(folder: dict, write=lambda data: data, racer: bytes | None = Non
             return "write-failed", os_error
         if CONFIG in folder:
             return "refused-exists", None
+        return land(data, "created")
+
+    def land(data: bytes, status: str):
         landed = write(data)
         if landed is not None:
             folder[CONFIG] = landed
-        return "created", None
+        return status, None
+
+    def replace(data: bytes):
+        return ("write-failed", os_error) if os_error is not None else land(data, "replaced")
 
     def restore(prior: bytes | None) -> None:
         if prior is None:
@@ -83,7 +92,7 @@ def config_file(folder: dict, write=lambda data: data, racer: bytes | None = Non
         else:
             folder[CONFIG] = prior
 
-    return fitness_config.ConfigFile(create=create, read=lambda: folder.get(CONFIG),
+    return fitness_config.ConfigFile(create=create, replace=replace, read=lambda: folder.get(CONFIG),
                                      restore=restore)
 
 
@@ -104,10 +113,10 @@ def is_(value):
     return state_delta.Predicate(f"== {value!r}", lambda before, after: after == value)
 
 
-def run_save(folder: dict, proposal_text: str, fingerprint: str, **faults):
+def run_save(folder: dict, proposal_text: str, fingerprint: str, force: bool = False, **faults):
     before = universe_snapshot(folder)
     outcome = fitness_config.save_new_proposal(proposal_text, fingerprint,
-                                               config_file(folder, **faults))
+                                               config_file(folder, **faults), force=force)
     return before, universe_snapshot(folder, outcome), outcome
 
 
@@ -200,3 +209,44 @@ def test_chain_origin_never_leaves_the_anchor(anchor_parts, target_parts):
         assert origin == target.parent and (origin == anchor or anchor in origin.parents)
     outside, outside_error = fitness_config.chain_origin(anchor.parent / "elsewhere", anchor)
     assert outside is None and outside_error
+
+
+# ---------------------------------------------------------------------------
+# Replace path (--expect FP --force): the reviewed bytes replace a different
+# config atomically; an identical config is left alone; a replace that does
+# not verify puts the prior bytes back.
+# ---------------------------------------------------------------------------
+
+def different_config(config: dict, other: dict, indent) -> bytes:
+    other = other if other != config else {**config, "security": {"confidenceThreshold": 0}}
+    return formatted(other, indent).encode("utf-8")
+
+
+@given(complete_configs(), complete_configs(), indents, indents)
+def test_forced_save_replaces_a_different_config_with_the_reviewed_bytes(config, other, indent, old_indent):
+    text, fingerprint = reviewed(config, indent)
+    folder = project_folder(different_config(config, other, old_indent))
+    before, after, _ = run_save(folder, text, fingerprint, force=True)
+    state_delta.assert_state_delta(before, after, UNIVERSE, {
+        CONFIG: is_(fitness_config.render_canonical(config).encode("utf-8")),
+        "status": is_("replaced"),
+    })
+
+
+@given(complete_configs(), indents, indents, st.booleans())
+def test_proposal_equal_to_the_current_config_writes_nothing(config, indent, current_indent, force):
+    text, fingerprint = reviewed(config, indent)
+    folder = project_folder(formatted(config, current_indent).encode("utf-8"))
+    before, after, _ = run_save(folder, text, fingerprint, force=force)
+    state_delta.assert_state_delta(before, after, UNIVERSE, {"status": is_("unchanged")})
+
+
+@given(complete_configs(), st.one_of(st.binary(max_size=64),
+                                     complete_configs().map(lambda other: formatted(other, 2).encode())),
+       indents, faulty_writes)
+def test_replace_that_does_not_verify_restores_the_prior_bytes(config, prior, indent, faulty_write):
+    text, fingerprint = reviewed(config, indent)
+    if prior == formatted(config, 2).encode():
+        prior = b"{}"
+    before, after, _ = run_save(project_folder(prior), text, fingerprint, force=True, write=faulty_write)
+    state_delta.assert_state_delta(before, after, UNIVERSE, {"status": is_("verify-failed-rolled-back")})

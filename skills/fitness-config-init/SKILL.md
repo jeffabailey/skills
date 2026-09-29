@@ -96,18 +96,24 @@ Pipe the proposal JSON to `init --path <target> --from - --dry-run`. This writes
 - Relay the `STATUS:` and `Proposal:` lines verbatim and show the canonical JSON block exactly as printed. The `Proposal:` value is the fingerprint.
 - `STATUS: invalid`: show each error line, fix the proposal, and run the check again.
 - `STATUS: would-create`: ask "Save this as `<target>/fitness-config.json`? [y/N]".
-- `STATUS: would-replace`, `unchanged` or `existing-malformed`: a config already exists. Show the diff lines the resolver printed and the proposal, and stop. Say that replacing an existing config is not supported yet and nothing was written.
+- `STATUS: would-replace`: a config already exists. Show every diff line the resolver printed (`path old -> new`, then `(N values unchanged)`), then ask "Overwrite `<target>/fitness-config.json`? [y/N]".
+- `STATUS: existing-malformed`: the current file is not valid JSON, so there is no diff. Say so, show the proposal, and ask the same overwrite question.
+- `STATUS: unchanged`: the current config already equals the proposal. Say there is nothing to save and skip to step 7.
 
 ### Step 6: Save
 
-Only after the user answers `y` or `yes` to a `would-create` proposal, pipe the **same** JSON to `init --path <target> --from - --expect <fingerprint>` with the fingerprint from step 5.
+Only an answer of `y` or `yes` (any case) is a go-ahead. Anything else, including an empty answer, means No: say nothing was written and stop.
 
-- `STATUS: created`: go to step 7.
+- After a go-ahead for `would-create`, pipe the **same** JSON to `init --path <target> --from - --expect <fingerprint>` with the fingerprint from step 5.
+- After a go-ahead to overwrite (`would-replace` or `existing-malformed`), pipe the **same** JSON to `init --path <target> --from - --expect <fingerprint> --force`. The resolver replaces the file atomically and puts the old bytes back if the check after writing fails.
+
+- `STATUS: created` or `replaced`: go to step 7.
+- `STATUS: unchanged`: the file already held this config and was not touched. Go to step 7.
 - `STATUS: fingerprint-mismatch`: the JSON changed since the check. Run step 5 again and ask again.
 - `STATUS: refused-exists`: a config appeared since the check. Stop; nothing was written.
 - `STATUS: verify-failed-rolled-back` or any other failure: report "not written" with the resolver's message.
 
-Never pass `--force`. Never save a proposal the user has not seen and approved.
+Pass `--force` only after the user said yes to the overwrite question for this fingerprint. Never save a proposal the user has not seen and approved.
 
 ### Step 7: Summarize
 

@@ -554,11 +554,13 @@ class ConfigFile:
 
     create(data) -> (status, reason): "created", "refused-exists" (a file is
     already there) or "write-failed" (the OS refused; reason says why).
+    replace(data) -> "replaced" or "write-failed": atomically swaps the file.
     read() -> the bytes now on disk, or None.  restore(prior) puts the prior
     bytes back (None removes the file).
     """
 
     create: Callable[[bytes], tuple[str, str | None]]
+    replace: Callable[[bytes], tuple[str, str | None]]
     read: Callable[[], bytes | None]
     restore: Callable[[bytes | None], None]
 
@@ -698,6 +700,67 @@ class GateOutcome:
     fingerprint: str | None = None
     canonical: str | None = None
     errors: tuple[str, ...] = ()
+    review: tuple[str, ...] = ()
+
+
+class _Missing:
+    def __repr__(self) -> str:
+        return "MISSING"
+
+
+MISSING = _Missing()  # the side of a value diff that has no such leaf
+
+
+@dataclass(frozen=True)
+class ValueDiff:
+    """(path, before, after) per differing leaf; `unchanged` counts equal tuning values."""
+
+    changes: tuple[tuple[str, object, object], ...]
+    unchanged: int
+
+
+def _config_leaves(config: dict, prefix: str = "") -> dict:
+    """Dot-joined leaf path -> value; a list (a [lo, hi] range) is one leaf."""
+    leaves = {}
+    for key, value in config.items():
+        if isinstance(value, dict) and value:
+            leaves.update(_config_leaves(value, f"{prefix}{key}."))
+        else:
+            leaves[f"{prefix}{key}"] = value
+    return leaves
+
+
+def value_diff(current: dict, proposal: dict) -> ValueDiff:
+    """Leaves that differ, in the proposal's (canonical) order, then leaves
+    only the current config has. The schema version is not a tuning value."""
+    before, after = _config_leaves(current), _config_leaves(proposal)
+    paths = [*after, *(path for path in before if path not in after)]
+    pairs = [(path, before.get(path, MISSING), after.get(path, MISSING)) for path in paths]
+    changes = tuple(pair for pair in pairs if pair[1] != pair[2])
+    same = sum(1 for path, old, new in pairs if old == new and path != "version")
+    return ValueDiff(changes, same)
+
+
+def _diff_value(value, when_missing: str) -> str:
+    return when_missing if value is MISSING else json.dumps(value, ensure_ascii=False)
+
+
+def render_value_diff(diff: ValueDiff) -> tuple[str, ...]:
+    """data-models 6.1: `path old -> new` lines, then `(N values unchanged)`."""
+    lines = [f"{path} {_diff_value(old, '(absent)')} -> {_diff_value(new, '(removed)')}"
+             for path, old, new in diff.changes]
+    return (*lines, f"({diff.unchanged} values unchanged)")
+
+
+def _config_object(data: bytes) -> dict | None:
+    try:
+        parsed = json.loads(data)
+    except ValueError:
+        return None
+    return parsed if isinstance(parsed, dict) else None
+
+
+_MALFORMED_NOTE = "Current file is not valid JSON; cannot diff by value."
 
 
 def _prepare_proposal(proposal_text: str) -> GateOutcome:
@@ -712,28 +775,46 @@ def _prepare_proposal(proposal_text: str) -> GateOutcome:
     return GateOutcome("ready", proposal_fingerprint(canonical), canonical)
 
 
-def check_proposal(proposal_text: str, config_exists: bool) -> GateOutcome:
-    """Dry run: validate, render, fingerprint. Never writes."""
+def check_proposal(proposal_text: str, config_exists: bool,
+                   current: bytes | None = None) -> GateOutcome:
+    """Dry run: validate, render, fingerprint and diff by value against the
+    current config's bytes. Never writes."""
     prepared = _prepare_proposal(proposal_text)
-    if prepared.status == "invalid":
-        return prepared
-    return replace(prepared, status="would-replace" if config_exists else "would-create")
+    if prepared.status == "invalid" or not config_exists:
+        return prepared if prepared.status == "invalid" else replace(prepared, status="would-create")
+    if current is None:
+        return replace(prepared, status="would-replace")
+    existing = _config_object(current)
+    if existing is None:
+        return replace(prepared, status="existing-malformed", review=(_MALFORMED_NOTE,))
+    diff = value_diff(existing, json.loads(prepared.canonical))
+    return replace(prepared, status="would-replace" if diff.changes else "unchanged",
+                   review=render_value_diff(diff))
 
 
 def save_new_proposal(proposal_text: str, expected_fingerprint: str,
-                      config_file: ConfigFile, configs_above: Sequence[dict] = ()) -> GateOutcome:
-    """Create path of the write gate (data-models 6.2): write the canonical
-    bytes only for the reviewed proposal, then verify them -- merged with the
-    configs above (nearest-first) -- or roll back."""
+                      config_file: ConfigFile, configs_above: Sequence[dict] = (),
+                      force: bool = False) -> GateOutcome:
+    """The write gate (data-models 6.2): write the canonical bytes only for the
+    reviewed proposal -- creating the file, or replacing a different one only
+    when forced -- then verify them, merged with the configs above
+    (nearest-first), or roll back to the prior bytes."""
     prepared = _prepare_proposal(proposal_text)
     if prepared.status == "invalid":
         return prepared
     if prepared.fingerprint != expected_fingerprint:
         return replace(prepared, status="fingerprint-mismatch")
-    status, reason = config_file.create(prepared.canonical.encode("utf-8"))
-    if status != "created":
+    prior = config_file.read()
+    if prior is not None and _config_object(prior) == json.loads(prepared.canonical):
+        return replace(prepared, status="unchanged")
+    if prior is not None and not force:
+        return replace(prepared, status="refused-exists")
+    publish, success = ((config_file.create, "created") if prior is None
+                        else (config_file.replace, "replaced"))
+    status, reason = publish(prepared.canonical.encode("utf-8"))
+    if status != success:
         return replace(prepared, status=status, errors=(reason,) if reason else ())
-    return _verify_or_roll_back(prepared, config_file, prior=None, configs_above=configs_above)
+    return _verify_or_roll_back(prepared, config_file, prior, configs_above, success)
 
 
 def _saved_problems(saved: bytes | None, fingerprint: str,
@@ -748,10 +829,11 @@ def _saved_problems(saved: bytes | None, fingerprint: str,
 
 
 def _verify_or_roll_back(prepared: GateOutcome, config_file: ConfigFile,
-                         prior: bytes | None, configs_above: Sequence[dict]) -> GateOutcome:
+                         prior: bytes | None, configs_above: Sequence[dict],
+                         success: str) -> GateOutcome:
     problems = _saved_problems(config_file.read(), prepared.fingerprint, configs_above)
     if not problems:
-        return replace(prepared, status="created")
+        return replace(prepared, status=success)
     config_file.restore(prior)
     return replace(prepared, status="verify-failed-rolled-back", errors=tuple(problems))
 
@@ -913,15 +995,16 @@ def _publish_via_temp(path: Path, data: bytes,
 
 def _config_file_at(path: Path) -> ConfigFile:
     """Adapter for the ConfigFile port: create is exclusive (os.link refuses
-    an existing file); restore puts prior bytes back or removes the file."""
-    def create(data: bytes) -> tuple[str, str | None]:
+    an existing file), replace swaps atomically (os.replace); restore puts
+    prior bytes back or removes the file."""
+    def publish(data: bytes, publisher, success: str) -> tuple[str, str | None]:
         try:
-            _publish_via_temp(path, data, os.link)
+            _publish_via_temp(path, data, publisher)
         except FileExistsError:
             return "refused-exists", None
         except OSError as exc:
             return "write-failed", f"Error: could not write {path}: {exc.strerror or exc}"
-        return "created", None
+        return success, None
 
     def read() -> bytes | None:
         try:
@@ -935,10 +1018,13 @@ def _config_file_at(path: Path) -> ConfigFile:
         else:
             _publish_via_temp(path, prior, os.replace)
 
-    return ConfigFile(create=create, read=read, restore=restore)
+    return ConfigFile(create=lambda data: publish(data, os.link, "created"),
+                      replace=lambda data: publish(data, os.replace, "replaced"),
+                      read=read, restore=restore)
 
 
-_GATE_SUCCESS = {"would-create", "would-replace", "created"}
+_GATE_SUCCESS = {"would-create", "would-replace", "unchanged", "existing-malformed",
+                 "created", "replaced"}
 
 
 def _print_gate_outcome(outcome: GateOutcome, show_canonical: bool) -> int:
@@ -946,23 +1032,26 @@ def _print_gate_outcome(outcome: GateOutcome, show_canonical: bool) -> int:
     if outcome.fingerprint:
         print(f"Proposal: {outcome.fingerprint}")
     _print_validation_errors(list(outcome.errors))
+    for line in outcome.review:
+        print(line)
     if show_canonical and outcome.canonical:
         sys.stdout.write(outcome.canonical)
     return 0 if outcome.status in _GATE_SUCCESS else 1
 
 
 def cmd_init_from(target: Path, base: Path, proposal_text: str,
-                  dry_run: bool, expected_fingerprint: str | None) -> int:
-    """`init --path T --from - (--dry-run | --expect FP)`: the write gate."""
+                  dry_run: bool, expected_fingerprint: str | None, force: bool = False) -> int:
+    """`init --path T --from - (--dry-run | --expect FP [--force])`: the write gate."""
     _, configs_above, error, exit_code = _read_anchored_chain(target, base)
     if error is not None:
         print(error, file=sys.stderr)
         return exit_code
-    out_path = target / CONFIG_FILENAME
+    config_file = _config_file_at(target / CONFIG_FILENAME)
     if dry_run:
-        return _print_gate_outcome(check_proposal(proposal_text, out_path.exists()), True)
-    outcome = save_new_proposal(proposal_text, expected_fingerprint, _config_file_at(out_path),
-                                configs_above)
+        current = config_file.read()
+        return _print_gate_outcome(check_proposal(proposal_text, current is not None, current), True)
+    outcome = save_new_proposal(proposal_text, expected_fingerprint, config_file,
+                                configs_above, force)
     return _print_gate_outcome(outcome, False)
 
 
@@ -983,6 +1072,8 @@ def cmd_init_baseline(target: Path, base: Path) -> int:
 def _gate_usage_error(args) -> str | None:
     """Return a usage error for inconsistent write-gate flags, else None."""
     if args.proposal_source is None:
+        if args.force:
+            return "Error: --force needs --from - and --expect <fingerprint>"
         if args.expect:
             return "Error: --expect needs --from -"
         if args.dry_run and (args.command != "init" or args.resolve_path is None):
@@ -992,6 +1083,8 @@ def _gate_usage_error(args) -> str | None:
         return "Error: --from only works with init --path"
     if args.proposal_source != "-":
         return "Error: --from takes '-' (read the proposal from stdin)"
+    if args.force and args.dry_run:
+        return "Error: --force saves; it does not go with --dry-run"
     if not args.dry_run and args.expect is None:
         return ("Error: saving needs --expect <fingerprint> of a reviewed proposal; "
                 "run with --dry-run first to see it")
@@ -1235,6 +1328,8 @@ def _build_parser() -> argparse.ArgumentParser:
                         help="(init --path --from -) validate and show the proposal; write nothing")
     parser.add_argument("--expect", default=None,
                         help="(init --path --from -) fingerprint of the reviewed proposal to save")
+    parser.add_argument("--force", action="store_true",
+                        help="(init --path --from - --expect FP) replace an existing config")
     return parser
 
 
@@ -1273,7 +1368,7 @@ def main() -> int:
             return cmd_validate_path(target, base=Path.cwd())
         if args.command == "init" and args.proposal_source is not None:
             return cmd_init_from(target, Path.cwd(), sys.stdin.read(),
-                                 args.dry_run, args.expect)
+                                 args.dry_run, args.expect, args.force)
         if args.command == "init" and args.dry_run:
             return cmd_init_baseline(target, Path.cwd())
         if args.command == "init":

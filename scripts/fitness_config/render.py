@@ -24,6 +24,55 @@ def _format_chain_path(path: Path, base: Path | None) -> str:
         return str(path)
 
 
+def _source_lines(chain_strs: list[str]) -> list[str]:
+    """The `Config:` headline and the numbered config sources, nearest first."""
+    if not chain_strs:
+        return ["Config: built-in defaults (no fitness-config.json found)",
+                "",
+                "  config sources (in precedence order):",
+                "    (no fitness-config.json found — using built-in defaults)"]
+    if len(chain_strs) == 1:
+        return [f"Config: {chain_strs[0]}",
+                "",
+                "  config sources (in precedence order):",
+                f"    1. {chain_strs[0]}  (root)"]
+    intermediates = [f"    {idx}. {entry}  (intermediate)"
+                     for idx, entry in enumerate(chain_strs[1:-1], start=2)]
+    return [f"Config: {chain_strs[0]} (merged with root, found by walking up from input path)",
+            "",
+            "  config sources (in precedence order, found by walking up the ancestor chain):",
+            f"    1. {chain_strs[0]}  (override)",
+            *intermediates,
+            f"    {len(chain_strs)}. {chain_strs[-1]}  (root)"]
+
+
+def _weights_lines(weights: dict) -> list[str]:
+    """The weights table with its total, then all domains on one `Effective weights:` line."""
+    ordered = sorted(weights.items(), key=lambda kv: (-kv[1], kv[0]))
+    total = sum(weights.values())
+    status = "OK" if abs(total - 100) <= WEIGHTS_SUM_TOLERANCE else "ERROR"
+    inline_pairs = " ".join(f"{domain}={value}" for domain, value in ordered)
+    return ["  effective weights (merged):",
+            *(f"    {domain:<16} {value}" for domain, value in ordered),
+            "    -------------------",
+            f"    total            {total}   {status}",
+            "",
+            f"Effective weights: {inline_pairs}",
+            ""]
+
+
+def _json_block_lines(effective: dict, chain_strs: list[str]) -> list[str]:
+    """The machine-readable copy for downstream skills, between sentinels."""
+    payload = {
+        "version": effective.get("version", SUPPORTED_SCHEMA_VERSION),
+        "source_chain": chain_strs,
+        "effective": effective,
+    }
+    return ["<!-- BEGIN_EFFECTIVE_CONFIG_JSON -->",
+            json.dumps(payload, indent=2, default=str),
+            "<!-- END_EFFECTIVE_CONFIG_JSON -->"]
+
+
 def render_show_output(
     target: Path,
     source_chain: list[Path],
@@ -36,63 +85,13 @@ def render_show_output(
     Chain entries print relative to `base` when possible. Weights sort by value
     descending, ties alphabetical (AC-03.6); same inputs, same bytes (AC-NFR-2).
     """
-    weights = effective.get("weights", {})
     chain_strs = [_format_chain_path(p, base) for p in source_chain]
-
-    lines: list[str] = []
-    lines.append(f"Resolved config for: {target}")
-    lines.append("")
-
-    # Source-chain section + Config: header line for the report.
-    if not source_chain:
-        lines.append("Config: built-in defaults (no fitness-config.json found)")
-        lines.append("")
-        lines.append("  config sources (in precedence order):")
-        lines.append("    (no fitness-config.json found — using built-in defaults)")
-    elif len(source_chain) == 1:
-        lines.append(f"Config: {chain_strs[0]}")
-        lines.append("")
-        lines.append("  config sources (in precedence order):")
-        lines.append(f"    1. {chain_strs[0]}  (root)")
-    else:
-        lines.append(f"Config: {chain_strs[0]} (merged with root, found by walking up from input path)")
-        lines.append("")
-        lines.append("  config sources (in precedence order, found by walking up the ancestor chain):")
-        lines.append(f"    1. {chain_strs[0]}  (override)")
-        for idx, entry in enumerate(chain_strs[1:-1], start=2):
-            lines.append(f"    {idx}. {entry}  (intermediate)")
-        lines.append(f"    {len(chain_strs)}. {chain_strs[-1]}  (root)")
-    lines.append("")
-
-    # Effective weights — table with one row per domain, descending by value
-    # then alphabetical, plus an inline single-line listing all 10 domains.
-    ordered = sorted(weights.items(), key=lambda kv: (-kv[1], kv[0]))
-    total = sum(weights.values())
-    status = "OK" if abs(total - 100) <= WEIGHTS_SUM_TOLERANCE else "ERROR"
-
-    lines.append("  effective weights (merged):")
-    for domain, value in ordered:
-        lines.append(f"    {domain:<16} {value}")
-    lines.append("    -------------------")
-    lines.append(f"    total            {total}   {status}")
-    lines.append("")
-
-    # Inline "Effective weights:" line per data-models.md §3.3 — all 10 domains
-    # on a single line, descending by value, ties alphabetical.
-    inline_pairs = " ".join(f"{domain}={value}" for domain, value in ordered)
-    lines.append(f"Effective weights: {inline_pairs}")
-    lines.append("")
-
-    # Embedded JSON sentinel block.
-    payload = {
-        "version": effective.get("version", SUPPORTED_SCHEMA_VERSION),
-        "source_chain": chain_strs,
-        "effective": effective,
-    }
-    lines.append("<!-- BEGIN_EFFECTIVE_CONFIG_JSON -->")
-    lines.append(json.dumps(payload, indent=2, default=str))
-    lines.append("<!-- END_EFFECTIVE_CONFIG_JSON -->")
-
+    lines = [f"Resolved config for: {target}",
+             "",
+             *_source_lines(chain_strs),
+             "",
+             *_weights_lines(effective.get("weights", {})),
+             *_json_block_lines(effective, chain_strs)]
     return "\n".join(lines) + "\n"
 
 

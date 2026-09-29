@@ -6,60 +6,70 @@ import re
 import sys
 from pathlib import Path
 
-_AUDIT_INLINE_WEIGHTS_PATTERN = r'"weights"\s*:\s*\{'
-_AUDIT_DIRECT_LOAD_PATTERN = r"(json\.load.*fitness-config\.json|open.*fitness-config\.json)"
+_INLINE_WEIGHTS = re.compile(r'"weights"\s*:\s*\{')
+_DIRECT_LOAD = re.compile(r"(json\.load.*fitness-config\.json|open.*fitness-config\.json)")
+
+Hit = tuple[Path, int, str]
+
+
+def _audited_files(repo_root: Path) -> list[Path]:
+    """The review skills, the fitness-config-init guide (BR-2) and the canonical prompt."""
+    files: list[Path] = []
+    skills = repo_root / "skills"
+    if skills.is_dir():
+        files.extend(sorted(skills.glob("review-*/SKILL.md")))
+        init_guide = skills / "fitness-config-init" / "SKILL.md"
+        if init_guide.is_file():
+            files.append(init_guide)
+    prompt = repo_root / ".github" / "fitness-review-prompt.md"
+    if prompt.is_file():
+        files.append(prompt)
+    return files
+
+
+def _lines_of(path: Path) -> list[str]:
+    """The file's lines; an unreadable or non-UTF-8 file has none to audit."""
+    try:
+        return path.read_text(encoding="utf-8").splitlines()
+    except (UnicodeDecodeError, OSError):
+        return []
+
+
+def _matching_lines(texts: list[tuple[Path, list[str]]], pattern: re.Pattern) -> list[Hit]:
+    return [(path, lineno, line.strip())
+            for path, lines in texts
+            for lineno, line in enumerate(lines, start=1)
+            if pattern.search(line)]
+
+
+def _report(title: str, hits: list[Hit], fix: str) -> None:
+    print(title, file=sys.stderr)
+    for path, lineno, line in hits:
+        print(f"  {path}:{lineno}: {line}", file=sys.stderr)
+    print(fix, file=sys.stderr)
 
 
 def cmd_audit(repo_root: Path) -> int:
-    """`audit` (BR-5 / FR-7 / US-08), run by CI: fail when skill prose inlines weights or reads the config directly.
+    """`audit` (BR-5 / FR-7 / US-08), run by CI: fail when skill prose inlines weights
+    or reads the config directly.
 
-    Scans skills/review-*/SKILL.md, skills/fitness-config-init/SKILL.md (BR-2)
-    and .github/fitness-review-prompt.md for an inline `"weights": {` table
-    (ADR-002) or a direct json.load/open of the config file (AC-08.4); names
-    every offender. Exit 0 = clean.
+    Flags an inline `"weights": {` table (ADR-002) or a direct json.load/open of
+    the config file (AC-08.4) and names every offender. Exit 0 = clean.
     """
-    inline = re.compile(_AUDIT_INLINE_WEIGHTS_PATTERN)
-    direct_load = re.compile(_AUDIT_DIRECT_LOAD_PATTERN)
-
-    candidates: list[Path] = []
-    src_dir = repo_root / "skills"
-    if src_dir.is_dir():
-        for skill in sorted(src_dir.glob("review-*/SKILL.md")):
-            candidates.append(skill)
-        init_guide = src_dir / "fitness-config-init" / "SKILL.md"
-        if init_guide.is_file():
-            candidates.append(init_guide)
-    prompt = repo_root / ".github" / "fitness-review-prompt.md"
-    if prompt.is_file():
-        candidates.append(prompt)
-
-    inline_hits: list[tuple[Path, int, str]] = []
-    direct_hits: list[tuple[Path, int, str]] = []
-    for path in candidates:
-        try:
-            text = path.read_text(encoding="utf-8")
-        except (UnicodeDecodeError, OSError):
-            continue
-        for lineno, line in enumerate(text.splitlines(), start=1):
-            if inline.search(line):
-                inline_hits.append((path, lineno, line.strip()))
-            if direct_load.search(line):
-                direct_hits.append((path, lineno, line.strip()))
+    files = _audited_files(repo_root)
+    texts = [(path, _lines_of(path)) for path in files]
+    inline_hits = _matching_lines(texts, _INLINE_WEIGHTS)
+    direct_hits = _matching_lines(texts, _DIRECT_LOAD)
 
     if not inline_hits and not direct_hits:
-        print(f"Audit clean: scanned {len(candidates)} SKILL.md / prompt files; no inline weight tables, no direct config loads.")
+        print(f"Audit clean: scanned {len(files)} SKILL.md / prompt files; "
+              "no inline weight tables, no direct config loads.")
         return 0
-
     if inline_hits:
-        print("Inline weight tables found (forbidden by ADR-002 / FR-7):", file=sys.stderr)
-        for path, lineno, line in inline_hits:
-            print(f"  {path}:{lineno}: {line}", file=sys.stderr)
-        print("  Fix: replace the inline table with a CLI invocation: python3 scripts/fitness-config.py show --path <target>", file=sys.stderr)
-
+        _report("Inline weight tables found (forbidden by ADR-002 / FR-7):", inline_hits,
+                "  Fix: replace the inline table with a CLI invocation: "
+                "python3 scripts/fitness-config.py show --path <target>")
     if direct_hits:
-        print("Direct fitness-config.json loads found (forbidden by US-08 / AC-08.4):", file=sys.stderr)
-        for path, lineno, line in direct_hits:
-            print(f"  {path}:{lineno}: {line}", file=sys.stderr)
-        print("  Fix: invoke the resolver CLI instead of reading the file directly.", file=sys.stderr)
-
+        _report("Direct fitness-config.json loads found (forbidden by US-08 / AC-08.4):", direct_hits,
+                "  Fix: invoke the resolver CLI instead of reading the file directly.")
     return 1

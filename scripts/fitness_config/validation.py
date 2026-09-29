@@ -41,6 +41,20 @@ def _format_chain_for_error(source_chain: list[Path]) -> str:
 # Chain rules
 # ---------------------------------------------------------------------------
 
+def _version_fix(declared: list[tuple[Path, int]]) -> str:
+    """The two concrete fixes for a version mismatch, worded for older, newer or mixed configs."""
+    has_newer = any(v > SUPPORTED_SCHEMA_VERSION for _, v in declared)
+    has_older = any(v < SUPPORTED_SCHEMA_VERSION for _, v in declared)
+    if has_older and not has_newer:
+        return (f"Fix: upgrade the older config(s) to version {SUPPORTED_SCHEMA_VERSION}, "
+                f"or pin the newer config(s) back to version {SUPPORTED_SCHEMA_VERSION}.")
+    if has_newer and not has_older:
+        return (f"Fix: pin the newer config(s) back to version {SUPPORTED_SCHEMA_VERSION}, "
+                "or upgrade tooling to support the newer schema.")
+    return (f"Fix: align every config to version {SUPPORTED_SCHEMA_VERSION} "
+            "(upgrade older entries or pin newer entries).")
+
+
 def validate_schema_versions(
     raw_configs: list[dict],
     source_chain: list[Path],
@@ -50,52 +64,30 @@ def validate_schema_versions(
     On a mismatch the errors list each chain file with its declared version
     and offer two concrete fixes.
     """
-    if not raw_configs:
-        return ValidationResult(ok=True, errors=[])
-
     declared: list[tuple[Path, int]] = []
-    mismatched: list[tuple[Path, int]] = []
+    mismatched = False
     for entry, cfg in zip(source_chain, raw_configs):
         if not isinstance(cfg, dict):
             continue
         version = cfg.get("version", SUPPORTED_SCHEMA_VERSION)
         if not isinstance(version, int):
-            mismatched.append((entry, version))
+            mismatched = True  # e.g. "1" or 1.0: never the supported version
             continue
         declared.append((entry, version))
-        if version != SUPPORTED_SCHEMA_VERSION:
-            mismatched.append((entry, version))
+        mismatched = mismatched or version != SUPPORTED_SCHEMA_VERSION
 
     if not mismatched:
         return ValidationResult(ok=True, errors=[])
-
-    chain_lines = [
-        f"  - {entry} declares version {version}"
-        for entry, version in declared
-    ]
-    errors: list[str] = [
+    return ValidationResult(ok=False, errors=[
         "Schema version mismatch across the resolution chain "
         f"(supported schema version is {SUPPORTED_SCHEMA_VERSION}):",
-        *chain_lines,
-    ]
-    has_newer = any(v > SUPPORTED_SCHEMA_VERSION for _, v in declared)
-    has_older = any(v < SUPPORTED_SCHEMA_VERSION for _, v in declared)
-    if has_older and not has_newer:
-        errors.append(
-            f"Fix: upgrade the older config(s) to version {SUPPORTED_SCHEMA_VERSION}, "
-            f"or pin the newer config(s) back to version {SUPPORTED_SCHEMA_VERSION}."
-        )
-    elif has_newer and not has_older:
-        errors.append(
-            f"Fix: pin the newer config(s) back to version {SUPPORTED_SCHEMA_VERSION}, "
-            f"or upgrade tooling to support the newer schema."
-        )
-    else:
-        errors.append(
-            f"Fix: align every config to version {SUPPORTED_SCHEMA_VERSION} "
-            "(upgrade older entries or pin newer entries)."
-        )
-    return ValidationResult(ok=False, errors=errors)
+        *(f"  - {entry} declares version {version}" for entry, version in declared),
+        _version_fix(declared),
+    ])
+
+
+_SUM_FIX = ("Fix: either adjust the override weights so the merged total is 100, "
+            "or replace all 10 weights in the override (full replacement).")
 
 
 def validate_effective(effective: dict, source_chain: list[Path]) -> ValidationResult:
@@ -105,29 +97,18 @@ def validate_effective(effective: dict, source_chain: list[Path]) -> ValidationR
     (responsibility may lie upstream), then two fixes. This is the validator
     review skills consult before a review.
     """
-    weights = effective.get("weights") or {}
-    total = _sum_weights(weights)
-
+    total = _sum_weights(effective.get("weights") or {})
     if abs(total - 100) <= WEIGHTS_SUM_TOLERANCE:
         return ValidationResult(ok=True, errors=[])
-
-    errors: list[str] = []
-    if source_chain:
-        errors.append(
-            f"Effective weights from {source_chain[0]} sum to {total:g}; must sum to 100."
-        )
-    else:
-        errors.append(
-            f"Effective weights sum to {total:g}; must sum to 100."
-        )
-    if source_chain:
-        errors.append("Resolution chain (nearest first):")
-        errors.append(_format_chain_for_error(source_chain))
-    errors.append(
-        "Fix: either adjust the override weights so the merged total is 100, "
-        "or replace all 10 weights in the override (full replacement)."
-    )
-    return ValidationResult(ok=False, errors=errors)
+    if not source_chain:
+        return ValidationResult(ok=False, errors=[
+            f"Effective weights sum to {total:g}; must sum to 100.", _SUM_FIX])
+    return ValidationResult(ok=False, errors=[
+        f"Effective weights from {source_chain[0]} sum to {total:g}; must sum to 100.",
+        "Resolution chain (nearest first):",
+        _format_chain_for_error(source_chain),
+        _SUM_FIX,
+    ])
 
 
 # ---------------------------------------------------------------------------

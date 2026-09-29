@@ -144,9 +144,4 @@ def anchored_chain(target: Path, anchor: Path,
 
 def merge_defaults(data: dict) -> dict:
     """Legacy `show [path]`: one file over the defaults, without a version key."""
-    return {
-        "weights": {**DEFAULT_WEIGHTS, **(data.get("weights") or {})},
-        "statusThresholds": {**DEFAULT_STATUS, **(data.get("statusThresholds") or {})},
-        "security": {**DEFAULT_SECURITY, **(data.get("security") or {})},
-        "scoring": {**DEFAULT_SCORING, **(data.get("scoring") or {})},
-    }
+    return {key: value for key, value in build_effective_config(data).items() if key != "version"}

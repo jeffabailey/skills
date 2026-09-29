@@ -237,3 +237,87 @@ def test_validate_schema_versions_enforces_version_match(
                 or "older" in combined_lower
                 or "newer" in combined_lower
             )
+
+
+# ---------------------------------------------------------------------------
+# Behavior B8: completeness rules for proposals headed for a write (ADR-008).
+# A complete proposal has all 10 domains as integers summing to 100 and all
+# four sections. Partial override files stay valid on their own; only the
+# write gate applies these rules.
+# ---------------------------------------------------------------------------
+
+from hypothesis import given  # noqa: E402
+from hypothesis import strategies as st  # noqa: E402
+
+DOMAINS = list(fitness_config.DEFAULT_WEIGHTS)
+
+
+@st.composite
+def weights_summing_to_100(draw) -> dict:
+    cuts = sorted(draw(st.lists(st.integers(0, 100), min_size=9, max_size=9)))
+    bounds = [0, *cuts, 100]
+    return {domain: bounds[i + 1] - bounds[i] for i, domain in enumerate(DOMAINS)}
+
+
+def score_ranges() -> st.SearchStrategy:
+    return st.tuples(st.integers(1, 10), st.integers(1, 10)).map(lambda pair: sorted(pair))
+
+
+@st.composite
+def complete_configs(draw) -> dict:
+    """Every proposal the write gate must accept."""
+    return {
+        "version": 1,
+        "weights": draw(weights_summing_to_100()),
+        "statusThresholds": {key: draw(score_ranges()) for key in fitness_config.DEFAULT_STATUS},
+        "security": {"confidenceThreshold": draw(st.integers(1, 10))},
+        "scoring": {key: draw(score_ranges()) for key in fitness_config.DEFAULT_SCORING},
+    }
+
+
+def _drop_section(config: dict, section: str) -> dict:
+    return {key: value for key, value in config.items() if key != section}
+
+
+def _drop_domain(config: dict, domain: str) -> dict:
+    weights = {key: value for key, value in config["weights"].items() if key != domain}
+    return {**config, "weights": weights}
+
+
+def _shift_sum(config: dict, domain: str) -> dict:
+    return {**config, "weights": {**config["weights"], domain: config["weights"][domain] + 1}}
+
+
+def _fractional_weight(config: dict, domain: str) -> dict:
+    return {**config, "weights": {**config["weights"], domain: config["weights"][domain] + 0.0}}
+
+
+def _unknown_domain(config: dict, domain: str) -> dict:
+    return {**config, "weights": {**config["weights"], f"{domain}-extra": 0}}
+
+
+INCOMPLETENESS = {
+    "missing section": lambda cfg, domain, section: _drop_section(cfg, section),
+    "missing domain": lambda cfg, domain, section: _drop_domain(cfg, domain),
+    "sum not 100": lambda cfg, domain, section: _shift_sum(cfg, domain),
+    "non-integer weight": lambda cfg, domain, section: _fractional_weight(cfg, domain),
+    "unknown domain": lambda cfg, domain, section: _unknown_domain(cfg, domain),
+}
+
+
+@given(complete_configs())
+def test_every_complete_proposal_passes_the_write_gate_validation(config):
+    assert fitness_config.validate_proposal(config) == []
+
+
+@given(
+    complete_configs(),
+    st.sampled_from(sorted(INCOMPLETENESS)),
+    st.sampled_from(DOMAINS),
+    st.sampled_from(["weights", "statusThresholds", "security", "scoring"]),
+)
+def test_any_incomplete_proposal_is_rejected_with_a_reason(config, flaw, domain, section):
+    broken = INCOMPLETENESS[flaw](config, domain, section)
+    errors = fitness_config.validate_proposal(broken)
+    assert errors, f"{flaw} accepted: {broken}"
+    assert all(isinstance(line, str) and line for line in errors)

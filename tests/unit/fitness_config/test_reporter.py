@@ -19,6 +19,7 @@ Test count budget (per 2x distinct-behaviors rule):
 
 from __future__ import annotations
 
+import hashlib
 import json
 from pathlib import Path
 
@@ -196,3 +197,45 @@ def test_render_show_output_is_byte_identical_across_two_calls():
     second = fitness_config.render_show_output(target=target, source_chain=chain, effective=effective)
 
     assert first == second, "render_show_output produced non-deterministic output"
+
+
+# ---------------------------------------------------------------------------
+# Behavior R5: canonical renderer (data-models section 2). The rendered text
+# is the byte-exact write payload: canonical key order, 2-space indent,
+# inline two-element ranges, LF, trailing newline. Input key order and
+# formatting never change the bytes, so the fingerprint is stable.
+# ---------------------------------------------------------------------------
+
+from hypothesis import given  # noqa: E402
+from hypothesis import strategies as st  # noqa: E402
+
+from .test_validator import complete_configs  # noqa: E402
+
+_EXAMPLE_CONFIG = Path(__file__).resolve().parents[3] / "fitness-config.example.json"
+
+
+def _reordered(value, rng):
+    """Same config, keys shuffled at every level."""
+    if isinstance(value, dict):
+        keys = list(value)
+        rng.shuffle(keys)
+        return {key: _reordered(value[key], rng) for key in keys}
+    return value
+
+
+@given(complete_configs(), st.randoms(use_true_random=False))
+def test_canonical_rendering_roundtrips_and_ignores_input_key_order(config, rng):
+    rendered = fitness_config.render_canonical(config)
+    assert json.loads(rendered) == config
+    assert fitness_config.render_canonical(_reordered(config, rng)) == rendered
+    assert list(json.loads(rendered)) == ["version", "weights", "statusThresholds", "security", "scoring"]
+    assert rendered.endswith("}\n") and "\r" not in rendered
+    assert fitness_config.proposal_fingerprint(rendered) == hashlib.sha256(rendered.encode()).hexdigest()[:12]
+
+
+def test_canonical_rendering_of_the_defaults_is_the_example_file():
+    # bypass: golden-master fitness function (data-models section 2) -- one
+    # fixed input by definition; the property above covers the input domain.
+    defaults = fitness_config.build_seed_config([])
+    rendered = fitness_config.render_canonical(defaults)
+    assert rendered == _EXAMPLE_CONFIG.read_text(encoding="utf-8")

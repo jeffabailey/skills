@@ -23,11 +23,14 @@ Internal architecture (per ADR-004 / ADR-006):
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
+import os
 import re
 import sys
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from pathlib import Path
+from typing import Callable
 
 DEFAULT_WEIGHTS = {
     "architecture": 14,
@@ -529,6 +532,155 @@ def render_show_output(
 
 
 # ---------------------------------------------------------------------------
+# Write gate core (ADR-008 completeness, ADR-010 gate) -- pure functions.
+# Completeness applies only to proposals headed for a write; partial override
+# files stay valid on their own.
+# ---------------------------------------------------------------------------
+
+_SECTION_DEFAULTS = {
+    "weights": DEFAULT_WEIGHTS,
+    "statusThresholds": DEFAULT_STATUS,
+    "security": DEFAULT_SECURITY,
+    "scoring": DEFAULT_SCORING,
+}
+_RANGE_SECTIONS = ("statusThresholds", "scoring")
+_INLINE_PAIR = re.compile(r"\[\s+([^\[\]\s,]+),\s+([^\[\]\s,]+)\s+\]")
+
+# Driven port of the write gate: create the config file exclusively.
+# Returns False (writing nothing) when a config already exists.
+CreateFile = Callable[[bytes], bool]
+
+
+def _is_number(value) -> bool:
+    return isinstance(value, (int, float)) and not isinstance(value, bool)
+
+
+def _is_whole_weight(value) -> bool:
+    return type(value) is int and 0 <= value <= 100
+
+
+def _is_range(value) -> bool:
+    return (isinstance(value, list) and len(value) == 2
+            and all(_is_number(v) for v in value) and value[0] <= value[1])
+
+
+def _section_key_errors(name: str, section) -> list[str]:
+    if not isinstance(section, dict):
+        return [f"'{name}' is missing or not an object"]
+    missing = [key for key in _SECTION_DEFAULTS[name] if key not in section]
+    unknown = sorted(set(section) - set(_SECTION_DEFAULTS[name]))
+    return ([f"'{name}' is missing: {', '.join(missing)}"] if missing else []) + (
+        [f"'{name}' has unknown keys: {', '.join(unknown)}"] if unknown else [])
+
+
+def _weight_value_errors(weights: dict) -> list[str]:
+    errors = [f"weights.{domain} must be a whole number 0-100, got {value!r}"
+              for domain, value in weights.items() if not _is_whole_weight(value)]
+    total = _sum_weights(weights)
+    if total != 100:
+        errors.append(f"weights add up to {total:g}; they must add up to 100")
+    return errors
+
+
+def _range_and_cutoff_errors(proposal: dict) -> list[str]:
+    errors = [f"{name}.{key} must be a [low, high] pair, got {proposal[name][key]!r}"
+              for name in _RANGE_SECTIONS for key in _SECTION_DEFAULTS[name]
+              if not _is_range(proposal[name][key])]
+    cutoff = proposal["security"]["confidenceThreshold"]
+    if not (_is_number(cutoff) and 1 <= cutoff <= 10):
+        errors.append(f"security.confidenceThreshold must be 1-10, got {cutoff!r}")
+    return errors
+
+
+def validate_proposal(proposal) -> list[str]:
+    """Strict validation plus completeness for a proposal headed for a write.
+
+    Complete = version 1, all four sections with exactly their known keys,
+    all 10 domains as whole numbers adding up to 100. Returns error lines
+    (empty when the proposal may be written).
+    """
+    if not isinstance(proposal, dict):
+        return ["Proposal must be a JSON object"]
+    version = proposal.get("version")
+    errors = [] if type(version) is int and version == 1 else ["'version' must be the integer 1"]
+    key_errors = [e for name in _SECTION_DEFAULTS for e in _section_key_errors(name, proposal.get(name))]
+    if key_errors:
+        return errors + key_errors
+    return errors + _weight_value_errors(proposal["weights"]) + _range_and_cutoff_errors(proposal)
+
+
+def render_canonical(config: dict) -> str:
+    """Canonical bytes (data-models section 2): known keys in DEFAULT_* order,
+    2-space indent, inline [lo, hi] pairs, LF, trailing newline."""
+    ordered = {"version": config["version"], **{
+        name: {key: config[name][key] for key in defaults}
+        for name, defaults in _SECTION_DEFAULTS.items()}}
+    return _INLINE_PAIR.sub(r"[\1, \2]", json.dumps(ordered, indent=2, ensure_ascii=False)) + "\n"
+
+
+def proposal_fingerprint(canonical: str) -> str:
+    """First 12 hex characters of SHA-256 over the canonical bytes."""
+    return hashlib.sha256(canonical.encode("utf-8")).hexdigest()[:12]
+
+
+@dataclass(frozen=True)
+class GateOutcome:
+    """What the write gate decided; `canonical` is the byte-exact payload."""
+
+    status: str
+    fingerprint: str | None = None
+    canonical: str | None = None
+    errors: tuple[str, ...] = ()
+
+
+def _prepare_proposal(proposal_text: str) -> GateOutcome:
+    try:
+        proposal = json.loads(proposal_text)
+    except ValueError as exc:
+        return GateOutcome("invalid", errors=(f"Proposal is not valid JSON: {exc}",))
+    errors = validate_proposal(proposal)
+    if errors:
+        return GateOutcome("invalid", errors=tuple(errors))
+    canonical = render_canonical(proposal)
+    return GateOutcome("ready", proposal_fingerprint(canonical), canonical)
+
+
+def check_proposal(proposal_text: str, config_exists: bool) -> GateOutcome:
+    """Dry run: validate, render, fingerprint. Never writes."""
+    prepared = _prepare_proposal(proposal_text)
+    if prepared.status == "invalid":
+        return prepared
+    return replace(prepared, status="would-replace" if config_exists else "would-create")
+
+
+def save_new_proposal(proposal_text: str, expected_fingerprint: str,
+                      create_file: CreateFile) -> GateOutcome:
+    """Create path of the write gate: write the canonical bytes only when the
+    proposal is complete and its fingerprint is the one the user reviewed."""
+    prepared = _prepare_proposal(proposal_text)
+    if prepared.status == "invalid":
+        return prepared
+    if prepared.fingerprint != expected_fingerprint:
+        return replace(prepared, status="fingerprint-mismatch")
+    created = create_file(prepared.canonical.encode("utf-8"))
+    return replace(prepared, status="created" if created else "refused-exists")
+
+
+def chain_origin(target: Path, anchor: Path) -> tuple[Path | None, str | None]:
+    """Where `init --path` starts its walk-up (ADR-009 anchor guard).
+
+    Pure over resolved paths. Target == anchor: no chain (None). A target
+    outside the anchor is an error. Otherwise the walk starts at the parent,
+    so the file about to be written is never part of its own chain.
+    """
+    if target == anchor:
+        return None, None
+    if anchor not in target.parents:
+        return None, f"Error: {target} is outside the project folder {anchor}"
+    return target.parent, None
+
+
+# ---------------------------------------------------------------------------
 # Validation (existing behavior preserved).
 # ---------------------------------------------------------------------------
 
@@ -626,15 +778,10 @@ def cmd_init_path(target: Path, base: Path) -> int:
         print(f"Error: {out_path} already exists", file=sys.stderr)
         return 1
 
-    # Walk up from the parent of target so we never include the file we're
-    # about to create. Use base (cwd) as the stop boundary like show/validate.
-    target_resolved = target.resolve(strict=False)
-    parent = target_resolved.parent
-    chain = walk_up_chain(parent, stop=base)
-    raw_configs, error = _read_chain_configs(chain)
+    raw_configs, error, exit_code = _read_anchored_chain(target, base)
     if error is not None:
         print(error, file=sys.stderr)
-        return 1
+        return exit_code
 
     seed = build_seed_config(raw_configs)
 
@@ -648,6 +795,76 @@ def cmd_init_path(target: Path, base: Path) -> int:
         )
     print("Created:", out_path)
     return 0
+
+
+def _read_anchored_chain(target: Path, base: Path) -> tuple[list[dict] | None, str | None, int]:
+    """Adapter: read the configs above target, never above the anchor (base).
+
+    Returns (raw_configs, error, exit_code): exit 2 for a target outside the
+    anchor, 1 for an unreadable chain file.
+    """
+    anchor = base.resolve()
+    origin, error = chain_origin(target.resolve(strict=False), anchor)
+    if error is not None:
+        return None, error, 2
+    chain = [] if origin is None else walk_up_chain(origin, stop=anchor)
+    raw_configs, read_error = _read_chain_configs(chain)
+    return raw_configs, read_error, 1
+
+
+def _exclusive_creator(path: Path) -> CreateFile:
+    """Adapter for the CreateFile port: exclusive create, fsync'd."""
+    def create_file(data: bytes) -> bool:
+        try:
+            with path.open("xb") as handle:
+                handle.write(data)
+                handle.flush()
+                os.fsync(handle.fileno())
+        except FileExistsError:
+            return False
+        return True
+    return create_file
+
+
+_GATE_SUCCESS = {"would-create", "would-replace", "created"}
+
+
+def _print_gate_outcome(outcome: GateOutcome, show_canonical: bool) -> int:
+    print(f"STATUS: {outcome.status}")
+    if outcome.fingerprint:
+        print(f"Proposal: {outcome.fingerprint}")
+    _print_validation_errors(list(outcome.errors))
+    if show_canonical and outcome.canonical:
+        sys.stdout.write(outcome.canonical)
+    return 0 if outcome.status in _GATE_SUCCESS else 1
+
+
+def cmd_init_from(target: Path, base: Path, proposal_text: str,
+                  dry_run: bool, expected_fingerprint: str | None) -> int:
+    """`init --path T --from - (--dry-run | --expect FP)`: the write gate."""
+    _, error, exit_code = _read_anchored_chain(target, base)
+    if error is not None:
+        print(error, file=sys.stderr)
+        return exit_code
+    out_path = target / CONFIG_FILENAME
+    if dry_run:
+        return _print_gate_outcome(check_proposal(proposal_text, out_path.exists()), True)
+    outcome = save_new_proposal(proposal_text, expected_fingerprint, _exclusive_creator(out_path))
+    return _print_gate_outcome(outcome, False)
+
+
+def _gate_usage_error(args) -> str | None:
+    """Return a usage error for inconsistent write-gate flags, else None."""
+    if args.proposal_source is None:
+        return "Error: --dry-run and --expect need --from -" if (args.dry_run or args.expect) else None
+    if args.command != "init" or args.resolve_path is None:
+        return "Error: --from only works with init --path"
+    if args.proposal_source != "-":
+        return "Error: --from takes '-' (read the proposal from stdin)"
+    if not args.dry_run and args.expect is None:
+        return ("Error: saving needs --expect <fingerprint> of a reviewed proposal; "
+                "run with --dry-run first to see it")
+    return None
 
 
 def cmd_show(path: Path) -> int:
@@ -877,6 +1094,12 @@ def _build_parser() -> argparse.ArgumentParser:
         default=None,
         help="(show/validate/init) Resolve walk-up chain or seed override starting from this target path",
     )
+    parser.add_argument("--from", dest="proposal_source", default=None,
+                        help="(init --path) read a proposed config from stdin ('-')")
+    parser.add_argument("--dry-run", action="store_true",
+                        help="(init --path --from -) validate and show the proposal; write nothing")
+    parser.add_argument("--expect", default=None,
+                        help="(init --path --from -) fingerprint of the reviewed proposal to save")
     return parser
 
 
@@ -896,6 +1119,11 @@ def main() -> int:
             return 2
         return cmd_audit(Path.cwd())
 
+    gate_error = _gate_usage_error(args)
+    if gate_error is not None:
+        print(gate_error, file=sys.stderr)
+        return 2
+
     if args.resolve_path is not None:
         if args.path is not None:
             print(
@@ -908,6 +1136,9 @@ def main() -> int:
             return cmd_show_path(target, base=Path.cwd())
         if args.command == "validate":
             return cmd_validate_path(target, base=Path.cwd())
+        if args.command == "init" and args.proposal_source is not None:
+            return cmd_init_from(target, Path.cwd(), sys.stdin.read(),
+                                 args.dry_run, args.expect)
         if args.command == "init":
             return cmd_init_path(target, base=Path.cwd())
         return 1

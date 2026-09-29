@@ -206,6 +206,14 @@ Feature: Only a valid config that Priya reviewed is ever saved
       | is not UTF-8 text                | UTF-8               |
       | sets "confidenceThreshold" twice | confidenceThreshold |
 
+  @AC-03.1 @error
+  Scenario: Validating a folder in place of the config file names the problem without crashing
+    Given Priya's project "ledgerd" has a folder named "fitness-config.json"
+    When Priya validates the fitness config file in "ledgerd"
+    Then the validation fails
+    And the validation names "could not be read"
+    And the validation reports its findings without crashing
+
   # ---- Error paths: targets that are not folders -------------------------
 
   @AC-03.3 @error
@@ -237,3 +245,18 @@ Feature: Only a valid config that Priya reviewed is ever saved
       | sets up a default fitness config                            | README.md | is not a folder |
       | checks the database-service proposal                        | reports   | does not exist  |
       | saves the database-service proposal with its fingerprint    | reports   | does not exist  |
+
+  @error
+  Scenario Outline: Write-gate options outside init --path are refused before anything runs
+    Given Priya's project "ledgerd" has no fitness config
+    When Priya runs the resolver in "ledgerd" with "<arguments>"
+    Then the options are refused as a usage error naming "<option>"
+    And nothing has been saved in "ledgerd"
+
+    Examples:
+      | arguments                                    | option    |
+      | show --path . --dry-run                      | --dry-run |
+      | validate --path . --from -                   | --from    |
+      | init --dry-run                               | --dry-run |
+      | init --path . --from + --dry-run             | --from    |
+      | init --path . --from proposal.json --dry-run | --from    |

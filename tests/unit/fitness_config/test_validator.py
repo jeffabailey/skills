@@ -405,6 +405,7 @@ FLAWS = {
     "three-number band": lambda cfg, domain: (_set(cfg, "statusThresholds", "healthy", [8, 9, 10]),
                                               "healthy"),
     "range as text": lambda cfg, domain: (_set(cfg, "scoring", "goodRange", "8-10"), "goodRange"),
+    "one-number range": lambda cfg, domain: (_set(cfg, "scoring", "badRange", [3]), "badRange"),
     "version 2": lambda cfg, domain: ({**cfg, "version": 2}, "version"),
 }
 
@@ -555,3 +556,100 @@ def test_any_gap_or_overlap_in_the_status_bands_is_rejected_naming_status(config
     before, after = run_validate_proposal(broken)
     state_delta.assert_state_delta(before, after, PROPOSAL_UNIVERSE,
                                    {"violations": naming_each({"statusThresholds"})})
+
+
+# ---------------------------------------------------------------------------
+# Mutation-testing gaps (DELIVER phase 5).
+#   B8b: a complete proposal with exactly one completeness flaw gets exactly
+#        one violation, naming that flaw (a missing key is not also "unknown";
+#        a reversed scoring range is caught even though the bands still tile).
+#   B7b: the version-mismatch fix advice fits the chain: older configs only,
+#        newer configs only, or both.
+#   B6b: an effective sum off 100 is blamed first on the nearest chain file.
+#   B10b: an audited file the audit cannot read (not UTF-8, or a folder in
+#        place of SKILL.md) is skipped, never a crash.
+# ---------------------------------------------------------------------------
+
+FIXED_KEY_SECTIONS = ["statusThresholds", "security", "scoring"]
+
+
+def exactly_one_violation_naming(*words) -> state_delta.Predicate:
+    return state_delta.Predicate(
+        f"exactly one violation, naming {list(words)}",
+        lambda before, after: len(after) == 1 and all(word in after[0] for word in words))
+
+
+@st.composite
+def proposals_with_one_completeness_flaw(draw) -> tuple[dict, tuple[str, ...]]:
+    config = draw(complete_configs())
+    flaw = draw(st.sampled_from(["missing key", "unknown key", "reversed range"]))
+    if flaw == "missing key":
+        section = draw(st.sampled_from(FIXED_KEY_SECTIONS))
+        key = draw(st.sampled_from(sorted(config[section])))
+        trimmed = {name: value for name, value in config[section].items() if name != key}
+        return {**config, section: trimmed}, (f"'{section}' is missing", key)
+    if flaw == "unknown key":
+        section = draw(st.sampled_from(FIXED_KEY_SECTIONS))
+        return _set(config, section, "notes", "tuned in June"), (f"'{section}' has unknown keys", "notes")
+    key = draw(st.sampled_from(sorted(model.DEFAULT_SCORING)))
+    low, high = draw(st.lists(st.integers(1, 10), min_size=2, max_size=2, unique=True).map(sorted))
+    return _set(config, "scoring", key, [high, low]), (f"scoring.{key}", "low end first")
+
+
+@given(proposals_with_one_completeness_flaw())
+def test_a_proposal_with_one_completeness_flaw_gets_exactly_the_violation_naming_it(flawed):
+    proposal, named = flawed
+    before, after = run_validate_proposal(proposal)
+    state_delta.assert_state_delta(before, after, PROPOSAL_UNIVERSE,
+                                   {"violations": exactly_one_violation_naming(*named)})
+
+
+FIX_ADVICE = {
+    "older only": "upgrade the older config(s)",
+    "newer only": "upgrade tooling to support the newer schema",
+    "older and newer": "align every config",
+}
+
+
+@given(st.lists(st.integers(-2, 4), min_size=1, max_size=4).filter(
+    lambda versions: any(version != model.SUPPORTED_SCHEMA_VERSION for version in versions)))
+def test_the_version_mismatch_fix_advice_fits_the_versions_in_the_chain(versions):
+    chain = [Path(f"level{depth}") / "fitness-config.json" for depth in range(len(versions))]
+    has_older = any(version < model.SUPPORTED_SCHEMA_VERSION for version in versions)
+    has_newer = any(version > model.SUPPORTED_SCHEMA_VERSION for version in versions)
+    kind = ("older and newer" if has_older and has_newer
+            else "older only" if has_older else "newer only")
+
+    result = validation.validate_schema_versions([{"version": v} for v in versions], chain)
+
+    assert result.ok is False
+    advice = result.errors[-1]
+    assert FIX_ADVICE[kind] in advice, f"{versions}: {advice}"
+    assert not any(other in advice for name, other in FIX_ADVICE.items() if name != kind), advice
+
+
+def test_an_audited_file_that_cannot_be_read_is_skipped_without_crashing():
+    with tempfile.TemporaryDirectory() as scratch:
+        root = Path(scratch)
+        not_utf8 = root / "skills" / "review-latin1" / "SKILL.md"
+        not_utf8.parent.mkdir(parents=True)
+        not_utf8.write_bytes('caf\xe9 { "weights": { "data": 10 } }\n'.encode("latin-1"))
+        (root / "skills" / "review-folder" / "SKILL.md").mkdir(parents=True)
+        out, err = io.StringIO(), io.StringIO()
+        with contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
+            code = audit.cmd_audit(root)
+
+    assert (code, err.getvalue()) == (0, "")
+    assert "scanned 2" in out.getvalue()
+
+
+@given(st.lists(st.text(alphabet="abcdef", min_size=1, max_size=5), min_size=1, max_size=4, unique=True),
+       st.integers(1, 30))
+def test_an_effective_sum_off_100_names_the_nearest_chain_file_first(folders, shortfall):
+    chain = [Path(folder) / "fitness-config.json" for folder in folders]
+    weights = {**model.DEFAULT_WEIGHTS, "architecture": model.DEFAULT_WEIGHTS["architecture"] - shortfall}
+
+    result = validation.validate_effective(_effective_with_weights(weights), chain)
+
+    assert result.ok is False
+    assert result.errors[0].startswith(f"Effective weights from {chain[0]} sum to")

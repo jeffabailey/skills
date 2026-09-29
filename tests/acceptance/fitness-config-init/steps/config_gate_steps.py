@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import json
 import re
+import shlex
 
 from pytest_bdd import given, parsers, scenarios, then, when
 
@@ -287,6 +288,20 @@ def _last_run(context):
         if key in context:
             return context[key].run
     return context["setup"]
+
+
+@when(parsers.parse("{person} runs the resolver in \"{project}\" with \"{arguments}\""))
+def runs_with_arguments(workspace, context, person, project, arguments):
+    anchor, _ = workspace.split_target(project)
+    context["usage"] = run_resolver(anchor, *shlex.split(arguments))
+
+
+@then(parsers.parse("the options are refused as a usage error naming \"{option}\""))
+def options_refused(context, option):
+    run = context["usage"]
+    assert run.exit_code == 2, run.describe()
+    assert "Traceback" not in run.stderr, run.describe()
+    assert option in run.stderr, run.describe()
 
 
 @then(parsers.parse("the request is refused because \"{target}\" {problem}"))

@@ -104,6 +104,12 @@ Feature: Invalid configs and broken merges are caught with clear errors before a
     Then the validate command exits with a non-zero status
     And the error names the missing target path
 
+  Scenario: Validate accepts a file target that does not exist yet inside an existing folder
+    Given the repo has a valid root fitness-config.json
+    And the path "planned-module.py" is absent from the repo
+    When Devin validates the effective config at "planned-module.py"
+    Then the validate command exits with success
+
   @infrastructure-failure
   Scenario: Walk-up reports a pathological-tree error past the depth guard
     Given Devin invokes resolution from a path 100 levels deep with no fitness-config.json on the way up

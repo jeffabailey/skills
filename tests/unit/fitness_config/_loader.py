@@ -14,7 +14,7 @@ _SCRIPTS = str(Path(__file__).resolve().parents[3] / "scripts")
 if _SCRIPTS not in sys.path:
     sys.path.insert(0, _SCRIPTS)
 
-from fitness_config import (audit, model, render, resolution,  # noqa: E402
-                            validation, write_gate)
+from fitness_config import (adapters, audit, model, render,  # noqa: E402
+                            resolution, validation, write_gate)
 
-__all__ = ["audit", "model", "render", "resolution", "validation", "write_gate"]
+__all__ = ["adapters", "audit", "model", "render", "resolution", "validation", "write_gate"]

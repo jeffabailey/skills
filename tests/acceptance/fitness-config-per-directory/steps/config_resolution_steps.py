@@ -15,6 +15,7 @@ This module covers:
 
 from __future__ import annotations
 
+import json
 import time
 from pathlib import Path
 
@@ -614,10 +615,17 @@ def then_domains_ordered(context: dict):
 # --- backward compatibility (milestone 5) ---
 
 @then("the preview prints the root config merged with the documented defaults")
-def then_show_no_path(context: dict):
+def then_show_no_path(repo: RepoTree, context: dict):
     text = context["preview"].stdout
-    # Legacy show prints JSON of merged-with-defaults config.
-    assert '"weights"' in text
+    # Legacy show prints JSON of merged-with-defaults config: the root file's
+    # values over the documented defaults, all four sections, no version.
+    root = json.loads(repo.path_at("fitness-config.json").read_text(encoding="utf-8"))
+    assert json.loads(text) == {
+        "weights": {**DEFAULT_WEIGHTS, **root.get("weights", {})},
+        "statusThresholds": root.get("statusThresholds", DEFAULT_STATUS_THRESHOLDS),
+        "security": root.get("security", DEFAULT_SECURITY),
+        "scoring": root.get("scoring", DEFAULT_SCORING),
+    }, text
 
 
 @then('the preview output contains no "merged with..." phrasing')

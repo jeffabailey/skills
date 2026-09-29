@@ -334,3 +334,73 @@ def test_applying_the_listed_changes_to_the_current_config_yields_the_proposal(
     changed_tuning_values = [path for path, _, after in diff.changes
                              if after is not render.MISSING and path != "version"]
     assert diff.unchanged == _TUNING_VALUES - len(changed_tuning_values)
+
+
+# ---------------------------------------------------------------------------
+# Mutation-testing gaps (DELIVER phase 5).
+#   B8c: the config sources list every chain entry once, numbered nearest
+#        first: override, intermediates, root. Entries under the base print
+#        relative to it; entries outside it print absolute.
+#   B8d: the weights total says OK exactly when the weights add up to 100
+#        within the 0.01 tolerance, fractional weights included.
+#   B8e: a text value in the review shows as written, not \u-escaped.
+# ---------------------------------------------------------------------------
+
+import re  # noqa: E402
+
+from .test_validator import weights_summing_to_100  # noqa: E402
+
+_SHOW_BASE = Path("/work/ledgerd")
+_SOURCE_LINE = re.compile(r"^    (\d+)\. (.+)  \((override|intermediate|root)\)$")
+_folder = st.text(alphabet="abcdefgh", min_size=1, max_size=6)
+
+
+@st.composite
+def chain_entries(draw) -> list[tuple[Path, str]]:
+    """(path handed to the reporter, how the report must show it), nearest first."""
+    folders = draw(st.lists(_folder, min_size=1, max_size=6, unique=True))
+    entries = []
+    for folder in folders:
+        if draw(st.booleans()):
+            entries.append((_SHOW_BASE / folder / "fitness-config.json", f"{folder}/fitness-config.json"))
+        else:
+            outside = Path("/elsewhere") / folder / "fitness-config.json"
+            entries.append((outside, str(outside)))
+    return entries
+
+
+def _roles(count: int) -> list[str]:
+    if count == 1:
+        return ["root"]
+    return ["override", *(["intermediate"] * (count - 2)), "root"]
+
+
+@given(chain_entries())
+def test_config_sources_list_every_chain_entry_once_nearest_first(entries):
+    chain = [path for path, _ in entries]
+    text = render.render_show_output(Path("target.tf"), chain,
+                                     _effective_with(dict(model.DEFAULT_WEIGHTS)), base=_SHOW_BASE)
+
+    sources = [match.groups() for match in map(_SOURCE_LINE.match, text.splitlines()) if match]
+    expected = [(str(number), shown, role) for number, ((_, shown), role)
+                in enumerate(zip(entries, _roles(len(entries))), start=1)]
+    assert sources == expected
+    assert text.splitlines()[2].startswith(f"Config: {entries[0][1]}")
+
+
+@given(weights_summing_to_100(), st.sampled_from(sorted(model.DEFAULT_WEIGHTS)),
+       st.sampled_from([0, 0.004, -0.004, 0.25, -3, 7, 100, -100]))
+def test_the_weights_total_is_ok_exactly_when_it_is_100_within_tolerance(weights, domain, shift):
+    shifted = {**weights, domain: weights[domain] + shift}
+    text = render.render_show_output(Path("target.tf"), [], _effective_with(shifted))
+
+    total_line = next(line for line in text.splitlines() if line.startswith("    total"))
+    within_tolerance = abs(shift) <= 0.01
+    assert total_line.endswith("   OK" if within_tolerance else "   ERROR"), (shift, total_line)
+
+
+@given(complete_configs(), st.text(alphabet=st.characters(whitelist_categories=("L",)),
+                                   min_size=1, max_size=8))
+def test_a_text_value_in_the_review_shows_as_written(config, note):
+    diff = render.value_diff({**config, "owner": note}, config)
+    assert f'owner "{note}" -> (removed)' in render.render_value_diff(diff)

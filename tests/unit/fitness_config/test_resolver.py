@@ -252,3 +252,60 @@ def test_save_under_a_root_config_keeps_it_only_when_the_merged_config_is_valid(
         "fitness-config.json": is_(checked.canonical.encode("utf-8") if merged_is_valid else None),
         "status": is_("created" if merged_is_valid else "verify-failed-rolled-back"),
     })
+
+
+# ---------------------------------------------------------------------------
+# B3b (mutation-testing gap): the depth cap's exact boundary. ADR-006 sets
+# the cap at 64: a target up to 64 folders below the stop still reaches the
+# stop's config; one more folder and the walk reports the cap and stops
+# short of it.
+# ---------------------------------------------------------------------------
+
+import tempfile  # noqa: E402
+
+ADR_006_DEPTH_CAP = 64
+
+
+@pytest.mark.parametrize("levels", range(ADR_006_DEPTH_CAP - 2, ADR_006_DEPTH_CAP + 3))
+def test_walk_up_depth_cap_fires_exactly_past_64_folders(levels):
+    with tempfile.TemporaryDirectory() as scratch:
+        stop = Path(scratch).resolve()
+        root_config = _write_config(stop)
+        target = stop.joinpath(*(["d"] * levels))
+        target.mkdir(parents=True)
+
+        status = resolution.walk_up_chain_with_status(target, stop=stop)
+
+    capped = levels > ADR_006_DEPTH_CAP
+    assert status.depth_capped is capped, f"levels={levels}"
+    assert status.chain == ([] if capped else [root_config]), f"levels={levels}"
+
+
+# ---------------------------------------------------------------------------
+# B1b / B2b (mutation-testing gaps): only regular files count as configs,
+# and a target outside the stop folder walks all the way to the filesystem
+# root, collecting every config on the way.
+# ---------------------------------------------------------------------------
+
+def test_a_folder_named_like_the_config_is_not_part_of_the_chain(tmp_path: Path):
+    root_config = _write_config(tmp_path)
+    (tmp_path / "services" / "fitness-config.json").mkdir(parents=True)
+    target = tmp_path / "services" / "billing"
+    target.mkdir()
+
+    assert resolution.walk_up_chain(target, stop=tmp_path) == [root_config]
+
+
+def test_a_target_outside_the_stop_folder_walks_up_to_the_filesystem_root(tmp_path: Path):
+    outer = tmp_path.resolve() / "aaa"
+    target = outer / "billing" / "src"
+    target.mkdir(parents=True)
+    nearest = _write_config(outer / "billing")
+    upper = _write_config(outer)
+    stop = tmp_path.resolve() / "zzz"
+    stop.mkdir()
+
+    status = resolution.walk_up_chain_with_status(target, stop=stop)
+
+    assert status.chain[:2] == [nearest, upper]
+    assert status.depth_capped is False

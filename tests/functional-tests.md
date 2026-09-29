@@ -382,3 +382,118 @@ For each test scenario:
 **Then:**
 - The banner is removed or regenerated with a real tool, and the fix is checked by rendering
 - Icons are normalized to one stroke width and size, or the finding says not verified if rendering was unavailable
+
+## fitness-config-init
+
+These are the `@manual` agent-eval scenarios in `tests/acceptance/fitness-config-init/`. Pytest never runs them. The resolver side of the skill (validation, fingerprint, save, rollback) is covered by `uv run pytest tests`.
+
+### Procedure
+
+1. Build each fixture below as a throwaway git repo with one initial commit, so the working tree starts clean.
+2. For each scenario, start a fresh agent session in the fixture and invoke `/fitness-config-init` with the arguments the scenario states. Answer the prompts as the scenario states.
+3. Record the transcript, the tool calls (count the file reads for the 40-file fast-scan budget), and `git status` after the run.
+4. Check each Then line of the scenario against the transcript and the files. Every cited evidence path must exist in the fixture.
+5. Run `python3 scripts/fitness-config.py validate --path <fixture>` on any saved `fitness-config.json`.
+
+### Fixtures
+
+- `ledgerd`: a Go service with pgx, 42 migrations, and a k8s StatefulSet with a PDB
+- `jeffbaileyblog`: a Hugo site with `content/`, `layouts/`, and a Pages deploy workflow
+- `homelab-cli`: a Go CLI with cobra and goreleaser
+- `geo-notes`: a README containing "TODO" and nothing else
+- `fieldnotes`: a Rails app with Postgres and public views, plus a root `fitness-config.json` and a `services/billing` subfolder
+- `paygate`: a webhook service with a Stripe or Adyen SDK
+
+### Test: Fast scan classifies without touching the project
+
+**Given:** The `ledgerd` fixture with a clean working tree
+**When:** Run `/fitness-config-init` with no arguments
+**Then:**
+- The first output line names the target folder
+- The mode is fast and review-full is not invoked
+- Purpose, confidence, and evidence lines are shown, and each evidence line names an existing path
+- At most 40 files are read, no project code runs, and `git status` is clean before the save
+
+### Test: Weights follow the project's purpose
+
+**Given:** The `ledgerd` and `jeffbaileyblog` fixtures
+**When:** Run `/fitness-config-init fast` in each
+**Then:**
+- The proposal has exactly 10 domains, integers from 0 to 100, summing to 100
+- `ledgerd`: reliability and data are above the baseline and accessibility is below it
+- `jeffbaileyblog`: accessibility is the highest weight
+- The number of reasons equals the number of values changed from the baseline, and each reason cites evidence
+- No value moves more than 4 from the matching profile
+
+### Test: An unknown project keeps the starting weights
+
+**Given:** The `geo-notes` fixture
+**When:** Run `/fitness-config-init fast`
+**Then:** Purpose is "unknown", confidence is "low", the weights equal the baseline, and there are zero reasons
+
+### Test: Corrections and adjustments are applied
+
+**Given:** Any fixture where the classification is wrong or medium confidence
+**When:** Correct the purpose in one reply, then change one proposed weight
+**Then:**
+- A medium-confidence classification asks for the primary purpose before proposing
+- The proposal header shows the corrected purpose
+- The adjusted weight is applied and the rest re-balance to 100
+
+### Test: Saving writes only the approved config
+
+**Given:** The `homelab-cli` fixture with no config
+**When:** Accept the proposal
+**Then:**
+- The written file passes `fitness-config.py validate` and the schema, and equals the accepted proposal with example key order and 2-space indentation
+- `git status` shows only `fitness-config.json`
+- The resolver `Config:` line is shown after the save
+
+### Test: A subfolder save shows the inherited root config
+
+**Given:** The `fieldnotes` fixture
+**When:** Run `/fitness-config-init fast services/billing` and accept
+**Then:** The output shows the resolver `Config:` line and the notice that the root config is overridden for this folder
+
+### Test: Replacing an existing config needs an explicit yes
+
+**Given:** The `ledgerd` fixture with a prior `fitness-config.json`, and the `homelab-cli` fixture with a malformed one
+**When:** Run `/fitness-config-init` and answer the overwrite question with `n`, an empty reply, `nope`, then `yes`
+**Then:**
+- The diff lists every changed leaf as `path old -> new` plus an unchanged count, and the question names the file and defaults to no
+- Only `y` or `yes` (any case) overwrites; the other replies leave the file bytes identical
+- An identical proposal causes no write (mtime unchanged)
+- The malformed file triggers a notice and still requires confirmation
+
+### Test: Full mode discloses the report and uses its findings
+
+**Given:** The `fieldnotes` fixture with a clean working tree
+**When:** Run `/fitness-config-init full` and accept
+**Then:**
+- Full mode starts only from the `full` argument, clear wording, or the prompt
+- The output names `docs/fitness-report.md` and asks for confirmation before review-full runs
+- A changed domain with a review-full finding or skip has a reason citing it
+- `git status` shows only `docs/fitness-report.md` and `fitness-config.json`
+
+### Test: A failed domain review does not stop the proposal
+
+**Given:** The `homelab-cli` fixture, with review-performance made to fail during the full review
+**When:** Run `/fitness-config-init full`
+**Then:** The output says the performance review failed, the performance value uses fast-scan evidence, and the proposal completes
+
+### Test: Full mode on a dirty tree does not use a narrowed review
+
+**Given:** The `fieldnotes` fixture with uncommitted changes, so review-full reports a scope of changed files instead of the `fieldnotes` folder
+**When:** Run `/fitness-config-init full`
+**Then:**
+- The skill checks the report's `**Scope:**` line against the target folder
+- It says review-full reviewed changes only and its results are not used
+- The proposal uses fast-scan evidence
+
+### Test: Thresholds tighten only with a stakes signal
+
+**Given:** The `paygate` and `jeffbaileyblog` fixtures
+**When:** Run `/fitness-config-init fast` in each
+**Then:**
+- `paygate`: each threshold change carries a reason, `security.confidenceThreshold` stays within 1-10, and status bands are contiguous and non-overlapping over 1-10
+- `jeffbaileyblog`: the three threshold sections equal the baseline

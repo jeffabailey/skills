@@ -245,6 +245,7 @@ All skills live under `skills/`. The install commands above symlink every direct
 - `skills/review-apply`
 - `skills/review-usability`
 - `skills/ai-sanitize`
+- `skills/fitness-config-init`
 
 ---
 

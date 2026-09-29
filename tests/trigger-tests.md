@@ -232,3 +232,18 @@ Should NOT trigger:
 - "Check WCAG compliance of these templates" (that's review-accessibility)
 - "Review the usability of https://example.com" (that's review-usability)
 - "Write a commit message" (that's generate-commit)
+
+## fitness-config-init
+
+Should trigger:
+- "Create a fitness config for this project"
+- "Set up fitness-config.json"
+- "Initialize fitness config"
+- "Tune the review weights for this project"
+- "Weight the review for this repo"
+- `/fitness-config-init`
+
+Should NOT trigger:
+- "Full review" (that's review-full)
+- "Apply the fitness report" (that's review-apply)
+- "Validate my fitness-config.json" (run `scripts/fitness-config.py validate`)

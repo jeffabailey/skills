@@ -11,6 +11,7 @@ Test count budget (per 2x distinct-behaviors rule):
   Behavior B1: walk_up_chain returns chain in precedence order
   Behavior B2: walk_up_chain stops at stop boundary
   Behavior B3: walk_up_chain caps depth at 64 (with_status reports it)
+  Behavior B4: anchored_chain never reads a config outside the anchor
 """
 
 from __future__ import annotations
@@ -18,8 +19,11 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
+from hypothesis import given
+from hypothesis import strategies as st
 
 from ._loader import fitness_config
+from .test_write_gate import is_, state_delta
 
 
 # ---------------------------------------------------------------------------
@@ -169,3 +173,50 @@ def test_walk_up_chain_is_deterministic_across_repeated_calls(tmp_path: Path):
         mid / "fitness-config.json",
         tmp_path / "fitness-config.json",
     ]
+
+
+# ---------------------------------------------------------------------------
+# B4 (ADR-009 anchor guard): anchored_chain(target, anchor, has_config) is the
+# chain `init --path` reads. Universe: the chain it returns plus every config
+# path it probed outside the anchor. Strict: the probe slot must stay empty.
+# ---------------------------------------------------------------------------
+
+_folder_names = st.lists(st.sampled_from(["services", "billing", "api"]), max_size=3)
+_WORKSPACE = Path("/workspace")
+
+
+def _config_trees(anchor: Path, target: Path):
+    """Config files anywhere from the workspace down to target, incl. above the anchor."""
+    folders = [target, *target.parents]
+    return st.sets(st.sampled_from(folders)).map(
+        lambda chosen: frozenset(folder / "fitness-config.json" for folder in chosen))
+
+
+def _inside(path: Path, anchor: Path) -> bool:
+    return path.parent == anchor or anchor in path.parent.parents
+
+
+@given(st.data(), _folder_names, _folder_names, st.booleans())
+def test_anchored_chain_never_contains_a_config_outside_the_anchor(data, anchor_parts, target_parts,
+                                                                   outside):
+    anchor = _WORKSPACE.joinpath(*anchor_parts, "ledgerd")
+    target = (_WORKSPACE / "archive" if outside else anchor).joinpath(*target_parts)
+    tree = data.draw(_config_trees(anchor, target))
+    probed_outside: list[Path] = []
+
+    def has_config(path: Path) -> bool:
+        if not _inside(path, anchor):
+            probed_outside.append(path)
+        return path in tree
+
+    before = {"chain": [], "probed_outside_anchor": []}
+    chain, error = fitness_config.anchored_chain(target, anchor, has_config)
+    after = {"chain": chain, "probed_outside_anchor": probed_outside}
+
+    expected_chain = [folder / "fitness-config.json" for folder in target.parents
+                      if folder / "fitness-config.json" in tree
+                      and (folder == anchor or anchor in folder.parents)]
+    state_delta.assert_state_delta(before, after, {"chain", "probed_outside_anchor"}, {
+        "chain": is_([] if outside else expected_chain),
+    })
+    assert (error is not None) == outside

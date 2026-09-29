@@ -34,7 +34,7 @@ Feature: Priya turns a reviewed weight proposal into the config her reviews will
     And reviews of "ledgerd" will use its own fitness config
     And nothing else in "ledgerd" changed
 
-  @skip @US-02 @AC-02.5 @ADR-009
+  @US-02 @AC-02.5 @ADR-009
   Scenario: Priya sees the built-in starting weights for a project at its repository root
     Given Priya's project "ledgerd" has no fitness config
     When Priya asks for the starting weights for "ledgerd"

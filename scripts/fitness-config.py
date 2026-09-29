@@ -680,6 +680,21 @@ def chain_origin(target: Path, anchor: Path) -> tuple[Path | None, str | None]:
     return target.parent, None
 
 
+def anchored_chain(target: Path, anchor: Path,
+                   has_config: Callable[[Path], bool]) -> tuple[list[Path], str | None]:
+    """The `init --path` chain, nearest-first, bounded by the anchor (ADR-009).
+
+    Pure over paths: only configs from target's parent up to the anchor are
+    probed through `has_config`; nothing above the anchor is ever consulted.
+    """
+    origin, error = chain_origin(target, anchor)
+    if origin is None:
+        return [], error
+    folders = [origin, *origin.parents][: len(origin.relative_to(anchor).parts) + 1]
+    return [folder / CONFIG_FILENAME for folder in folders
+            if has_config(folder / CONFIG_FILENAME)], None
+
+
 # ---------------------------------------------------------------------------
 # Validation (existing behavior preserved).
 # ---------------------------------------------------------------------------
@@ -778,7 +793,7 @@ def cmd_init_path(target: Path, base: Path) -> int:
         print(f"Error: {out_path} already exists", file=sys.stderr)
         return 1
 
-    raw_configs, error, exit_code = _read_anchored_chain(target, base)
+    _, raw_configs, error, exit_code = _read_anchored_chain(target, base)
     if error is not None:
         print(error, file=sys.stderr)
         return exit_code
@@ -797,19 +812,17 @@ def cmd_init_path(target: Path, base: Path) -> int:
     return 0
 
 
-def _read_anchored_chain(target: Path, base: Path) -> tuple[list[dict] | None, str | None, int]:
+def _read_anchored_chain(target: Path, base: Path):
     """Adapter: read the configs above target, never above the anchor (base).
 
-    Returns (raw_configs, error, exit_code): exit 2 for a target outside the
-    anchor, 1 for an unreadable chain file.
+    Returns (chain, raw_configs, error, exit_code): exit 2 for a target
+    outside the anchor, 1 for an unreadable chain file.
     """
-    anchor = base.resolve()
-    origin, error = chain_origin(target.resolve(strict=False), anchor)
+    chain, error = anchored_chain(target.resolve(strict=False), base.resolve(), Path.is_file)
     if error is not None:
-        return None, error, 2
-    chain = [] if origin is None else walk_up_chain(origin, stop=anchor)
+        return [], None, error, 2
     raw_configs, read_error = _read_chain_configs(chain)
-    return raw_configs, read_error, 1
+    return chain, raw_configs, read_error, 1
 
 
 def _exclusive_creator(path: Path) -> CreateFile:
@@ -842,7 +855,7 @@ def _print_gate_outcome(outcome: GateOutcome, show_canonical: bool) -> int:
 def cmd_init_from(target: Path, base: Path, proposal_text: str,
                   dry_run: bool, expected_fingerprint: str | None) -> int:
     """`init --path T --from - (--dry-run | --expect FP)`: the write gate."""
-    _, error, exit_code = _read_anchored_chain(target, base)
+    _, _, error, exit_code = _read_anchored_chain(target, base)
     if error is not None:
         print(error, file=sys.stderr)
         return exit_code
@@ -855,12 +868,14 @@ def cmd_init_from(target: Path, base: Path, proposal_text: str,
 
 def cmd_init_baseline(target: Path, base: Path) -> int:
     """`init --path T --dry-run`: print the starting config; write nothing."""
-    raw_configs, error, exit_code = _read_anchored_chain(target, base)
+    chain, raw_configs, error, exit_code = _read_anchored_chain(target, base)
     if error is not None:
         print(error, file=sys.stderr)
         return exit_code
     print("STATUS: baseline")
     print(f"Baseline-Source: {'chain' if raw_configs else 'defaults'}")
+    for config_path in chain:
+        print(config_path)
     sys.stdout.write(render_canonical(build_seed_config(raw_configs)))
     return 0
 

@@ -25,7 +25,7 @@ Feature: Only a valid config that Priya reviewed is ever saved
     And the config as it will be saved follows the example config's layout
     And nothing has been saved in "ledgerd"
 
-  @skip @AC-02.5 @ADR-009
+  @AC-02.5 @ADR-009
   Scenario: Starting weights for a subfolder come from the configs above it
     Given Kenji's project "fieldnotes" has a root fitness config
     When Kenji asks for the starting weights for "fieldnotes/services/billing"
@@ -123,7 +123,7 @@ Feature: Only a valid config that Priya reviewed is ever saved
   # data-models.md section 6.3: cmd_init_path walked from the target's parent
   # with stop=cwd; when target == cwd the walk climbed past the project.
 
-  @skip @regression @ADR-009 @error
+  @regression @ADR-009 @error
   Scenario: Starting weights at the project root ignore a config outside the project
     Given a stray fitness config favouring accessibility sits in the folder above "ledgerd"
     And Priya's project "ledgerd" has no fitness config
@@ -131,14 +131,14 @@ Feature: Only a valid config that Priya reviewed is ever saved
     Then the starting weights are the built-in defaults
     And the starting point does not mention the stray config
 
-  @skip @regression @ADR-009 @error
+  @regression @ADR-009 @error
   Scenario: A default config set up at the project root ignores a config outside the project
     Given a stray fitness config favouring accessibility sits in the folder above "ledgerd"
     And Priya's project "ledgerd" has no fitness config
     When Priya sets up a default fitness config for "ledgerd"
     Then the new fitness config in "ledgerd" carries the built-in default weights
 
-  @skip @regression @ADR-009 @error
+  @regression @ADR-009 @error
   Scenario: No config is ever created for a folder outside the project
     Given Priya's project "ledgerd" has no fitness config
     And a folder "ledgerd-archive" sits next to "ledgerd"

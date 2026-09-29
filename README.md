@@ -308,7 +308,8 @@ All skills live under `skills/`. Install commands symlink each directory in `ski
 fitness-config.example.json   # Example config for custom thresholds
 fitness-config.schema.json    # JSON schema for validation
 scripts/
-  fitness-config.py           # validate, init, show (cross-platform)
+  fitness-config.py           # entry point: validate, init, show, audit (cross-platform)
+  fitness_config/             # resolver package the entry point runs; keep it beside the script
 skills/
   generate-commit/          # general-development skill (conventional commits)
     SKILL.md

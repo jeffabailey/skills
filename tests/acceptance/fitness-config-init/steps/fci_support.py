@@ -41,7 +41,7 @@ ARCHETYPES = [
 ]
 
 # Test-side expectations of the built-in defaults (the tests may know them;
-# the skill must not). Kept aligned with scripts/fitness-config.py.
+# the skill must not). Kept aligned with scripts/fitness_config/model.py.
 DEFAULT_WEIGHTS = dict(zip(DOMAINS, [14, 14, 10, 10, 10, 10, 10, 8, 8, 6]))
 DEFAULT_STATUS = {"healthy": [8, 10], "needsAttention": [5, 7], "critical": [1, 4]}
 DEFAULT_SECURITY = {"confidenceThreshold": 7}

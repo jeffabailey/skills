@@ -212,6 +212,41 @@
       "s": "EXECUTED",
       "d": "PASS",
       "t": "2026-09-29T04:24:11Z"
+    },
+    {
+      "sid": "02-03",
+      "p": "PREPARE",
+      "s": "EXECUTED",
+      "d": "PASS",
+      "t": "2026-09-29T04:25:13Z"
+    },
+    {
+      "sid": "02-03",
+      "p": "RED_ACCEPTANCE",
+      "s": "SKIPPED",
+      "d": "NOT_APPLICABLE: no new scenario; schema-parity scenario already active since 01-04 and passes locally with jsonschema (3 passed, 0 skipped); CI YAML has no failing test to drive",
+      "t": "2026-09-29T04:25:39Z"
+    },
+    {
+      "sid": "02-03",
+      "p": "RED_UNIT",
+      "s": "SKIPPED",
+      "d": "NOT_APPLICABLE: CI workflow YAML has no runtime behaviour to unit test; validator/schema parity properties already exist in tests/unit/fitness_config/test_validator.py",
+      "t": "2026-09-29T04:25:39Z"
+    },
+    {
+      "sid": "02-03",
+      "p": "GREEN",
+      "s": "EXECUTED",
+      "d": "PASS",
+      "t": "2026-09-29T04:25:59Z"
+    },
+    {
+      "sid": "02-03",
+      "p": "COMMIT",
+      "s": "EXECUTED",
+      "d": "PASS",
+      "t": "2026-09-29T04:25:59Z"
     }
   ]
 }

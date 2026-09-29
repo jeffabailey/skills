@@ -156,3 +156,84 @@ Feature: Only a valid config that Priya reviewed is ever saved
     And the validation names "usability"
     And the validation names the security cutoff
     And the validation reports its findings without crashing
+
+  # ---- Error paths: input the resolver cannot read -----------------------
+  # Never a traceback: bytes that are not UTF-8 text and JSON that sets a key
+  # twice are refused with a reason, wherever the resolver reads them.
+
+  @AC-03.3 @error
+  Scenario: A proposal that is not UTF-8 text is rejected without crashing
+    Given Priya's project "ledgerd" has no fitness config
+    When Priya checks bytes that are not UTF-8 text in place of a config for "ledgerd"
+    Then the proposal is rejected with a reason naming "UTF-8"
+    And nothing has been saved in "ledgerd"
+
+  @AC-03.3 @error
+  Scenario Outline: A proposal that sets a key twice is rejected naming the key
+    Given Priya's project "ledgerd" has no fitness config
+    When Priya checks the database-service proposal for "ledgerd" written with "<key>" set twice
+    Then the proposal is rejected with a reason naming "<key>"
+    And nothing has been saved in "ledgerd"
+
+    Examples:
+      | key     |
+      | version |
+      | testing |
+      | healthy |
+
+  @AC-03.3 @error
+  Scenario Outline: A root config the resolver cannot read stops the check and names the file
+    Given Kenji's project "fieldnotes" has a root fitness config that <damage>
+    When Kenji checks the billing proposal for "fieldnotes/services/billing"
+    Then the check is refused and names the damaged fieldnotes root config
+    And nothing has been saved in "fieldnotes"
+
+    Examples:
+      | damage               |
+      | is not UTF-8 text    |
+      | sets "version" twice |
+
+  @AC-03.1 @error
+  Scenario Outline: Validating a config file the resolver cannot read names the problem without crashing
+    Given Priya's project "ledgerd" has a fitness config file that <damage>
+    When Priya validates the fitness config file in "ledgerd"
+    Then the validation fails
+    And the validation names "<named>"
+    And the validation reports its findings without crashing
+
+    Examples:
+      | damage                           | named               |
+      | is not UTF-8 text                | UTF-8               |
+      | sets "confidenceThreshold" twice | confidenceThreshold |
+
+  # ---- Error paths: targets that are not folders -------------------------
+
+  @AC-03.3 @error
+  Scenario: A folder where the config belongs is reported, not treated as a missing config
+    Given Priya's project "ledgerd" has a folder named "fitness-config.json"
+    When Priya checks the database-service proposal for "ledgerd"
+    Then the check is refused because "fitness-config.json" in "ledgerd" is not a regular file
+    And nothing has been saved in "ledgerd"
+
+  @AC-03.3 @error
+  Scenario: A config is never saved over a folder of the same name
+    Given Priya's project "ledgerd" has a folder named "fitness-config.json"
+    When Priya saves the database-service proposal with its fingerprint for "ledgerd"
+    Then the save is refused because "fitness-config.json" in "ledgerd" is not a regular file
+    And nothing has been saved in "ledgerd"
+
+  @error
+  Scenario Outline: A target that is not a folder is refused before any proposal is looked at
+    Given Priya's project "ledgerd" has no fitness config
+    When Priya <action> for "ledgerd/<target>"
+    Then the request is refused because "<target>" <problem>
+    And nothing has been saved in "ledgerd"
+
+    Examples:
+      | action                                                      | target    | problem         |
+      | checks the database-service proposal                        | README.md | is not a folder |
+      | asks for the starting weights                               | README.md | is not a folder |
+      | saves the database-service proposal with its fingerprint    | README.md | is not a folder |
+      | sets up a default fitness config                            | README.md | is not a folder |
+      | checks the database-service proposal                        | reports   | does not exist  |
+      | saves the database-service proposal with its fingerprint    | reports   | does not exist  |

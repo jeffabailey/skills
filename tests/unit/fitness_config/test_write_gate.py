@@ -11,7 +11,7 @@ The universe is the fake project folder the injected writer controls, plus
 the gate's reported status. Every test asserts the state delta over that
 whole universe (strict: every slot not expected to change must be unchanged).
 
-Behaviors (budget 2 x 10 = 20; 10 properties here):
+Behaviors (budget 2 x 13 = 26; 13 properties here):
   G1 a reviewed proposal is created byte-for-byte as checked
   G2 a fingerprint that is not the proposal's writes nothing
   G3 an existing config is never overwritten on the create path
@@ -23,6 +23,9 @@ Behaviors (budget 2 x 10 = 20; 10 properties here):
   G9 with --force a reviewed proposal replaces a different config byte-for-byte
   G10 a proposal equal to the current config writes nothing, forced or not
   G11 a replace that does not verify restores the prior bytes
+  G12 a proposal that is not UTF-8 text is invalid, never an exception, and writes nothing
+  G13 a proposal that sets a key twice, at any depth, is invalid naming the key
+  G14 something other than a regular file at the config's path is reported, never written over
 """
 
 from __future__ import annotations
@@ -61,12 +64,13 @@ def project_folder(existing_config: bytes | None) -> dict:
 
 
 def config_file(folder: dict, write=lambda data: data, racer: bytes | None = None,
-                os_error: str | None = None):
+                os_error: str | None = None, obstruction: str | None = None):
     """Pure-function stand-in for the ConfigFile port over the fake folder.
 
     `write` decides what actually lands on disk (None = silent no-op),
     `racer` plants a concurrent config just before the create, `os_error`
-    makes the create fail the way a read-only folder does.
+    makes the create fail the way a read-only folder does, `obstruction`
+    reports something other than a regular file at the config's path.
     """
     def create(data: bytes):
         if racer is not None:
@@ -93,7 +97,7 @@ def config_file(folder: dict, write=lambda data: data, racer: bytes | None = Non
             folder[CONFIG] = prior
 
     return write_gate.ConfigFile(create=create, replace=replace, read=lambda: folder.get(CONFIG),
-                                     restore=restore)
+                                     restore=restore, obstruction=lambda: obstruction)
 
 
 def universe_snapshot(folder: dict, outcome=None) -> dict:
@@ -113,7 +117,7 @@ def is_(value):
     return state_delta.Predicate(f"== {value!r}", lambda before, after: after == value)
 
 
-def run_save(folder: dict, proposal_text: str, fingerprint: str, force: bool = False, **faults):
+def run_save(folder: dict, proposal_text: str | bytes, fingerprint: str, force: bool = False, **faults):
     before = universe_snapshot(folder)
     outcome = write_gate.save_reviewed_proposal(proposal_text, fingerprint,
                                                     config_file(folder, **faults), force=force)
@@ -233,3 +237,79 @@ def test_replace_that_does_not_verify_restores_the_prior_bytes(config, prior, in
         prior = b"{}"
     before, after, _ = run_save(project_folder(prior), text, fingerprint, force=True, write=faulty_write)
     state_delta.assert_state_delta(before, after, UNIVERSE, {"status": is_("verify-failed-rolled-back")})
+
+
+# ---------------------------------------------------------------------------
+# Input the gate cannot read, and a config path that is not a regular file.
+# Never an exception: every such input is an outcome that writes nothing.
+# ---------------------------------------------------------------------------
+
+_NOT_UTF8 = [b"\xff", b"\x80", b"\xc0\x80", b"\xed\xa0\x80", b"\xe2\x82", b"\xf8\x88\x80\x80\x80"]
+
+
+def _is_utf8(data: bytes) -> bool:
+    try:
+        data.decode("utf-8")
+    except UnicodeDecodeError:
+        return False
+    return True
+
+
+not_utf8_text = st.builds(lambda head, bad, tail: head + bad + tail,
+                          st.binary(max_size=24), st.sampled_from(_NOT_UTF8),
+                          st.binary(max_size=24)).filter(lambda data: not _is_utf8(data))
+
+
+@given(not_utf8_text, st.one_of(st.none(), st.binary(max_size=32)))
+def test_proposal_that_is_not_utf8_text_is_invalid_and_writes_nothing(proposal_bytes, current):
+    checked = write_gate.check_proposal(proposal_bytes, current=current)
+    assert checked.status == "invalid" and checked.fingerprint is None
+    assert any("UTF-8" in error for error in checked.errors), checked.errors
+    before, after, _ = run_save(project_folder(current), proposal_bytes, "0" * 12)
+    state_delta.assert_state_delta(before, after, UNIVERSE, {"status": is_("invalid")})
+
+
+def _key_paths(value: dict, prefix: tuple = ()) -> list[tuple]:
+    """Every key path in a nested JSON object, e.g. ('weights', 'testing')."""
+    paths = []
+    for key, item in value.items():
+        paths.append((*prefix, key))
+        if isinstance(item, dict):
+            paths.extend(_key_paths(item, (*prefix, key)))
+    return paths
+
+
+def _text_with_key_twice(value, path: tuple) -> str:
+    """JSON text of value with the member at `path` written twice."""
+    if not isinstance(value, dict):
+        return json.dumps(value)
+    members = []
+    for key, item in value.items():
+        below = path[1:] if path and path[0] == key and len(path) > 1 else ()
+        member = f"{json.dumps(key)}: {_text_with_key_twice(item, below)}"
+        members.extend([member, member] if path == (key,) else [member])
+    return "{" + ", ".join(members) + "}"
+
+
+@given(complete_configs(), st.data(), st.one_of(st.none(), st.binary(max_size=32)))
+def test_proposal_that_sets_a_key_twice_is_invalid_naming_the_key(config, data, current):
+    path = data.draw(st.sampled_from(_key_paths(config)), label="repeated key")
+    text = _text_with_key_twice(config, path)
+    checked = write_gate.check_proposal(text, current=current)
+    assert checked.status == "invalid" and checked.fingerprint is None
+    assert any(f'"{path[-1]}"' in error for error in checked.errors), checked.errors
+    before, after, _ = run_save(project_folder(current), text, "0" * 12)
+    state_delta.assert_state_delta(before, after, UNIVERSE, {"status": is_("invalid")})
+
+
+@given(complete_configs(), indents, st.text(min_size=1, max_size=40), st.booleans())
+def test_config_path_that_is_not_a_regular_file_is_reported_and_never_written(config, indent,
+                                                                              reason, force):
+    text, fingerprint = reviewed(config, indent)
+    checked = write_gate.check_proposal(text, current=None, obstruction=reason)
+    assert (checked.status, checked.fingerprint, checked.canonical) == ("existing-not-a-file", None, None)
+    assert reason in checked.errors
+    before, after, outcome = run_save(project_folder(None), text, fingerprint, force=force,
+                                      obstruction=reason)
+    state_delta.assert_state_delta(before, after, UNIVERSE, {"status": is_("existing-not-a-file")})
+    assert reason in outcome.errors and outcome.fingerprint is None

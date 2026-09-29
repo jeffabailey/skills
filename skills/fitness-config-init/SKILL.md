@@ -43,7 +43,8 @@ Run every resolver command from the **anchor**: the git top-level of the target 
 1. The target is the path argument, or the current folder. Print it as the first line of output: `Target: <absolute path>`.
 2. Find the anchor. If there is no git repository, say "No repository found; ancestor configs not considered."
 3. Run `init --path <target> --dry-run`. It writes nothing. Relay its header lines verbatim (`STATUS:`, `Baseline-Source:` and any chain lines) and keep the canonical JSON block as the **baseline**. The baseline is the built-in starting config at the repository root, or the merged parent configs for a subfolder.
-4. If the command fails (no `python3`, the path did not expand, the resolver errors), switch to **degraded mode**: read `${CLAUDE_SKILL_DIR}/../../fitness-config.example.json` as the baseline, label it "example file (degraded)", and continue through step 5 printing the proposal for manual use. Degraded mode never saves. If the example file is also unreachable, stop and say why.
+4. If it exits 2 saying the target is not a folder or does not exist, stop and tell the user; do not use degraded mode.
+5. If the command fails otherwise (no `python3`, the path did not expand, the resolver errors), switch to **degraded mode**: read `${CLAUDE_SKILL_DIR}/../../fitness-config.example.json` as the baseline, label it "example file (degraded)", and continue through step 5 printing the proposal for manual use. Degraded mode never saves. If the example file is also unreachable, stop and say why.
 
 ### Step 1: Evidence mode
 
@@ -99,6 +100,7 @@ Pipe the proposal JSON to `init --path <target> --from - --dry-run`. This writes
 - `STATUS: would-replace`: a config already exists. Show every diff line the resolver printed (`path old -> new`, then `(N values unchanged)`), then ask "Overwrite `<target>/fitness-config.json`? [y/N]".
 - `STATUS: existing-malformed`: the current file is not valid JSON, so there is no diff. Say so, show the proposal, and ask the same overwrite question.
 - `STATUS: unchanged`: the current config already equals the proposal. Say there is nothing to save and skip to step 7.
+- `STATUS: existing-not-a-file`: something other than a file (such as a folder) is at `<target>/fitness-config.json`. Relay the error and stop; nothing can be saved there until the user moves it.
 
 ### Step 6: Save
 

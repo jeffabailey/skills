@@ -67,12 +67,18 @@ cwd for every call = **anchor** (git top-level, or the target when there is no r
 |---|---|---|---|---|
 | `init --path T` (existing) | chain above T | T/fitness-config.json seed | unchanged | unchanged |
 | `init --path T --dry-run` | chain above T (never above the anchor) | nothing | `STATUS: baseline`, `Baseline-Source: defaults \| chain`, chain paths, canonical JSON | 0; 1 on chain error |
-| `init --path T --from - --dry-run` | stdin proposal, existing T/fitness-config.json, chain | nothing | `STATUS: would-create \| would-replace \| unchanged \| invalid \| existing-malformed`, `Proposal: <fp>`, diff lines, canonical JSON | 0 valid; 1 invalid (errors on stderr, one per line) |
-| `init --path T --from - --expect FP` | same | T/fitness-config.json only if absent (exclusive create) | `STATUS: created \| unchanged \| refused-exists \| fingerprint-mismatch \| verify-failed-rolled-back` | 0 created/unchanged; 1 otherwise |
-| `init --path T --from - --expect FP --force` | same | replaces T/fitness-config.json atomically | `STATUS: replaced \| unchanged \| fingerprint-mismatch \| verify-failed-rolled-back` | 0 replaced/unchanged; 1 otherwise |
+| `init --path T --from - --dry-run` | stdin proposal, existing T/fitness-config.json, chain | nothing | `STATUS: would-create \| would-replace \| unchanged \| invalid \| existing-malformed \| existing-not-a-file`, `Proposal: <fp>`, diff lines, canonical JSON | 0 valid; 1 invalid or existing-not-a-file (errors on stderr, one per line) |
+| `init --path T --from - --expect FP` | same | T/fitness-config.json only if absent (exclusive create) | `STATUS: created \| unchanged \| refused-exists \| fingerprint-mismatch \| existing-not-a-file \| write-failed \| verify-failed-rolled-back` | 0 created/unchanged; 1 otherwise |
+| `init --path T --from - --expect FP --force` | same | replaces T/fitness-config.json atomically | `STATUS: replaced \| unchanged \| fingerprint-mismatch \| existing-not-a-file \| write-failed \| verify-failed-rolled-back` | 0 replaced/unchanged; 1 otherwise |
 | `show --path T` (existing) | chain | nothing | unchanged (`Config:` line used verbatim) | unchanged |
 
 `--from` without `--dry-run` requires `--expect`. `--force` requires `--from`. Proposal on stdin must be a JSON object; a parse failure gives `STATUS: invalid`.
+
+Strict reading (every document the resolver reads: the stdin proposal, `validate <file>`, each chain file, the current T/fitness-config.json). The bytes must be UTF-8 text and valid JSON, and no object may set the same key twice at any depth. A proposal that fails gives `STATUS: invalid` with one reason line (`Proposal is not valid UTF-8 text`, `Proposal is not valid JSON: ...`, `Proposal sets the key "<key>" more than once`). A chain file or `validate <file>` that fails is an error naming the file (exit 1). A current file that fails gives `existing-malformed` with `Current file <reason>; cannot diff by value.` Never a traceback.
+
+Target checks (all `init --path T` forms, before stdin is read or any status is printed): T that exists but is not a folder is exit 2, `Error: target is not a folder: T`. The gate forms (`--dry-run`, `--from -`) also need T to exist: otherwise exit 2, `Error: target folder does not exist: T`. The plain seed `init --path T` still creates a missing T.
+
+`existing-not-a-file` (dry run and save): something other than a regular file (a folder, a dangling link) sits at T/fitness-config.json. The error names the path; no `Proposal:` line is printed, because no save can succeed there; exit 1; nothing is written. It is a failure status of its own, not `existing-malformed` (which is a successful dry run that `--force` can replace) and not `write-failed` (which is a save that was attempted).
 
 ### 6.1 Diff lines (dry-run with an existing file)
 
@@ -88,7 +94,7 @@ Leaf paths are dot-joined; a two-element range is one leaf. Order: canonical ord
 
 ### 6.2 Write-gate sequence (inside `--from` without `--dry-run`)
 
-1. Parse stdin and run strict validation plus completeness rules; if they fail, `invalid`.
+1. Parse stdin and run strict validation plus completeness rules; if they fail, `invalid`. Then, if something other than a regular file is at T/fitness-config.json, `existing-not-a-file`.
 2. Canonicalize and fingerprint; if ≠ `--expect`, `fingerprint-mismatch`.
 3. Chain pre-check above T: parse and version (existing functions); if it fails, the existing error message.
 4. Existing file: equal object means `unchanged` (no write, mtime kept). Present without `--force` means `refused-exists`.

@@ -9,6 +9,7 @@ import json
 from dataclasses import dataclass, replace
 from typing import Callable, Sequence
 
+from .parsing import parse_document
 from .resolution import build_effective_config, deep_merge_chain
 from .render import proposal_fingerprint, render_canonical, render_value_diff, value_diff
 from .validation import validate_effective, validate_proposal
@@ -24,6 +25,9 @@ class GateStatus:
     WOULD_REPLACE = "would-replace"
     UNCHANGED = "unchanged"
     EXISTING_MALFORMED = "existing-malformed"
+    # dry run and save: a folder (or anything but a regular file) holds the
+    # config's path, so nothing can be diffed or saved there
+    EXISTING_NOT_A_FILE = "existing-not-a-file"
     # save (save_reviewed_proposal), including what the ConfigFile port reports
     FINGERPRINT_MISMATCH = "fingerprint-mismatch"
     REFUSED_EXISTS = "refused-exists"
@@ -47,13 +51,15 @@ class ConfigFile:
     create(data): CREATED, REFUSED_EXISTS (a file is already there) or
     WRITE_FAILED. replace(data): REPLACED or WRITE_FAILED, swapping atomically.
     read(): the bytes now on disk, or None. restore(prior): put the prior
-    bytes back (None removes the file).
+    bytes back (None removes the file). obstruction(): why something other
+    than a regular file (a folder, a dangling link) holds the path, or None.
     """
 
     create: Callable[[bytes], PublishResult]
     replace: Callable[[bytes], PublishResult]
     read: Callable[[], bytes | None]
     restore: Callable[[bytes | None], None]
+    obstruction: Callable[[], str | None] = lambda: None
 
 
 @dataclass(frozen=True)
@@ -71,23 +77,24 @@ class GateOutcome:
         return self.status in GateStatus.SUCCESSFUL
 
 
-def _config_object(data: bytes) -> dict | None:
-    """The bytes as a JSON object, or None when they are not one."""
-    try:
-        parsed = json.loads(data)
-    except ValueError:
-        return None
-    return parsed if isinstance(parsed, dict) else None
+def _read_current(data: bytes) -> tuple[dict | None, str]:
+    """The current config's bytes as a JSON object, or (None, why they are not one)."""
+    parsed, unreadable = parse_document(data)
+    if unreadable is not None:
+        return None, unreadable
+    if not isinstance(parsed, dict):
+        return None, "is not a JSON object"
+    return parsed, ""
 
 
-_MALFORMED_NOTE = "Current file is not valid JSON; cannot diff by value."
+def _malformed_note(unreadable: str) -> str:
+    return f"Current file {unreadable}; cannot diff by value."
 
 
-def _prepare_proposal(proposal_text: str) -> GateOutcome:
-    try:
-        proposal = json.loads(proposal_text)
-    except ValueError as exc:
-        return GateOutcome(GateStatus.INVALID, errors=(f"Proposal is not valid JSON: {exc}",))
+def _prepare_proposal(proposal_text: bytes | str) -> GateOutcome:
+    proposal, unreadable = parse_document(proposal_text)
+    if unreadable is not None:
+        return GateOutcome(GateStatus.INVALID, errors=(f"Proposal {unreadable}",))
     errors = validate_proposal(proposal)
     if errors:
         return GateOutcome(GateStatus.INVALID, errors=tuple(errors))
@@ -95,23 +102,34 @@ def _prepare_proposal(proposal_text: str) -> GateOutcome:
     return GateOutcome(GateStatus.READY, proposal_fingerprint(canonical), canonical)
 
 
-def check_proposal(proposal_text: str, current: bytes | None) -> GateOutcome:
+def _not_a_file(obstruction: str) -> GateOutcome:
+    """No fingerprint: it would invite a save that cannot succeed."""
+    return GateOutcome(GateStatus.EXISTING_NOT_A_FILE, errors=(obstruction,))
+
+
+def check_proposal(proposal_text: bytes | str, current: bytes | None,
+                   obstruction: str | None = None) -> GateOutcome:
     """Dry run: validate, render and fingerprint the proposal, then diff it by
-    value against the current config's bytes (None: no config yet). Never writes."""
+    value against the current config's bytes (None: no config yet). Never writes.
+    An obstruction (something other than a regular file at the config's path)
+    is reported instead of a diff."""
     prepared = _prepare_proposal(proposal_text)
     if prepared.status == GateStatus.INVALID:
         return prepared
+    if obstruction is not None:
+        return _not_a_file(obstruction)
     if current is None:
         return replace(prepared, status=GateStatus.WOULD_CREATE)
-    existing = _config_object(current)
+    existing, unreadable = _read_current(current)
     if existing is None:
-        return replace(prepared, status=GateStatus.EXISTING_MALFORMED, review=(_MALFORMED_NOTE,))
+        return replace(prepared, status=GateStatus.EXISTING_MALFORMED,
+                       review=(_malformed_note(unreadable),))
     diff = value_diff(existing, json.loads(prepared.canonical))
     return replace(prepared, status=GateStatus.WOULD_REPLACE if diff.changes else GateStatus.UNCHANGED,
                    review=render_value_diff(diff))
 
 
-def save_reviewed_proposal(proposal_text: str, expected_fingerprint: str,
+def save_reviewed_proposal(proposal_text: bytes | str, expected_fingerprint: str,
                            config_file: ConfigFile, configs_above: Sequence[dict] = (),
                            force: bool = False) -> GateOutcome:
     """The write gate (data-models 6.2): save the canonical bytes only for the
@@ -121,10 +139,13 @@ def save_reviewed_proposal(proposal_text: str, expected_fingerprint: str,
     prepared = _prepare_proposal(proposal_text)
     if prepared.status == GateStatus.INVALID:
         return prepared
+    obstruction = config_file.obstruction()
+    if obstruction is not None:
+        return _not_a_file(obstruction)
     if prepared.fingerprint != expected_fingerprint:
         return replace(prepared, status=GateStatus.FINGERPRINT_MISMATCH)
     prior = config_file.read()
-    if prior is not None and _config_object(prior) == json.loads(prepared.canonical):
+    if prior is not None and _read_current(prior)[0] == json.loads(prepared.canonical):
         return replace(prepared, status=GateStatus.UNCHANGED)
     if prior is not None and not force:
         return replace(prepared, status=GateStatus.REFUSED_EXISTS)

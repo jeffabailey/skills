@@ -148,13 +148,22 @@ class ResolverRun:
                 f"--- stdout ---\n{self.stdout}--- stderr ---\n{self.stderr}")
 
 
-def run_resolver(cwd: Path, *args: str, stdin_text: str | None = None) -> ResolverRun:
+def run_resolver(cwd: Path, *args: str, stdin_text: str | bytes | None = None) -> ResolverRun:
+    """Run the resolver; bytes on stdin are passed through raw (e.g. not UTF-8)."""
     env = {
         "PATH": os.environ.get("PATH", ""),
         "HOME": os.environ.get("HOME", ""),
         "LANG": os.environ.get("LANG", "C.UTF-8"),
         "PYTHONIOENCODING": "utf-8",
     }
+    if isinstance(stdin_text, bytes):
+        done = subprocess.run(
+            [sys.executable, str(RESOLVER), *args],
+            cwd=str(cwd), env=env, input=stdin_text, capture_output=True, timeout=30,
+        )
+        return ResolverRun(list(args), done.returncode,
+                           done.stdout.decode("utf-8", errors="replace"),
+                           done.stderr.decode("utf-8", errors="replace"))
     done = subprocess.run(
         [sys.executable, str(RESOLVER), *args],
         cwd=str(cwd), env=env, input=stdin_text,
@@ -290,8 +299,41 @@ class Workspace:
         return run_resolver(anchor, *args, stdin_text=stdin_text)
 
 
-def to_stdin(config: dict | str) -> str:
-    return config if isinstance(config, str) else json.dumps(config)
+def to_stdin(config: dict | str | bytes) -> str | bytes:
+    return config if isinstance(config, (str, bytes)) else json.dumps(config)
+
+
+# Bytes that are not UTF-8 text: a config saved in Latin-1 with an accented note.
+NOT_UTF8_CONFIG = b'{"$comment": "r\xe9vis\xe9 en juin", "version": 1}\n'
+
+
+def json_with_key_twice(value, key: str) -> str:
+    """JSON text of value in which the first object holding `key` (depth-first,
+    at any depth) sets it twice. Stdlib json cannot emit this, so serialize by hand."""
+    text, found = _dump_with_key_twice(value, key)
+    assert found, f"no key {key!r} to repeat"
+    return text
+
+
+def _dump_with_key_twice(value, key: str, found: bool = False) -> tuple[str, bool]:
+    if isinstance(value, dict):
+        members = []
+        for name, item in value.items():
+            item_text, found_below = _dump_with_key_twice(item, key, found)
+            member = f"{json.dumps(name)}: {item_text}"
+            members.append(member)
+            if name == key and not found:
+                members.append(member)
+                found_below = True
+            found = found_below
+        return "{" + ", ".join(members) + "}", found
+    if isinstance(value, list):
+        parts = []
+        for item in value:
+            item_text, found = _dump_with_key_twice(item, key, found)
+            parts.append(item_text)
+        return "[" + ", ".join(parts) + "]", found
+    return json.dumps(value), found
 
 
 # ---------------------------------------------------------------------------

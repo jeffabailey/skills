@@ -224,7 +224,7 @@ def _print_gate_outcome(outcome: GateOutcome, show_canonical: bool) -> int:
     return EXIT_OK if outcome.succeeded else EXIT_FAILED
 
 
-def cmd_init_from(target: Path, base: Path, proposal_text: str,
+def cmd_init_from(target: Path, base: Path, proposal_text: bytes,
                   dry_run: bool, expected_fingerprint: str | None, force: bool = False) -> int:
     """`init --path T --from - (--dry-run | --expect FP [--force])`: the write gate."""
     _, configs_above, failure = _read_anchored_configs(target, base)
@@ -232,8 +232,8 @@ def cmd_init_from(target: Path, base: Path, proposal_text: str,
         return _report_failure(failure)
     config_file = config_file_at(target / CONFIG_FILENAME)
     if dry_run:
-        return _print_gate_outcome(check_proposal(proposal_text, config_file.read()),
-                                   show_canonical=True)
+        outcome = check_proposal(proposal_text, config_file.read(), config_file.obstruction())
+        return _print_gate_outcome(outcome, show_canonical=True)
     outcome = save_reviewed_proposal(proposal_text, expected_fingerprint, config_file,
                                      configs_above, force)
     return _print_gate_outcome(outcome, show_canonical=False)
@@ -310,17 +310,41 @@ def _build_parser() -> argparse.ArgumentParser:
     return parser
 
 
+def _init_target_error(target: Path, base: Path, must_exist: bool) -> str | None:
+    """`init --path T` writes into the folder T: a file there is never a target;
+    the gate forms (--dry-run, --from) also need T to exist already (the plain
+    seed creates it)."""
+    folder = target if target.is_absolute() else base / target
+    if folder.exists() and not folder.is_dir():
+        return (f"Error: target is not a folder: {target}\n"
+                f"  Fix: pass the folder the config belongs in, e.g. --path {target.parent}")
+    if must_exist and not folder.exists():
+        return (f"Error: target folder does not exist: {target}\n"
+                f"  Fix: create the folder first, or pass an existing one.")
+    return None
+
+
+def _run_init_with_target(args, target: Path, base: Path) -> int:
+    gate_form = args.dry_run or args.proposal_source is not None
+    target_error = _init_target_error(target, base, must_exist=gate_form)
+    if target_error is not None:
+        print(target_error, file=sys.stderr)
+        return EXIT_USAGE
+    if args.proposal_source is not None:
+        return cmd_init_from(target, base, sys.stdin.buffer.read(), args.dry_run,
+                             args.expect, args.force)
+    if args.dry_run:
+        return cmd_init_baseline(target, base)
+    return cmd_init_path(target, base)
+
+
 def _run_with_target(args) -> int:
     target, base = Path(args.resolve_path), Path.cwd()
     if args.command == "show":
         return cmd_show_path(target, base)
     if args.command == "validate":
         return cmd_validate_path(target, base)
-    if args.proposal_source is not None:
-        return cmd_init_from(target, base, sys.stdin.read(), args.dry_run, args.expect, args.force)
-    if args.dry_run:
-        return cmd_init_baseline(target, base)
-    return cmd_init_path(target, base)
+    return _run_init_with_target(args, target, base)
 
 
 _LEGACY_COMMANDS = {"validate": cmd_validate, "init": cmd_init, "show": cmd_show}

@@ -9,6 +9,7 @@ pytest-bdd step fixtures in this module).
 from __future__ import annotations
 
 import json
+import re
 
 from pytest_bdd import given, parsers, scenarios, then, when
 
@@ -18,7 +19,10 @@ from fci_support import (  # noqa: E402
     DEFAULT_WEIGHTS,
     FIELDNOTES_ROOT,
     JUNE_LEDGERD,
+    NOT_UTF8_CONFIG,
     fingerprint_of,
+    json_with_key_twice,
+    parse_gate_report,
     proposal,
     require_status,
     run_resolver,
@@ -199,6 +203,99 @@ def check_refused_names_root(workspace, context):
     assert report.run.exit_code != 0, report.run.describe()
     assert report.status not in {"would-create", "would-replace", "unchanged"}, report.run.describe()
     assert "fieldnotes/fitness-config.json" in report.run.output, report.run.describe()
+
+
+# ---------------------------------------------------------------------------
+# Input the resolver cannot read: not UTF-8 text, or a key set twice
+# ---------------------------------------------------------------------------
+
+def _damaged_config_bytes(config: dict, damage: str) -> bytes:
+    if damage == "is not UTF-8 text":
+        return NOT_UTF8_CONFIG
+    repeated = re.fullmatch(r'sets "(\w+)" twice', damage)
+    if repeated is None:
+        raise AssertionError(f"unknown damage in feature file: {damage!r}")
+    return json_with_key_twice(config, repeated.group(1)).encode("utf-8")
+
+
+@when(parsers.parse("{person} checks bytes that are not UTF-8 text in place of a config for \"{target}\""))
+def checks_non_utf8(workspace, context, person, target):
+    check_proposal(workspace, context, target, NOT_UTF8_CONFIG)
+
+
+@when(parsers.parse(
+    "{person} checks the {name} proposal for \"{target}\" written with \"{key}\" set twice"))
+def checks_key_twice(workspace, context, person, name, target, key):
+    check_proposal(workspace, context, target, json_with_key_twice(proposal(name), key))
+
+
+@given(parsers.parse("{person}'s project \"{project}\" has a root fitness config that {damage}"))
+def project_with_unreadable_root(workspace, context, person, project, damage):
+    anchor = workspace.create_project(project)
+    (anchor / CONFIG).write_bytes(_damaged_config_bytes(FIELDNOTES_ROOT, damage))
+    _mark_initial(workspace, context)
+
+
+@given(parsers.parse("{person}'s project \"{project}\" has a fitness config file that {damage}"))
+def project_with_unreadable_config(workspace, context, person, project, damage):
+    anchor = workspace.create_project(project)
+    (anchor / CONFIG).write_bytes(_damaged_config_bytes(proposal("database-service"), damage))
+    _mark_initial(workspace, context)
+
+
+# ---------------------------------------------------------------------------
+# Targets that are not folders, and a folder where the config belongs
+# ---------------------------------------------------------------------------
+
+@given(parsers.parse("{person}'s project \"{project}\" has a folder named \"{name}\""))
+def project_with_folder_named(workspace, context, person, project, name):
+    anchor = workspace.create_project(project)
+    workspace.write_raw(anchor / name / "notes.txt", "kept here by hand\n")
+    _mark_initial(workspace, context)
+
+
+def _reviewable_fingerprint(workspace, config: dict) -> str:
+    """The fingerprint a check shows for config, taken in a scratch folder
+    outside the workspace so the project under test is never touched."""
+    scratch = workspace.root.parent / "fingerprint-scratch"
+    scratch.mkdir(exist_ok=True)
+    report = parse_gate_report(run_resolver(scratch, "init", "--path", ".", "--from", "-", "--dry-run",
+                                            stdin_text=json.dumps(config)))
+    require_status(report, "would-create")
+    return report.fingerprint
+
+
+@when(parsers.parse("{person} saves the {name} proposal with its fingerprint for \"{target}\""))
+def saves_with_fingerprint(workspace, context, person, name, target):
+    cfg = proposal(name)
+    save_proposal(workspace, context, target, cfg, _reviewable_fingerprint(workspace, cfg))
+
+
+@then(parsers.parse(
+    "the {action} is refused because \"{name}\" in \"{project}\" is not a regular file"))
+def refused_not_regular_file(context, action, name, project):
+    report = context["save" if action == "save" else "report"]
+    require_status(report, "existing-not-a-file")
+    assert report.run.exit_code == 1, report.run.describe()
+    assert f"{project}/{name}" in report.run.stderr, report.run.describe()
+    assert "not a regular file" in report.run.stderr, report.run.describe()
+    assert report.fingerprint is None, "a fingerprint invites a save that cannot succeed"
+
+
+def _last_run(context):
+    for key in ("save", "report", "starting"):
+        if key in context:
+            return context[key].run
+    return context["setup"]
+
+
+@then(parsers.parse("the request is refused because \"{target}\" {problem}"))
+def request_refused_target(context, target, problem):
+    run = _last_run(context)
+    assert run.exit_code == 2, run.describe()
+    assert "STATUS:" not in run.stdout, run.describe()
+    assert "Traceback" not in run.stderr, run.describe()
+    assert target in run.stderr and problem in run.stderr, run.describe()
 
 
 @given(parsers.parse("the folder \"{project}\" cannot be written to"))

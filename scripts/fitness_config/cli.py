@@ -7,7 +7,7 @@ import json
 import sys
 from pathlib import Path
 
-from .adapters import config_file_at, load, read_anchored_chain, read_chain_configs
+from .adapters import config_file_at, load_legacy_config, read_anchored_chain, read_chain_configs
 from .audit import cmd_audit
 from .resolution import (WALK_UP_DEPTH_CAP, build_effective_config, build_seed_config,
                     deep_merge_chain, merge_defaults, walk_up_chain_with_status)
@@ -15,32 +15,23 @@ from .model import (CONFIG_FILENAME, DEFAULT_SCORING, DEFAULT_SECURITY, DEFAULT_
                     DEFAULT_WEIGHTS)
 from .render import render_canonical, render_show_output
 from .validation import validate_config, validate_effective, validate_schema_versions
-from .write_gate import GateOutcome, check_proposal, save_new_proposal
+from .write_gate import GateOutcome, check_proposal, save_reviewed_proposal
 
-def _print_validation_errors(errors: list[str]) -> None:
-    """Adapter: print each error line on its own to stderr.
 
-    Centralises the multi-line ValidationResult.errors -> stderr boundary
-    so command verbs read as a flat pipeline of validation gates.
-    """
+def _print_errors(errors: list[str]) -> None:
     for line in errors:
         print(line, file=sys.stderr)
 
-def cmd_validate(path: Path) -> int:
-    """Validate config file.
 
-    On failure, names the offending file in the error message so downstream
-    consumers (CI, milestone-5 backward-compat) can identify the source. The
-    successful "Valid: <path>" line is preserved verbatim from the legacy
-    behavior to keep bare invocations byte-identical (NFR-3).
-    """
-    data = load(path)
+def cmd_validate(path: Path) -> int:
+    """Legacy `validate [path]`: strict per-file rules; errors name the file (NFR-3)."""
+    data = load_legacy_config(path)
     if data is None:
         print(f"Error: {path} not found or invalid JSON", file=sys.stderr)
         return 1
     violations = validate_config(data)
     if violations:
-        _print_validation_errors([f"Error: {line}" for line in violations])
+        _print_errors([f"Error: {line}" for line in violations])
         print(f"Error: invalid config: {path}", file=sys.stderr)
         return 1
     print("Valid:", path)
@@ -48,7 +39,7 @@ def cmd_validate(path: Path) -> int:
 
 
 def cmd_init(path: Path) -> int:
-    """Create default config."""
+    """Legacy `init [path]`: write the built-in defaults; never overwrite."""
     if path.exists():
         print(f"Error: {path} already exists", file=sys.stderr)
         return 1
@@ -67,18 +58,8 @@ def cmd_init(path: Path) -> int:
 
 
 def cmd_init_path(target: Path, base: Path) -> int:
-    """Seed a per-directory override at <target>/fitness-config.json.
-
-    Resolution rule: walk up from <target>'s PARENT (so we don't read the
-    file we're about to create) to <base>, collect any fitness-config.json
-    files into a chain (nearest-first), and seed the new override from the
-    deep-merged effective config. When no ancestor config is found, fall
-    back to documented DEFAULT_WEIGHTS and note that on stdout so Devin
-    knows the seed source.
-
-    Refuses to overwrite an existing file (exit 1, names the file). The
-    file-write boundary stays here; the seed builder above is pure.
-    """
+    """`init --path T`: seed T/fitness-config.json from the anchored chain's
+    effective config (or the defaults, said on stdout); never overwrite."""
     out_path = target / CONFIG_FILENAME
 
     if out_path.exists():
@@ -112,7 +93,7 @@ def _print_gate_outcome(outcome: GateOutcome, show_canonical: bool) -> int:
     print(f"STATUS: {outcome.status}")
     if outcome.fingerprint:
         print(f"Proposal: {outcome.fingerprint}")
-    _print_validation_errors(list(outcome.errors))
+    _print_errors(list(outcome.errors))
     for line in outcome.review:
         print(line)
     if show_canonical and outcome.canonical:
@@ -130,9 +111,9 @@ def cmd_init_from(target: Path, base: Path, proposal_text: str,
     config_file = config_file_at(target / CONFIG_FILENAME)
     if dry_run:
         current = config_file.read()
-        return _print_gate_outcome(check_proposal(proposal_text, current is not None, current), True)
-    outcome = save_new_proposal(proposal_text, expected_fingerprint, config_file,
-                                configs_above, force)
+        return _print_gate_outcome(check_proposal(proposal_text, current), True)
+    outcome = save_reviewed_proposal(proposal_text, expected_fingerprint, config_file,
+                                     configs_above, force)
     return _print_gate_outcome(outcome, False)
 
 
@@ -173,26 +154,16 @@ def _gate_usage_error(args) -> str | None:
 
 
 def cmd_show(path: Path) -> int:
-    """Print effective config (legacy single-file mode)."""
-    data = load(path) or {}
+    """Legacy `show [path]`: one file over the defaults, as JSON."""
+    data = load_legacy_config(path) or {}
     effective = merge_defaults(data)
     print(json.dumps(effective, indent=2))
     return 0
 
 
 def _check_target_exists(target: Path, base: Path) -> str | None:
-    """Return an actionable error message iff the target path is missing.
-
-    Adapter-level guard: walk-up resolution requires a real anchor for the
-    chain. Missing-path is a hard error per ADR-006 (fail-closed): silent
-    fallback to defaults would let downstream consumers receive an effective
-    config from the wrong scope.
-
-    A path is considered "missing" iff neither the path itself NOR its
-    immediate parent directory exists under base. This preserves the prior
-    contract for `show --path` invocations that name a file inside a real
-    directory (the file may not exist yet, but the anchor directory does).
-    """
+    """ADR-006 fail-closed: an error when neither the target nor its parent exists
+    (a not-yet-created file inside a real folder is fine)."""
     candidate = (base / target) if not target.is_absolute() else target
     if candidate.exists():
         return None
@@ -206,14 +177,7 @@ def _check_target_exists(target: Path, base: Path) -> str | None:
 
 
 def _depth_cap_error_message(target: Path) -> str:
-    """Build the pathological-tree depth-cap error message.
-
-    The 64-level safety cap fires only when an ancestor walk traverses more
-    than WALK_UP_DEPTH_CAP directories without reaching the stop boundary.
-    That signals a pathological tree (no .git, no repo root, no fitness-config
-    anywhere on the way up). Surfacing this as a hard error lets the CLI
-    fail-closed instead of silently truncating.
-    """
+    """ADR-006: a walk that hit WALK_UP_DEPTH_CAP is a pathological tree, not a short chain."""
     return (
         f"Error: pathological-tree depth limit (>{WALK_UP_DEPTH_CAP} levels) "
         f"reached while resolving config from {target}.\n"
@@ -223,17 +187,9 @@ def _depth_cap_error_message(target: Path) -> str:
 
 
 def cmd_show_path(target: Path, base: Path) -> int:
-    """Resolve walk-up chain from target, deep-merge, render to stdout.
-
-    Fail-closed: every IO/parse/depth-cap/version-mismatch error short-
-    circuits BEFORE rendering so downstream consumers cannot read the JSON
-    sentinel block from a partial chain.
-
-    Note: `show` deliberately does NOT reject non-existent target paths —
-    legacy preview behavior (milestone-5 backward-compat) renders the root
-    chain when the target is a hypothetical/future path. `validate` is the
-    fail-closed gate; `show` is a preview tool.
-    """
+    """`show --path T`: render T's effective config. Fails closed before rendering,
+    so no JSON block is printed from a partial chain. A target that does not
+    exist yet is allowed: show is a preview; validate is the gate."""
     walk = walk_up_chain_with_status(target, stop=base)
     if walk.depth_capped:
         print(_depth_cap_error_message(target), file=sys.stderr)
@@ -247,7 +203,7 @@ def cmd_show_path(target: Path, base: Path) -> int:
 
     version_check = validate_schema_versions(raw_configs, source_chain=chain)
     if not version_check.ok:
-        _print_validation_errors(version_check.errors)
+        _print_errors(version_check.errors)
         return 1
 
     merged = deep_merge_chain(raw_configs)
@@ -258,20 +214,8 @@ def cmd_show_path(target: Path, base: Path) -> int:
 
 
 def cmd_validate_path(target: Path, base: Path) -> int:
-    """Resolve walk-up chain from target, deep-merge, validate effective config.
-
-    On success: prints a confirmation that the merged config is valid.
-    On failure: prints actionable error(s) to stderr and exits non-zero.
-    Critical: on failure, the JSON sentinel block MUST NOT appear on stdout
-    so downstream review skills cannot consume an invalid config.
-
-    Fail-closed order (each step short-circuits before the next):
-      1. Target path must exist
-      2. Walk-up must complete within the depth cap
-      3. Every chain file must parse as JSON
-      4. Every chain file must declare the supported schema version
-      5. The effective merged config must satisfy domain invariants
-    """
+    """`validate --path T`: fail closed, in order, on a missing target, the depth
+    cap, malformed JSON, a schema version mismatch, then invalid effective weights."""
     missing = _check_target_exists(target, base)
     if missing is not None:
         print(missing, file=sys.stderr)
@@ -290,7 +234,7 @@ def cmd_validate_path(target: Path, base: Path) -> int:
 
     version_check = validate_schema_versions(raw_configs, source_chain=chain)
     if not version_check.ok:
-        _print_validation_errors(version_check.errors)
+        _print_errors(version_check.errors)
         return 1
 
     merged = deep_merge_chain(raw_configs)
@@ -304,8 +248,9 @@ def cmd_validate_path(target: Path, base: Path) -> int:
             print("Valid: built-in defaults (no fitness-config.json found)")
         return 0
 
-    _print_validation_errors(result.errors)
+    _print_errors(result.errors)
     return 1
+
 
 def _build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(

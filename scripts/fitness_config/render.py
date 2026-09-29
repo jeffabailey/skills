@@ -1,4 +1,4 @@
-"""Rendering: show output, canonical bytes, fingerprint, value diff. Pure."""
+"""Rendering: the show report, canonical config bytes, fingerprint and value diff. Pure."""
 
 from __future__ import annotations
 
@@ -8,9 +8,11 @@ import re
 from dataclasses import dataclass
 from pathlib import Path
 
-from .model import SECTION_DEFAULTS
+from .model import SECTION_DEFAULTS, SUPPORTED_SCHEMA_VERSION, WEIGHTS_SUM_TOLERANCE
 
+# json.dumps(indent=2) spreads a [lo, hi] pair over four lines; canonical bytes keep it inline.
 _INLINE_PAIR = re.compile(r"\[\s+([^\[\]\s,]+),\s+([^\[\]\s,]+)\s+\]")
+
 
 def _format_chain_path(path: Path, base: Path | None) -> str:
     """Render a chain entry relative to base when possible, else absolute."""
@@ -28,22 +30,11 @@ def render_show_output(
     effective: dict,
     base: Path | None = None,
 ) -> str:
-    """Render the human-readable + JSON-sentinel output for `show --path`.
+    """The `show --path` report: config sources, weights table, inline weights,
+    then the effective config as JSON between BEGIN/END sentinels.
 
-    Inputs:
-      target: the path the user passed via `show --path`.
-      source_chain: ordered list of contributing fitness-config.json paths
-        (nearest-first); empty when no configs were found.
-      effective: dict from build_effective_config — fully-populated config.
-      base: optional directory used to render chain entries as relative paths;
-        falls back to absolute when relativisation fails.
-    Output: a single string ending in '\\n', suitable for direct stdout write.
-    Side effects: none. Pure — does not print, does not touch the filesystem.
-    Invariants:
-      - Domains are sorted descending by value, alphabetical for ties (AC-03.6).
-      - The BEGIN/END_EFFECTIVE_CONFIG_JSON sentinel block is always emitted
-        as valid JSON parseable by downstream consumers.
-      - Same inputs produce byte-identical output (AC-NFR-2).
+    Chain entries print relative to `base` when possible. Weights sort by value
+    descending, ties alphabetical (AC-03.6); same inputs, same bytes (AC-NFR-2).
     """
     weights = effective.get("weights", {})
     chain_strs = [_format_chain_path(p, base) for p in source_chain]
@@ -77,7 +68,7 @@ def render_show_output(
     # then alphabetical, plus an inline single-line listing all 10 domains.
     ordered = sorted(weights.items(), key=lambda kv: (-kv[1], kv[0]))
     total = sum(weights.values())
-    status = "OK" if abs(total - 100) <= 0.01 else "ERROR"
+    status = "OK" if abs(total - 100) <= WEIGHTS_SUM_TOLERANCE else "ERROR"
 
     lines.append("  effective weights (merged):")
     for domain, value in ordered:
@@ -94,7 +85,7 @@ def render_show_output(
 
     # Embedded JSON sentinel block.
     payload = {
-        "version": effective.get("version", 1),
+        "version": effective.get("version", SUPPORTED_SCHEMA_VERSION),
         "source_chain": chain_strs,
         "effective": effective,
     }
@@ -103,6 +94,7 @@ def render_show_output(
     lines.append("<!-- END_EFFECTIVE_CONFIG_JSON -->")
 
     return "\n".join(lines) + "\n"
+
 
 def render_canonical(config: dict) -> str:
     """Canonical bytes (data-models section 2): known keys in DEFAULT_* order,
@@ -116,6 +108,7 @@ def render_canonical(config: dict) -> str:
 def proposal_fingerprint(canonical: str) -> str:
     """First 12 hex characters of SHA-256 over the canonical bytes."""
     return hashlib.sha256(canonical.encode("utf-8")).hexdigest()[:12]
+
 
 class _Missing:
     def __repr__(self) -> str:

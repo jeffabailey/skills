@@ -238,11 +238,11 @@ def test_save_under_a_root_config_keeps_it_only_when_the_merged_config_is_valid(
         override, root, indent, leaked_weight):
     root_above = {**root, "weights": {**root["weights"], "legacyDomain": leaked_weight}}
     text = formatted(override, indent)
-    checked = write_gate.check_proposal(text, config_exists=False)
+    checked = write_gate.check_proposal(text, current=None)
     folder = project_folder(None)
     before = universe_snapshot(folder)
-    outcome = write_gate.save_new_proposal(text, checked.fingerprint, config_file(folder),
-                                               configs_above=[root_above])
+    outcome = write_gate.save_reviewed_proposal(text, checked.fingerprint, config_file(folder),
+                                                    configs_above=[root_above])
     after = universe_snapshot(folder, outcome)
     merged_is_valid = leaked_weight == 0
     state_delta.assert_state_delta(before, after, UNIVERSE, {

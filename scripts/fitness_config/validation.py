@@ -1,4 +1,11 @@
-"""Validation rules: schema versions, effective sum, per-file strict rules, completeness. Pure."""
+"""Validation rules. Pure: every function returns error lines as data and never raises.
+
+Two families:
+  - chain rules (ADR-003, ADR-006): schema versions across a chain, and the
+    effective (merged) weights summing to 100;
+  - file rules (ADR-008): strict per-file checks, plus completeness for a
+    proposal headed for a write. Partial override files stay valid on their own.
+"""
 
 from __future__ import annotations
 
@@ -9,63 +16,39 @@ from typing import Callable
 from .model import (DEFAULT_WEIGHTS, SECTION_DEFAULTS, SUPPORTED_SCHEMA_VERSION,
                     WEIGHTS_SUM_TOLERANCE)
 
+_RANGE_SECTIONS = ("statusThresholds", "scoring")
+
+
 @dataclass(frozen=True)
 class ValidationResult:
-    """Immutable algebraic result of validating an effective config.
-
-    ok=True means the config passes all invariants.
-    errors holds zero or more actionable messages naming files when possible.
-
-    Pure data — no methods with side effects.
-    """
+    """ok, plus actionable error lines that name the chain files when there are any."""
 
     ok: bool
     errors: list[str] = field(default_factory=list)
 
 
 def _sum_weights(weights: dict) -> float:
-    """Sum numeric weight values, ignoring non-numeric noise. Pure."""
+    """Sum the numeric weight values, ignoring anything else."""
     return sum(v for v in weights.values() if isinstance(v, (int, float)))
 
 
-def _nearest_chain_label(source_chain: list[Path]) -> str | None:
-    """Return a human-readable label for the deepest (override) entry.
-
-    Pure: takes already-resolved paths and returns a string. The deepest entry
-    is the one most likely responsible for an override that pushed the
-    effective sum off 100, so naming it gives Devin a single place to look.
-    """
-    if not source_chain:
-        return None
-    nearest = source_chain[0]
-    return str(nearest)
-
-
 def _format_chain_for_error(source_chain: list[Path]) -> str:
-    """Render every file in the chain as a bulleted list.
-
-    Pure: takes already-resolved paths and returns a string. Naming every
-    chain entry — not just the nearest — lets Devin locate the offending
-    file even when responsibility lies upstream of the deepest override
-    (fail-closed contract, Step 03-01).
-    """
+    """Every chain file as a bulleted list, so the offending one can be found upstream too."""
     return "\n".join(f"  - {entry}" for entry in source_chain)
 
+
+# ---------------------------------------------------------------------------
+# Chain rules
+# ---------------------------------------------------------------------------
 
 def validate_schema_versions(
     raw_configs: list[dict],
     source_chain: list[Path],
 ) -> ValidationResult:
-    """Validate that every chain config declares the supported schema version.
+    """ADR-003: every chain config must declare the supported version (missing = 1).
 
-    Pure function: no filesystem, no mutation of inputs.
-
-    Per ADR-003, schema-version mismatch is a HARD ERROR. Configs missing
-    a `version` key are treated as version 1 (the documented default). On
-    mismatch, the returned ValidationResult.errors names every chain file
-    paired with its declared version, states the supported version, and
-    offers two concrete fixes (upgrade the older config, or pin the newer
-    config to the supported version).
+    On a mismatch the errors list each chain file with its declared version
+    and offer two concrete fixes.
     """
     if not raw_configs:
         return ValidationResult(ok=True, errors=[])
@@ -86,7 +69,6 @@ def validate_schema_versions(
     if not mismatched:
         return ValidationResult(ok=True, errors=[])
 
-    # Build chain-naming message: every file with its declared version.
     chain_lines = [
         f"  - {entry} declares version {version}"
         for entry, version in declared
@@ -96,7 +78,6 @@ def validate_schema_versions(
         f"(supported schema version is {SUPPORTED_SCHEMA_VERSION}):",
         *chain_lines,
     ]
-    # Two concrete fixes per ADR-003 / fail-closed contract.
     has_newer = any(v > SUPPORTED_SCHEMA_VERSION for _, v in declared)
     has_older = any(v < SUPPORTED_SCHEMA_VERSION for _, v in declared)
     if has_older and not has_newer:
@@ -118,22 +99,11 @@ def validate_schema_versions(
 
 
 def validate_effective(effective: dict, source_chain: list[Path]) -> ValidationResult:
-    """Validate an EFFECTIVE merged config against domain invariants.
+    """ADR-002 / ADR-006: the effective weights must sum to 100.
 
-    Pure function: no filesystem, no globals, no mutation of inputs.
-
-    Invariants enforced:
-      - Effective weights sum to 100 (±WEIGHTS_SUM_TOLERANCE).
-
-    On violation, the returned ValidationResult.errors lists actionable
-    messages naming EVERY file in the source chain (not just the deepest)
-    and offers two fixes (adjust the override weights, or use a full
-    replacement of all 10). Naming the whole chain is a fail-closed
-    requirement: Devin must be able to locate the offending file even when
-    responsibility lies upstream of the deepest override.
-
-    Per ADR-002 / ADR-006, this is the single validator that downstream
-    review skills consult before initiating a review.
+    On a violation the errors name the nearest file, then every chain file
+    (responsibility may lie upstream), then two fixes. This is the validator
+    review skills consult before a review.
     """
     weights = effective.get("weights") or {}
     total = _sum_weights(weights)
@@ -141,13 +111,10 @@ def validate_effective(effective: dict, source_chain: list[Path]) -> ValidationR
     if abs(total - 100) <= WEIGHTS_SUM_TOLERANCE:
         return ValidationResult(ok=True, errors=[])
 
-    # Sum violation — build an actionable error message that names every
-    # entry in the chain so Devin can find the offending file.
     errors: list[str] = []
-    nearest = _nearest_chain_label(source_chain)
-    if nearest:
+    if source_chain:
         errors.append(
-            f"Effective weights from {nearest} sum to {total:g}; must sum to 100."
+            f"Effective weights from {source_chain[0]} sum to {total:g}; must sum to 100."
         )
     else:
         errors.append(
@@ -162,7 +129,10 @@ def validate_effective(effective: dict, source_chain: list[Path]) -> ValidationR
     )
     return ValidationResult(ok=False, errors=errors)
 
-_RANGE_SECTIONS = ("statusThresholds", "scoring")
+
+# ---------------------------------------------------------------------------
+# File rules (ADR-008)
+# ---------------------------------------------------------------------------
 
 def _is_number(value) -> bool:
     return isinstance(value, (int, float)) and not isinstance(value, bool)
@@ -224,9 +194,8 @@ _SECTION_RULES: dict[str, Callable[[dict], list[str]]] = {
 def validate_config(config) -> list[str]:
     """Strict per-file rules (ADR-008 Decision 1), mirroring the schema.
 
-    Pure. Returns every violation as a message line (empty = valid); never
-    raises. Partial override files stay valid: only the sections and weight
-    domains present are checked, and the sum only when all domains are listed.
+    Only the sections and weight domains present are checked, and the sum only
+    when every domain is listed. Empty list = valid.
     """
     if not isinstance(config, dict):
         return ["A fitness config must be a JSON object"]
@@ -279,11 +248,10 @@ def _completeness_violations(proposal: dict) -> list[str]:
 
 
 def validate_proposal(proposal) -> list[str]:
-    """Strict validation plus completeness for a proposal headed for a write.
+    """Strict rules plus completeness, for a proposal headed for a write.
 
     Complete = version 1, all four sections with exactly their known keys,
-    all 10 domains as whole numbers adding up to 100. Returns error lines
-    (empty when the proposal may be written).
+    all ten domains as whole numbers adding up to 100.
     """
     violations = validate_config(proposal)
     if not isinstance(proposal, dict):

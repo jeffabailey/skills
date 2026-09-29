@@ -1,4 +1,4 @@
-"""Filesystem adapters: config reads and the ConfigFile port over a real file."""
+"""Filesystem adapters: config reads, and the ConfigFile port over a real file."""
 
 from __future__ import annotations
 
@@ -12,15 +12,10 @@ from typing import Callable
 from .resolution import anchored_chain
 from .write_gate import ConfigFile
 
-def load(path: Path) -> dict | None:
-    """Load config from path for legacy CLI verbs (cmd_validate, cmd_show).
 
-    Returns None if the file is missing OR malformed; on a JSON parse error it
-    prints a one-line "Invalid JSON: ..." message to stderr. This swallow-and-
-    log contract is preserved verbatim from the pre-refactor CLI to keep bare
-    invocations byte-identical (NFR-3). New path-based verbs use read_config,
-    which RAISES JSONDecodeError so the caller can name the offending file.
-    """
+def load_legacy_config(path: Path) -> dict | None:
+    """The legacy verbs' read (`validate [path]`, `show [path]`): None when the file
+    is missing or malformed, printing "Invalid JSON: ..." for the latter (NFR-3)."""
     if not path.exists():
         return None
     try:
@@ -31,10 +26,7 @@ def load(path: Path) -> dict | None:
 
 
 def read_config(path: Path) -> dict | None:
-    """Adapter: read+parse a fitness-config.json. Returns None for missing
-    files and raises json.JSONDecodeError for malformed JSON so callers can
-    surface the offending path in their error message.
-    """
+    """Parse one config file: None when missing; raises JSONDecodeError when malformed."""
     if not path.exists():
         return None
     with path.open(encoding="utf-8") as f:
@@ -42,14 +34,8 @@ def read_config(path: Path) -> dict | None:
 
 
 def read_chain_configs(chain: list[Path]) -> tuple[list[dict] | None, str | None]:
-    """Adapter: read every fitness-config.json on the chain in order.
-
-    Returns (raw_configs, None) on success, or (None, error_message) on the
-    first malformed JSON file. Result-style return so command verbs can
-    short-circuit cleanly without nested try/except blocks. Missing files
-    are skipped silently (already filtered by walk_up_chain's existence
-    check, but we double-check for robustness).
-    """
+    """Parse every chain file in order: (configs, None), or (None, error naming the
+    first malformed file). Files that vanished since the walk are skipped."""
     raw_configs: list[dict] = []
     for entry in chain:
         try:
@@ -59,6 +45,7 @@ def read_chain_configs(chain: list[Path]) -> tuple[list[dict] | None, str | None
         if cfg is not None:
             raw_configs.append(cfg)
     return raw_configs, None
+
 
 def read_anchored_chain(target: Path, base: Path):
     """Adapter: read the configs above target, never above the anchor (base).

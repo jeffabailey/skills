@@ -1,5 +1,11 @@
 """Config model: built-in defaults and the constants every layer shares."""
 
+CONFIG_FILENAME = "fitness-config.json"
+
+# ADR-003: a config without a `version` is version 1; any other version is a
+# hard error, raised before anything is merged.
+SUPPORTED_SCHEMA_VERSION = 1
+
 DEFAULT_WEIGHTS = {
     "architecture": 14,
     "security": 14,
@@ -23,8 +29,7 @@ DEFAULT_SECURITY = {"confidenceThreshold": 7}
 
 DEFAULT_SCORING = {"goodRange": [8, 10], "badRange": [1, 3]}
 
-CONFIG_FILENAME = "fitness-config.json"
-
+# Section name -> its defaults, in canonical (written) order.
 SECTION_DEFAULTS = {
     "weights": DEFAULT_WEIGHTS,
     "statusThresholds": DEFAULT_STATUS,
@@ -32,11 +37,5 @@ SECTION_DEFAULTS = {
     "scoring": DEFAULT_SCORING,
 }
 
-# Acceptable absolute deviation from 100 when summing weights, to absorb
-# rounding from floating-point overrides without permitting real drift.
+# Absorbs float rounding in overrides when checking that weights sum to 100.
 WEIGHTS_SUM_TOLERANCE = 0.01
-
-# Supported schema version. ADR-003: any chain config declaring a different
-# version is a HARD ERROR, surfaced before any merge is attempted so the CLI
-# never produces an effective config from incompatible inputs.
-SUPPORTED_SCHEMA_VERSION = 1

@@ -11,23 +11,12 @@ _AUDIT_DIRECT_LOAD_PATTERN = r"(json\.load.*fitness-config\.json|open.*fitness-c
 
 
 def cmd_audit(repo_root: Path) -> int:
-    """Grep audit step (BR-5 / FR-7 / US-08): refuse inline weight tables and direct config loads in SKILL.md.
+    """`audit` (BR-5 / FR-7 / US-08), run by CI: fail when skill prose inlines weights or reads the config directly.
 
-    Walks every review-*/SKILL.md under <repo_root>/skills/, the
-    fitness-config-init guide (BR-2), and the canonical prompt at
-    <repo_root>/.github/fitness-review-prompt.md and fails closed if any of
-    them either:
-      - declares an inline `"weights": { ... }` JSON literal (ADR-002 / FR-7
-        forbids hardcoded weights in skill prose), or
-      - reads `fitness-config.json` directly via `json.load(...)` or `open(...)`
-        instead of calling the resolver CLI (US-08 / AC-08.4).
-
-    Designed to be invoked from CI:
-
-        python3 scripts/fitness-config.py audit
-
-    Exit 0 means clean. Exit 1 means at least one violation; the script names
-    every offender so reviewers can locate the regression.
+    Scans skills/review-*/SKILL.md, skills/fitness-config-init/SKILL.md (BR-2)
+    and .github/fitness-review-prompt.md for an inline `"weights": {` table
+    (ADR-002) or a direct json.load/open of the config file (AC-08.4); names
+    every offender. Exit 0 = clean.
     """
     inline = re.compile(_AUDIT_INLINE_WEIGHTS_PATTERN)
     direct_load = re.compile(_AUDIT_DIRECT_LOAD_PATTERN)

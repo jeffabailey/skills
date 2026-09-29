@@ -1,8 +1,8 @@
 """Property tests for the write gate, create and replace paths (ADR-010, data-models 6.2).
 
 Driving port:
-  save_new_proposal(proposal_text, expected_fingerprint, config_file, force=) -> GateOutcome
-  check_proposal(proposal_text, config_exists) -> GateOutcome
+  save_reviewed_proposal(proposal_text, expected_fingerprint, config_file, force=) -> GateOutcome
+  check_proposal(proposal_text, current) -> GateOutcome
 Driven port (injected): ConfigFile(create, replace, read, restore) -- the one file the
 gate may touch. Faults are injected by substituting its functions: a silent
 no-op, a partial or tampered write, a concurrent create, an OS failure.
@@ -115,15 +115,15 @@ def is_(value):
 
 def run_save(folder: dict, proposal_text: str, fingerprint: str, force: bool = False, **faults):
     before = universe_snapshot(folder)
-    outcome = write_gate.save_new_proposal(proposal_text, fingerprint,
-                                               config_file(folder, **faults), force=force)
+    outcome = write_gate.save_reviewed_proposal(proposal_text, fingerprint,
+                                                    config_file(folder, **faults), force=force)
     return before, universe_snapshot(folder, outcome), outcome
 
 
 @given(complete_configs(), indents)
 def test_reviewed_proposal_is_created_byte_for_byte_as_checked(config, indent):
     text = formatted(config, indent)
-    checked = write_gate.check_proposal(text, config_exists=False)
+    checked = write_gate.check_proposal(text, current=None)
     assert checked.status == "would-create"
     before, after, _ = run_save(project_folder(None), text, checked.fingerprint)
     state_delta.assert_state_delta(before, after, UNIVERSE, {
@@ -135,7 +135,7 @@ def test_reviewed_proposal_is_created_byte_for_byte_as_checked(config, indent):
 @given(complete_configs(), indents, st.text("0123456789abcdef", min_size=12, max_size=12))
 def test_fingerprint_that_is_not_the_proposals_writes_nothing(config, indent, other_fingerprint):
     text = formatted(config, indent)
-    if other_fingerprint == write_gate.check_proposal(text, config_exists=False).fingerprint:
+    if other_fingerprint == write_gate.check_proposal(text, current=None).fingerprint:
         return
     before, after, _ = run_save(project_folder(None), text, other_fingerprint)
     state_delta.assert_state_delta(before, after, UNIVERSE, {"status": is_("fingerprint-mismatch")})
@@ -144,7 +144,7 @@ def test_fingerprint_that_is_not_the_proposals_writes_nothing(config, indent, ot
 @given(complete_configs(), st.binary(max_size=64))
 def test_existing_config_is_never_overwritten_on_the_create_path(config, existing):
     text = formatted(config, 2)
-    fingerprint = write_gate.check_proposal(text, config_exists=True).fingerprint
+    fingerprint = write_gate.check_proposal(text, current=existing).fingerprint
     before, after, _ = run_save(project_folder(existing), text, fingerprint)
     state_delta.assert_state_delta(before, after, UNIVERSE, {"status": is_("refused-exists")})
 
@@ -161,7 +161,7 @@ def test_invalid_proposal_writes_nothing(proposal_text):
 
 def reviewed(config: dict, indent) -> tuple[str, str]:
     text = formatted(config, indent)
-    return text, write_gate.check_proposal(text, config_exists=False).fingerprint
+    return text, write_gate.check_proposal(text, current=None).fingerprint
 
 
 faulty_writes = st.one_of(

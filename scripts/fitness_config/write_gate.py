@@ -1,4 +1,7 @@
-"""Write gate (ADR-010): check a proposal, then save only the reviewed bytes. Pure over the ConfigFile port."""
+"""Write gate (ADR-010): check a proposal, then save only the reviewed bytes.
+
+Pure apart from calls through the ConfigFile port, which the CLI wires to a real file.
+"""
 
 from __future__ import annotations
 
@@ -9,6 +12,7 @@ from typing import Callable, Sequence
 from .resolution import build_effective_config, deep_merge_chain
 from .render import proposal_fingerprint, render_canonical, render_value_diff, value_diff
 from .validation import validate_effective, validate_proposal
+
 
 @dataclass(frozen=True)
 class ConfigFile:
@@ -26,6 +30,7 @@ class ConfigFile:
     read: Callable[[], bytes | None]
     restore: Callable[[bytes | None], None]
 
+
 @dataclass(frozen=True)
 class GateOutcome:
     """What the write gate decided; `canonical` is the byte-exact payload."""
@@ -36,7 +41,9 @@ class GateOutcome:
     errors: tuple[str, ...] = ()
     review: tuple[str, ...] = ()
 
+
 def _config_object(data: bytes) -> dict | None:
+    """The bytes as a JSON object, or None when they are not one."""
     try:
         parsed = json.loads(data)
     except ValueError:
@@ -59,15 +66,14 @@ def _prepare_proposal(proposal_text: str) -> GateOutcome:
     return GateOutcome("ready", proposal_fingerprint(canonical), canonical)
 
 
-def check_proposal(proposal_text: str, config_exists: bool,
-                   current: bytes | None = None) -> GateOutcome:
-    """Dry run: validate, render, fingerprint and diff by value against the
-    current config's bytes. Never writes."""
+def check_proposal(proposal_text: str, current: bytes | None) -> GateOutcome:
+    """Dry run: validate, render and fingerprint the proposal, then diff it by
+    value against the current config's bytes (None: no config yet). Never writes."""
     prepared = _prepare_proposal(proposal_text)
-    if prepared.status == "invalid" or not config_exists:
-        return prepared if prepared.status == "invalid" else replace(prepared, status="would-create")
+    if prepared.status == "invalid":
+        return prepared
     if current is None:
-        return replace(prepared, status="would-replace")
+        return replace(prepared, status="would-create")
     existing = _config_object(current)
     if existing is None:
         return replace(prepared, status="existing-malformed", review=(_MALFORMED_NOTE,))
@@ -76,10 +82,10 @@ def check_proposal(proposal_text: str, config_exists: bool,
                    review=render_value_diff(diff))
 
 
-def save_new_proposal(proposal_text: str, expected_fingerprint: str,
-                      config_file: ConfigFile, configs_above: Sequence[dict] = (),
-                      force: bool = False) -> GateOutcome:
-    """The write gate (data-models 6.2): write the canonical bytes only for the
+def save_reviewed_proposal(proposal_text: str, expected_fingerprint: str,
+                           config_file: ConfigFile, configs_above: Sequence[dict] = (),
+                           force: bool = False) -> GateOutcome:
+    """The write gate (data-models 6.2): save the canonical bytes only for the
     reviewed proposal -- creating the file, or replacing a different one only
     when forced -- then verify them, merged with the configs above
     (nearest-first), or roll back to the prior bytes."""

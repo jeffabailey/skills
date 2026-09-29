@@ -254,7 +254,7 @@ _DRY_RUN_UNIVERSE = {"status", "canonical", "fingerprint"}
 
 
 def _dry_run_observables(proposal_text: str) -> dict:
-    outcome = write_gate.check_proposal(proposal_text, config_exists=False)
+    outcome = write_gate.check_proposal(proposal_text, current=None)
     return {"status": outcome.status, "canonical": outcome.canonical, "fingerprint": outcome.fingerprint}
 
 
@@ -292,7 +292,7 @@ unknown_notes = st.dictionaries(st.sampled_from(["$comment", "owner", "tunedBy"]
 
 
 def _review_observables(proposal_text: str, current: bytes | None) -> dict:
-    outcome = write_gate.check_proposal(proposal_text, current is not None, current)
+    outcome = write_gate.check_proposal(proposal_text, current)
     return {"status": outcome.status, "canonical": outcome.canonical,
             "fingerprint": outcome.fingerprint, "review": outcome.review}
 

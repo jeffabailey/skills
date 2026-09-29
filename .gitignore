@@ -34,3 +34,4 @@ docs/fitness-report.md
 # Test artifacts
 /tmp/
 .gitnexus
+.dual-graph/

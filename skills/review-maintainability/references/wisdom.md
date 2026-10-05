@@ -1,7 +1,7 @@
 # Domain Knowledge Reference
 
 Auto-generated from blog posts. Do not edit manually.
-Last updated: 2026-04-20
+Last updated: 2026-10-05
 
 ---
 
@@ -510,7 +510,7 @@ Maintainability standards and tooling evolve. Verify current ISO revisions and t
 [iso-25010-detail]: https://iso25000.com/index.php/en/iso-25000-standards/iso-25010
 [sonarqube-complexity]: https://www.sonarsource.com/resources/cognitive-complexity/
 [codeclimate-maintainability]: https://docs.qlty.sh/cloud/maintainability/metrics
-[maintainability-skill]: https://github.com/jeffabailey/skills/tree/main/src/review-maintainability
+[maintainability-skill]: https://github.com/jeffabailey/skills/tree/main/skills/review-maintainability
 [skills-repo]: https://github.com/jeffabailey/skills
 [fundamental-skills]: https://jeffbailey.us/blog/2026/02/21/fundamental-skills/
 [naming]: https://jeffbailey.us/blog/2025/12/31/fundamentals-of-naming/

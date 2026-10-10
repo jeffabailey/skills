@@ -1,7 +1,7 @@
 # Domain Knowledge Reference
 
 Auto-generated from blog posts. Do not edit manually.
-Last updated: 2026-04-20
+Last updated: 2026-09-28
 
 ---
 
@@ -1356,7 +1356,6 @@ Start building data engineering fundamentals today. Focus on one area to improve
 
 Test your understanding of data engineering fundamentals.
 
-<!-- markdownlint-disable MD033 -->
 1. **What's the difference between batch and streaming processing?**
    
    <details><summary>Show answer</summary>
@@ -1404,7 +1403,7 @@ Test your understanding of data engineering fundamentals.
    The main stages are: Data Extraction → Data Validation → Data Transformation → Data Loading → Data Storage → Monitoring & Quality Checks → Pipeline Maintenance. The order matters because each stage builds on the previous one. Skipping validation means errors propagate. Transforming before validating wastes effort on corrupt data. Loading before transformation means data isn't ready for use. Monitoring detects when maintenance is needed.
    
    </details>
-   <!-- markdownlint-enable MD033 -->
+   
 
 ### Glossary
 

@@ -8,6 +8,9 @@
 #   install-skills.sh SOURCE_DIR
 #     Use SOURCE_DIR instead of script's parent directory
 #
+#   install-skills.sh SOURCE_DIR DEST_DIR
+#     Symlink skills from SOURCE_DIR into DEST_DIR (skips auto-detection)
+#
 set -euo pipefail
 
 detect_tool_configs() {
@@ -59,10 +62,15 @@ main() {
     source_dir="$(cd "$(dirname "$0")/.." && pwd)"
   elif [[ $# -eq 1 ]]; then
     source_dir="$(cd "$1" && pwd)"
+  elif [[ $# -eq 2 ]]; then
+    source_dir="$(cd "$1" && pwd)"
+    symlink_skills "$source_dir" "$2"
+    return
   else
-    echo "Usage: $0 [SOURCE_DIR]" >&2
+    echo "Usage: $0 [SOURCE_DIR [DEST_DIR]]" >&2
     echo "" >&2
     echo "  SOURCE_DIR   Repo root containing skills/ (default: script's parent dir)" >&2
+    echo "  DEST_DIR     Install here instead of auto-detected tool directories" >&2
     exit 1
   fi
   

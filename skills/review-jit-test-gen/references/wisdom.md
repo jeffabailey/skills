@@ -1,7 +1,7 @@
 # Domain Knowledge Reference
 
 Auto-generated from blog posts. Do not edit manually.
-Last updated: 2026-03-03
+Last updated: 2026-09-28
 
 ---
 
@@ -11,11 +11,9 @@ URL: https://jeffbailey.us/blog/2026/02/14/what-is-just-in-time-catching-test-ge
 
 ## Introduction
 
-When I submit a pull request, I rely on [existing tests](https://jeffbailey.us/fundamentals-of-software-testing/), written months or years ago, which run with each change. But what if tests could be automatically generated for each diff, tailored to catch bugs before code lands? That's the premise of Just-in-Time (JIT) Catching Test Generation.
+**Just-in-Time (JIT) Catching Test Generation** creates tests at the moment a code change is submitted, instead of relying on a [suite written months earlier][software-testing]. A large language model generates tests aimed at that specific diff and runs them, and a failure flags a likely bug before the change lands.
 
-This approach turns traditional testing on its head. Instead of maintaining a static test suite that you update whenever behavior changes, catching tests are generated on the fly by large language models (LLMs). They are meant to fail when they find a bug. They do not live in your codebase. They exist only to catch regressions in the specific code change under review.
-
-The mental model: tests generated just-in-time, tailored to each change, to catch bugs before production while minimizing the friction of false positives.
+These tests are disposable by design. A catching test exists to fail, so it never joins the codebase: either it exposes a bug that then gets fixed, or it gets dismissed as a false positive. That inverts the usual arrangement, where a static suite is maintained and updated whenever behavior changes.
 
 ```mermaid
 flowchart TB
@@ -27,7 +25,7 @@ flowchart TB
 
 ## What Is Just-in-Time Catching Test Generation?
 
-Just-in-Time Catching Test Generation creates tests when code changes are submitted. LLMs generate and run these tests against the change, designed to fail if regression is detected. A failed test indicates a potential bug, while passing tests suggest the change is clean.
+The mechanics state in one line: generate tests against the diff, run them, and treat a failure as a candidate bug. What makes the idea work is the kind of test being generated.
 
 A **catching test** differs from a **hardening test**. A hardening test passes upon initial writing, gets checked into the codebase, and runs on all subsequent changes, preventing regressions. A catching test, designed to fail at generation time, catches bugs during review. It can't be checked in with the change that causes it to fail; either the bug is fixed, making the test obsolete, or the test is discarded as a false positive.
 
@@ -83,13 +81,13 @@ JIT catching test generation connects to several related ideas.
 
 ### Hardening Tests and the Harden-and-Catch Framework
 
-The Harden and Catch Framework ([Becker et al.][arxiv-paper]) distinguishes hardening tests (pass at generation, land in codebase, protect against future regressions) from catching tests (fail at generation, catch bugs in the change under test). JIT catching test generation is the automated production of catching tests, just-in-time. Both hardening and catching can coexist: you keep your [hardening suite](https://jeffbailey.us/fundamentals-of-software-testing/) and add JIT catching for each submitted change.
+The Harden and Catch Framework ([Becker et al.][arxiv-paper]) distinguishes hardening tests (pass at generation, land in codebase, protect against future regressions) from catching tests (fail at generation, catch bugs in the change under test). JIT catching test generation is the automated production of catching tests, just-in-time. Both hardening and catching can coexist: you keep your [hardening suite][software-testing] and add JIT catching for each submitted change.
 
 ### Mutation Testing
 
-Traditional mutation testing evaluates the quality of an existing test suite. You start with tests already in your codebase. The system seeds **mutants**—versions of the code with deliberately introduced faults—into the system under test, then runs your existing tests against each mutant. If a test fails on a mutant, it "kills" that mutant; if no test kills it, the mutant "survives," suggesting your tests are weak or miss that fault. The result is a mutation score: the proportion of mutants killed. The goal is to improve your test suite until it kills most mutants.
+Traditional mutation testing evaluates the quality of an existing test suite. You start with tests already in your codebase. The system seeds **mutants** (versions of the code with deliberately introduced faults) into the system under test, then runs your existing tests against each mutant. If a test fails on a mutant, it "kills" that mutant; if no test kills it, the mutant "survives," suggesting your tests are weak or miss that fault. The result is a mutation score: the proportion of mutants killed. The goal is to improve your test suite until it kills most mutants.
 
-JIT catching inverts this. Instead of using mutants to evaluate existing tests, it uses mutants to *generate* new tests. You start with a code change (the diff), not a test suite. The system generates mutants that represent plausible bugs introduced by that change. It then generates tests that would kill those mutants—tests that pass on the parent (base) code but fail on the mutant. Those generated tests are run on the actual diff. If a generated test fails on the diff, it may have caught a real bug. The goal is not to score your test suite; it is to produce tests, just-in-time, that catch regressions in the change under review.
+JIT catching inverts this. Instead of using mutants to evaluate existing tests, it uses mutants to *generate* new tests. You start with a code change (the diff), not a test suite. The system generates mutants that represent plausible bugs introduced by that change. It then generates tests that would kill those mutants, tests that pass on the parent (base) code but fail on the mutant. Those generated tests are run on the actual diff. If a generated test fails on the diff, it may have caught a real bug. The goal is not to score your test suite; it is to produce tests, just-in-time, that catch regressions in the change under review.
 
 Both use the same mutation machinery and the coupling hypothesis (real faults resemble artificial ones). Traditional mutation testing asks: "How good are my tests?" JIT catching asks: "What tests would catch bugs in this change?"
 
@@ -159,7 +157,7 @@ JIT catching does not replace traditional testing. It adapts testing to a world 
 
 If you want to learn more:
 
-* **Learn the basics**: [Fundamentals of Software Testing](https://jeffbailey.us/fundamentals-of-software-testing/) explains traditional testing, test types, and the testing pyramid—useful background before diving into JIT catching.
+* **Learn the basics**: [Fundamentals of Software Testing][software-testing] explains traditional testing, test types, and the testing pyramid, useful background before diving into JIT catching.
 * **Read the paper**: [Just-in-Time Catching Test Generation at Meta][arxiv-paper] (Becker et al., FSE Companion 2026) describes the diff-aware workflows, assessors, and deployment results in detail.
 * **Read the blog post**: Meta's Engineering blog post [The Death of Traditional Testing][meta-jit-blog] offers a high-level overview and motivation.
 * **Explore mutation testing**: Understanding mutation testing clarifies how mutants guide test generation in JIT catching. The [mutation testing literature][mutation-testing] is a good starting point.
@@ -173,6 +171,7 @@ If you want to learn more:
 * [Weimer et al.][oracle-ref], for the oracle problem and software testing theory that informs catching test design.
 
 [arxiv-paper]: https://arxiv.org/pdf/2601.22832
+[software-testing]: https://jeffbailey.us/blog/2025/11/30/fundamentals-of-software-testing/
 [meta-jit-blog]: https://engineering.fb.com/2026/02/11/developer-tools/the-death-of-traditional-testing-agentic-development-jit-testing-revival/
 [mutation-testing]: https://mutationtesting.uni.lu/
 [oracle-ref]: https://arxiv.org/abs/2109.04086

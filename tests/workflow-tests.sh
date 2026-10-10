@@ -168,13 +168,13 @@ else
   fail "gh-aw not pinned to $GH_AW_PINNED_VERSION" "$unpinned"
 fi
 
-# Regression guard: dependabot must ignore github-actions bumps until the
-# workflow YAML is regenerated. Without this, the next bump silently
-# reintroduces path drift.
-if grep -q 'dependency-name: "\*"' .github/dependabot.yml; then
-  pass "dependabot ignores all github-actions bumps"
+# Regression guard: dependabot must ignore gh-aw bumps until the workflow
+# YAML is regenerated. Without this, the next bump silently reintroduces
+# path drift. Other actions stay on the normal update schedule.
+if grep -q 'dependency-name: "github/gh-aw\*"' .github/dependabot.yml; then
+  pass "dependabot ignores gh-aw bumps"
 else
-  fail "dependabot.yml missing 'dependency-name: \"*\"' ignore rule"
+  fail "dependabot.yml missing 'dependency-name: \"github/gh-aw*\"' ignore rule"
 fi
 
 # ---- act parsing (skipped if act is not installed) ----

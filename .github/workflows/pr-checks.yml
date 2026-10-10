@@ -18,6 +18,7 @@ jobs:
   workflow-validation:
     name: Workflow & engine-config validation
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
@@ -48,6 +49,7 @@ jobs:
   workflow-tests:
     name: Workflow validation tests
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
@@ -62,6 +64,7 @@ jobs:
   skill-structure:
     name: Skill structure validation
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
@@ -76,6 +79,7 @@ jobs:
   fitness-config:
     name: Fitness config validation
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
@@ -98,6 +102,7 @@ jobs:
   python-tests:
     name: Python tests (pytest, jsonschema)
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
@@ -120,9 +125,24 @@ jobs:
       - name: Run pytest
         run: uv run pytest tests -q -rs
 
+  python-lint:
+    name: Python lint (ruff)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9 # v9.0.0
+
+      # Rules come from [tool.ruff] in pyproject.toml; the version is pinned here.
+      - name: Run ruff
+        run: uvx ruff@0.16.9 check scripts .github/scripts tests
+
   engine-config-unit-tests:
     name: Engine config unit tests
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       - name: Set up Python
@@ -135,6 +155,7 @@ jobs:
   internal-link-check:
     name: Internal link check
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 

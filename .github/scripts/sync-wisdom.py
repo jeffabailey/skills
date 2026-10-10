@@ -6,6 +6,9 @@ blog post, and writes references/wisdom.md for each skill.
 
 Usage:
     python3 .github/scripts/sync-wisdom.py [--dry-run] [--skill SKILL]
+
+Exit codes: 0 on success (whether or not files changed), 2 when any fetch
+failed. A skill with a failed fetch keeps its existing wisdom.md.
 """
 
 import argparse
@@ -14,6 +17,8 @@ import sys
 import urllib.request
 from datetime import datetime, timezone
 from pathlib import Path
+
+EXIT_FETCH_FAILED = 2
 
 
 def fetch_llm_content(base_url: str, url_path: str) -> str:
@@ -35,8 +40,11 @@ def fetch_llm_content(base_url: str, url_path: str) -> str:
 
 def generate_wisdom(
     fetch_base_url: str, canonical_base_url: str, posts: list
-) -> str:
-    """Generate wisdom.md content from a list of blog posts."""
+) -> tuple[str, list[str]]:
+    """Generate wisdom.md content from a list of blog posts.
+
+    Returns the content and the slugs of posts that failed to fetch.
+    """
     now = datetime.now(timezone.utc).strftime("%Y-%m-%d")
 
     lines = [
@@ -45,6 +53,7 @@ def generate_wisdom(
         "Auto-generated from blog posts. Do not edit manually.",
         f"Last updated: {now}",
     ]
+    failures = []
 
     for post in posts:
         slug = post["slug"]
@@ -61,9 +70,10 @@ def generate_wisdom(
             lines.append(content)
         else:
             lines.append("Failed to fetch content.")
+            failures.append(slug)
         lines.append("")
 
-    return "\n".join(lines)
+    return "\n".join(lines), failures
 
 
 def strip_date_line(text: str) -> str:
@@ -73,7 +83,7 @@ def strip_date_line(text: str) -> str:
     )
 
 
-def main():
+def main(argv=None, root=None):
     parser = argparse.ArgumentParser(
         description="Sync wisdom content from blog posts into skill reference files."
     )
@@ -90,9 +100,9 @@ def main():
         "--base-url",
         help="Override the base URL from skill-sources.json (e.g. http://localhost:8765).",
     )
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
 
-    root = Path(__file__).resolve().parent.parent.parent
+    root = root or Path(__file__).resolve().parent.parent.parent
     config_path = root / "skill-sources.json"
 
     with open(config_path) as f:
@@ -116,12 +126,16 @@ def main():
 
         print(f"  SYNC: {skill_name} ({len(posts)} post(s))")
 
-        wisdom_content = generate_wisdom(fetch_base_url, canonical_base_url, posts)
+        wisdom_content, fetch_failures = generate_wisdom(
+            fetch_base_url, canonical_base_url, posts
+        )
         wisdom_path = root / "skills" / skill_name / "references" / "wisdom.md"
 
-        # Check for fetch failures
-        if "Failed to fetch content." in wisdom_content:
+        # Never replace good content with a failed fetch; keep the old file.
+        if fetch_failures:
+            print(f"    Fetch failed for {', '.join(fetch_failures)}; keeping existing file")
             failed.append(skill_name)
+            continue
 
         # Compare ignoring the date line
         existing = ""
@@ -148,8 +162,7 @@ def main():
     if failed:
         print(f"Fetch failures in: {', '.join(failed)}")
 
-    # Exit 0 if no changes, 1 if changes were made (useful for CI)
-    return 1 if changed else 0
+    return EXIT_FETCH_FAILED if failed else 0
 
 
 if __name__ == "__main__":

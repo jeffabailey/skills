@@ -125,5 +125,28 @@ else
   echo "SKIP: python3 or skill-sources.json not available"
 fi
 
+# ---- Resolver invocation: every ## Configuration section calls the resolver the same way ----
+# The prose around it may differ per skill (review-security reads only the
+# confidence threshold); these lines tie each skill to the plugin layout, so a
+# change to the resolver's location or interface must reach every copy.
+echo "--- Resolver invocation ---"
+RESOLVER_CMD='python3 "${CLAUDE_SKILL_DIR}/../../scripts/fitness-config.py" show --path <target>'
+RESOLVER_NOTE='`${CLAUDE_SKILL_DIR}` is this skill'"'"'s directory; the resolver ships two levels up in the plugin'"'"'s `scripts/`. If your agent does not expand the variable, substitute the directory containing this `SKILL.md`.'
+for skill in "${SKILLS[@]}"; do
+  skill_md="$SKILLS_ROOT/$skill/SKILL.md"
+  grep -q "^## Configuration" "$skill_md" || continue
+  config_section="$(awk '/^## Configuration/{f=1;next} /^## /{f=0} f' "$skill_md")"
+  if grep -qxF "$RESOLVER_CMD" <<<"$config_section"; then
+    pass "$skill Configuration uses the canonical resolver command"
+  else
+    fail "$skill Configuration resolver command differs from the canonical one"
+  fi
+  if grep -qxF "$RESOLVER_NOTE" <<<"$config_section"; then
+    pass "$skill Configuration explains \${CLAUDE_SKILL_DIR}"
+  else
+    fail "$skill Configuration \${CLAUDE_SKILL_DIR} note differs from the canonical one"
+  fi
+done
+
 # ---- Summary ----
 summarize

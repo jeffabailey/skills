@@ -11,10 +11,7 @@ Covers:
 
 from __future__ import annotations
 
-import json
 import os
-import stat
-from pathlib import Path
 
 import pytest
 from pytest_bdd import given, parsers, scenarios, then, when

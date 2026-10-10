@@ -9,6 +9,7 @@ Two families:
 
 from __future__ import annotations
 
+import math
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Callable
@@ -28,8 +29,8 @@ class ValidationResult:
 
 
 def _sum_weights(weights: dict) -> float:
-    """Sum the numeric weight values, ignoring anything else."""
-    return sum(v for v in weights.values() if isinstance(v, (int, float)))
+    """Sum the numeric weight values, ignoring anything else (bools, NaN, text)."""
+    return sum(v for v in weights.values() if _is_number(v))
 
 
 def _format_chain_for_error(source_chain: list[Path]) -> str:
@@ -70,8 +71,8 @@ def validate_schema_versions(
         if not isinstance(cfg, dict):
             continue
         version = cfg.get("version", SUPPORTED_SCHEMA_VERSION)
-        if not isinstance(version, int):
-            mismatched = True  # e.g. "1" or 1.0: never the supported version
+        if type(version) is not int:
+            mismatched = True  # e.g. "1", 1.0 or true: never the supported version
             continue
         declared.append((entry, version))
         mismatched = mismatched or version != SUPPORTED_SCHEMA_VERSION
@@ -116,7 +117,9 @@ def validate_effective(effective: dict, source_chain: list[Path]) -> ValidationR
 # ---------------------------------------------------------------------------
 
 def _is_number(value) -> bool:
-    return isinstance(value, (int, float)) and not isinstance(value, bool)
+    """A finite int or float; bools, NaN and Infinity are not numbers here."""
+    return (isinstance(value, (int, float)) and not isinstance(value, bool)
+            and math.isfinite(value))
 
 
 def _is_pair(value) -> bool:
@@ -141,18 +144,27 @@ def _weight_sum_violations(weights: dict) -> list[str]:
     return [f"weights add up to {total:g}; they must add up to 100"]
 
 
+def _weight_value_violations(weights: dict) -> list[str]:
+    return [f"weights.{name} must be a number 0-100, got {value!r}"
+            for name, value in weights.items()
+            if name in DEFAULT_WEIGHTS and not (_is_number(value) and 0 <= value <= 100)]
+
+
 def _weights_violations(weights: dict) -> list[str]:
     unknown = [f"weights.{name} is not a known domain ({', '.join(DEFAULT_WEIGHTS)})"
                for name in weights if name not in DEFAULT_WEIGHTS]
-    out_of_range = [f"weights.{name} must be a number 0-100, got {value!r}"
-                    for name, value in weights.items()
-                    if name in DEFAULT_WEIGHTS and not (_is_number(value) and 0 <= value <= 100)]
-    return unknown + out_of_range + _weight_sum_violations(weights)
+    return unknown + _weight_value_violations(weights) + _weight_sum_violations(weights)
 
 
 def _pair_violations(name: str, section: dict) -> list[str]:
-    return [f"{name}.{key} must be a [low, high] pair of numbers, got {section[key]!r}"
-            for key in SECTION_DEFAULTS[name] if key in section and not _is_pair(section[key])]
+    """Every range is a [low, high] pair of scores, so each end lies within 1-10."""
+    present = [key for key in SECTION_DEFAULTS[name] if key in section]
+    malformed = [f"{name}.{key} must be a [low, high] pair of numbers, got {section[key]!r}"
+                 for key in present if not _is_pair(section[key])]
+    out_of_scale = [f"{name}.{key} must stay within scores 1-10, got {section[key]!r}"
+                    for key in present
+                    if _is_pair(section[key]) and not all(1 <= v <= 10 for v in section[key])]
+    return malformed + out_of_scale
 
 
 def _cutoff_violations(security: dict) -> list[str]:
@@ -238,3 +250,30 @@ def validate_proposal(proposal) -> list[str]:
     if not isinstance(proposal, dict):
         return violations
     return violations + _completeness_violations(proposal)
+
+
+_CHAIN_VALUE_RULES: dict[str, Callable[[dict], list[str]]] = {
+    "weights": _weight_value_violations,
+    "statusThresholds": lambda section: _pair_violations("statusThresholds", section),
+    "security": _cutoff_violations,
+    "scoring": lambda section: _pair_violations("scoring", section),
+}
+
+
+def validate_chain_values(raw_configs: list[dict], source_chain: list[Path]) -> ValidationResult:
+    """Every value in every chain file must be usable before merging and rendering.
+
+    Only the value rules apply: a partial override, a missing version (checked
+    by validate_schema_versions) and the merged sum (validate_effective) stay
+    the other validators' business. Errors name the file that holds the value.
+    """
+    errors = [
+        f"Error: {entry}: {line}"
+        for entry, cfg in zip(source_chain, raw_configs) if isinstance(cfg, dict)
+        for name, rule in _CHAIN_VALUE_RULES.items() if name in cfg
+        for line in (rule(cfg[name]) if isinstance(cfg[name], dict)
+                     else [f"'{name}' must be an object"])]
+    if not errors:
+        return ValidationResult(ok=True, errors=[])
+    return ValidationResult(ok=False, errors=[
+        *errors, "Fix: correct the value(s) above, then run validate --path again."])

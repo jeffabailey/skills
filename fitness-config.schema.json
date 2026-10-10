@@ -27,9 +27,9 @@
       "type": "object",
       "description": "Score ranges for Healthy, Needs Attention, Critical",
       "properties": {
-        "healthy": { "type": "array", "items": { "type": "number" }, "minItems": 2, "maxItems": 2 },
-        "needsAttention": { "type": "array", "items": { "type": "number" }, "minItems": 2, "maxItems": 2 },
-        "critical": { "type": "array", "items": { "type": "number" }, "minItems": 2, "maxItems": 2 }
+        "healthy": { "type": "array", "items": { "type": "number", "minimum": 1, "maximum": 10 }, "minItems": 2, "maxItems": 2 },
+        "needsAttention": { "type": "array", "items": { "type": "number", "minimum": 1, "maximum": 10 }, "minItems": 2, "maxItems": 2 },
+        "critical": { "type": "array", "items": { "type": "number", "minimum": 1, "maximum": 10 }, "minItems": 2, "maxItems": 2 }
       }
     },
     "security": {
@@ -41,8 +41,8 @@
     "scoring": {
       "type": "object",
       "properties": {
-        "goodRange": { "type": "array", "items": { "type": "number" }, "minItems": 2, "maxItems": 2 },
-        "badRange": { "type": "array", "items": { "type": "number" }, "minItems": 2, "maxItems": 2 }
+        "goodRange": { "type": "array", "items": { "type": "number", "minimum": 1, "maximum": 10 }, "minItems": 2, "maxItems": 2 },
+        "badRange": { "type": "array", "items": { "type": "number", "minimum": 1, "maximum": 10 }, "minItems": 2, "maxItems": 2 }
       }
     }
   }

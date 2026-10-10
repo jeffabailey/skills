@@ -18,8 +18,9 @@ from .render import render_canonical, render_show_output
 from .resolution import (WALK_UP_DEPTH_CAP, anchored_chain, build_effective_config,
                          build_seed_config, deep_merge_chain, merge_defaults,
                          walk_up_chain_with_status)
-from .validation import validate_config, validate_effective, validate_schema_versions
-from .write_gate import GateOutcome, check_proposal, save_reviewed_proposal
+from .validation import (validate_chain_values, validate_config, validate_effective,
+                         validate_schema_versions)
+from .write_gate import GateOutcome, GateStatus, check_proposal, save_reviewed_proposal
 
 EXIT_OK = 0
 EXIT_FAILED = 1
@@ -38,10 +39,17 @@ def _load_legacy(path: Path) -> dict | None:
     return config
 
 
-def _write_json(path: Path, config: dict) -> None:
+def _create_json(path: Path, config: dict) -> str | None:
+    """Create path holding config, exclusively and atomically (the write gate's
+    ConfigFile.create). Returns None, or an error line when nothing was written."""
     path.parent.mkdir(parents=True, exist_ok=True)
-    with path.open("w", encoding="utf-8") as f:
-        json.dump(config, f, indent=2)
+    data = json.dumps(config, indent=2).encode("utf-8")
+    status, message = config_file_at(path).create(data)
+    if status == GateStatus.CREATED:
+        return None
+    if status == GateStatus.REFUSED_EXISTS:
+        return f"Error: {path} already exists"
+    return message or f"Error: could not write {path}"
 
 
 # ---------------------------------------------------------------------------
@@ -68,15 +76,22 @@ def cmd_init(path: Path) -> int:
     if path.exists():
         print(f"Error: {path} already exists", file=sys.stderr)
         return EXIT_FAILED
-    _write_json(path, build_seed_config([]))
+    error = _create_json(path, build_seed_config([]))
+    if error is not None:
+        print(error, file=sys.stderr)
+        return EXIT_FAILED
     print("Created:", path)
     return EXIT_OK
 
 
 def cmd_show(path: Path) -> int:
-    """Legacy `show [path]`: one file over the defaults, as JSON."""
-    data = _load_legacy(path) or {}
-    print(json.dumps(merge_defaults(data), indent=2))
+    """Legacy `show [path]`: one file over the defaults, as JSON. A missing file
+    shows the defaults; a file that cannot be read or parsed fails closed."""
+    data, parse_error = load_legacy_config(path)
+    if parse_error is not None:
+        print(parse_error, file=sys.stderr)
+        return EXIT_FAILED
+    print(json.dumps(merge_defaults(data or {}), indent=2))
     return EXIT_OK
 
 
@@ -108,10 +123,11 @@ def _depth_cap_error_message(target: Path) -> str:
 
 
 def _resolve_effective(target: Path, base: Path) -> tuple[list[Path], dict | None, list[str]]:
-    """Walk up from target to base, read and version-check the chain, merge it.
+    """Walk up from target to base, read and check the chain, merge it.
 
     Returns (chain, effective, []) or (chain, None, errors): the depth cap,
-    malformed JSON and a schema version mismatch each stop before merging.
+    malformed JSON, a schema version mismatch and an unusable value (a weight
+    written as text, say) each stop before merging.
     """
     walk = walk_up_chain_with_status(target, stop=base)
     if walk.depth_capped:
@@ -122,6 +138,9 @@ def _resolve_effective(target: Path, base: Path) -> tuple[list[Path], dict | Non
     version_check = validate_schema_versions(raw_configs, source_chain=walk.chain)
     if not version_check.ok:
         return walk.chain, None, version_check.errors
+    value_check = validate_chain_values(raw_configs, source_chain=walk.chain)
+    if not value_check.ok:
+        return walk.chain, None, value_check.errors
     return walk.chain, build_effective_config(deep_merge_chain(raw_configs)), []
 
 
@@ -192,7 +211,10 @@ def cmd_init_path(target: Path, base: Path) -> int:
     _, raw_configs, failure = _read_anchored_configs(target, base)
     if failure is not None:
         return _report_failure(failure)
-    _write_json(out_path, build_seed_config(raw_configs))
+    error = _create_json(out_path, build_seed_config(raw_configs))
+    if error is not None:
+        print(error, file=sys.stderr)
+        return EXIT_FAILED
     if not raw_configs:
         print("No root fitness-config.json found; seeded with documented default weights.")
     print("Created:", out_path)

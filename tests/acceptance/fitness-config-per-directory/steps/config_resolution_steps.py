@@ -19,7 +19,6 @@ import json
 import time
 from pathlib import Path
 
-import pytest
 from pytest_bdd import given, parsers, scenarios, then, when
 
 from .conftest import (
@@ -28,7 +27,6 @@ from .conftest import (
     DEFAULT_STATUS_THRESHOLDS,
     DEFAULT_WEIGHTS,
     RepoTree,
-    assert_text_contains_all,
     find_embedded_json_block,
     parse_int_pair,
     parse_weights_string,

@@ -406,6 +406,12 @@ FLAWS = {
                                               "healthy"),
     "range as text": lambda cfg, domain: (_set(cfg, "scoring", "goodRange", "8-10"), "goodRange"),
     "one-number range": lambda cfg, domain: (_set(cfg, "scoring", "badRange", [3]), "badRange"),
+    "not-a-number weight": lambda cfg, domain: (_set(cfg, "weights", domain, float("nan")), domain),
+    "endless range": lambda cfg, domain: (_set(cfg, "scoring", "goodRange", [8, float("inf")]),
+                                          "goodRange"),
+    "range beyond 10": lambda cfg, domain: (_set(cfg, "scoring", "badRange", [1, 30]), "badRange"),
+    "band below 1": lambda cfg, domain: (_set(cfg, "statusThresholds", "critical", [0, 4]),
+                                         "critical"),
     "version 2": lambda cfg, domain: ({**cfg, "version": 2}, "version"),
     "version 0": lambda cfg, domain: ({**cfg, "version": 0}, "version"),
 }

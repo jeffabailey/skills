@@ -40,21 +40,23 @@ Where `<target>` is the file or directory under review. The CLI walks up to disc
    - merge, override, and precedence logic (config chains, layered defaults, dict merges);
    - validation and parsing: what a validator accepts versus what downstream code assumes;
    - path, slice, and index arithmetic (walk-up-to-root loops, `[:n]` vs `[:n+1]`);
-   - dedupe, ordering, and anything whose output is stored, diffed, or compared between runs.
-   Use Grep/Glob to find these, then read the code around each.
+   - dedupe, ordering, and anything whose output is stored, diffed, or compared between runs;
+   - loops bounded by a stop condition: what happens when the input starts outside the expected tree (a path above or beside the project root);
+   - parallel lists re-paired with `zip`, and error messages: does the message name the file or value that is actually wrong?
+   Use Grep/Glob to find these, then read the code around each. Where one rule is enforced on one path (single file, proposal, write) but not on another (merged chain, read), check whether the other path can reach the same bad state.
 
 5. **Evaluate each applicable dimension** against `references/checklist.md`: algorithm choice, data structure fit, complexity, concurrency, edge cases, correctness patterns.
 
-6. **Probe edge inputs** -- Running the code finds bugs that reading misses. For each hotspot, call the function or run the CLI on edge inputs: empty, one element, boundary index, the root or top level, unknown keys, values the validator accepts that the consumer might not, and a second `PYTHONHASHSEED` (or equivalent) where output order matters. Work in a scratch directory or temp files; never modify the user's files.
+6. **Probe edge inputs** -- Running the code finds bugs that reading misses. For each hotspot, call the function or run the CLI on edge inputs: empty, one element, boundary index, the root or top level, a target outside the project, `null` / `[]` / a scalar where an object is expected, wrong-typed values (`"1"` for `1`), unknown keys, values the validator accepts that the consumer might not, and a second `PYTHONHASHSEED` (or equivalent) where output order matters. Work in a scratch directory or temp files; never modify the user's files. Every edge input a user can type or put in a file is supported input, so a defect it triggers is a finding at whatever severity its impact earns, including LOW.
 
-7. **Confirm HIGH and CRITICAL findings** -- Every HIGH or CRITICAL finding needs a minimal reproduction: the command or snippet you ran and the output you observed. If you cannot reproduce it, downgrade it or drop it (rubric.md, "Proof for HIGH and CRITICAL").
+7. **Confirm HIGH and CRITICAL findings** -- Every HIGH or CRITICAL finding needs a minimal reproduction: the command or snippet you ran and the output you observed. A finding you cannot reproduce but can see plainly in the code stays in the report at MEDIUM or LOW with "not reproduced: <why>" in its Reproduction field; drop it only when the code does not support it (rubric.md, "Proof for HIGH and CRITICAL"). Severity follows impact, so a reproduced finding keeps the severity its impact earns: a validator that passes input the next command crashes on is still that, even when the fix is one line.
 
 8. **Score** each applicable dimension with file:line evidence, using the anchors in `references/rubric.md`. Compute the overall per rubric.md.
 
 9. **Self-check, then write the report** (see Output Format). Before writing, check that:
    - every cited file:line exists and says what the finding claims;
    - every finding has confidence >= 7, and every HIGH/CRITICAL has a Reproduction;
-   - no finding depends on an unsupported setup (rubric.md, "Not a finding");
+   - no finding depends on an unsupported setup (rubric.md, "Not a finding"), and no reproduced or code-evident defect was left out just because it is LOW;
    - the overall equals the stated computation over the named dimensions;
    - no secret values are reproduced (refer to secrets by file:line only).
 
@@ -65,7 +67,7 @@ Only report findings with confidence >= 7/10. For each finding, ask:
 - Can you point to a specific file and line?
 - Is it reachable in normal, supported use of this code?
 
-If any answer is no, do not report it. Missing a theoretical issue costs less than a report full of noise, because readers stop trusting the real findings. Severity levels (CRITICAL, HIGH, MEDIUM, LOW), with algorithm-specific examples, are defined in `references/rubric.md`.
+If any answer is no, do not report it. Missing a theoretical issue costs less than a report full of noise, because readers stop trusting the real findings. The filter is about whether a defect is real, not how important it is: a reproduced bug, or one the code plainly shows, is not noise even at LOW, and leaving it out hides real defects from the reader. Noise is speculation: guesses about runtime behavior, setups the code does not support, and style. Severity levels (CRITICAL, HIGH, MEDIUM, LOW), with algorithm-specific examples, are defined in `references/rubric.md`.
 
 ## Scoring Dimensions (1-10 each)
 

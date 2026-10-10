@@ -12,18 +12,22 @@ A finding's severity comes from what a user of the code would see when the defec
 |---|---|---|
 | CRITICAL | Silent wrong result, data loss, or corruption on common input, or a hang/crash on the main path. | A dedupe keyed on a non-unique field drops records; a retry loop with no exit condition hangs on the first transient error. |
 | HIGH | Wrong result, crash, or nondeterminism on valid input that is reachable without unusual setup, but not the common case. | An off-by-one slice drops the first or last element of a chain; iterating a `set` makes output order depend on the hash seed, so a "no change" check flaps. |
-| MEDIUM | Validation or data structure gap that lets bad input through or fails loudly instead of cleanly; quadratic path on inputs that can realistically grow. | `validate` accepts a value that `show` later crashes on; `list.index` inside a loop over all files. |
-| LOW | Fragile but currently correct: undocumented invariant, missing guard on a value callers never pass today, unclear inclusive/exclusive bounds. | A comparator relies on all keys being present; a division guarded only by an upstream caller. |
+| MEDIUM | Validation or data structure gap that lets bad input through or fails loudly instead of cleanly; a loop that escapes its bound on user-supplied input; quadratic path on inputs that can realistically grow. | `validate` accepts a value that `show` later crashes on; a walk-up that passes its stop folder when the target is outside the project; `list.index` inside a loop over all files. |
+| LOW | Fragile but currently correct, or wrong only in diagnostics: undocumented invariant, missing guard on a value callers never pass today, unclear inclusive/exclusive bounds, an error message that names the wrong file or leaves out the bad value. | A comparator relies on all keys being present; `zip(paths, configs)` after `configs` skipped a `null` entry, so errors blame the previous file. |
 
 ### Proof for HIGH and CRITICAL
 
 Before rating a finding HIGH or CRITICAL, run a minimal reproduction: call the function from a one-off script, or run the CLI on an edge input (empty file, empty list, one element, boundary value, unknown key, different `PYTHONHASHSEED`). Put the command and its observed output in the finding's **Reproduction** field. Run it in a scratch copy or with temp files; never modify the user's files to reproduce.
 
-If you cannot reproduce it, downgrade to MEDIUM or lower and say why, or drop it.
+If you cannot reproduce it, keep it at MEDIUM or lower when the defect is plain in the code, and write `not reproduced: <why>` in the Reproduction field (for example, the trigger needs a network service). Drop it only when the code does not support the claim. A reproduction raises confidence; its absence lowers severity, not existence.
+
+Reproduce MEDIUM and LOW findings too when it is cheap (a one-line CLI call or snippet); it is the fastest way to tell a real defect from a misreading. Once reproduced, a finding keeps the severity its impact earns.
 
 ### Not a finding
 
-Drop it, rather than reporting it at LOW, when triggering it needs a setup the code does not support or document: two copies of a single-user CLI or CI job running at once in the same checkout, a process killed between two writes, a hand-edited corrupt cache, an attacker-controlled input the tool never receives. Report these only if the user asked about that scenario. Security exploitability belongs to review-security, and "is it fast enough" belongs to review-performance.
+Drop it, rather than reporting it at LOW, when triggering it needs a setup the code does not support or document: two copies of a single-user CLI or CI job running at once in the same checkout, a process killed between two writes, a hand-edited corrupt cache, an attacker-controlled input the tool never receives. Report these only if the user asked about that scenario.
+
+This is about the environment, not the input. Anything a user can pass as an argument or write into a file the tool reads is supported input: a path outside the project, a config file holding `null`, `[]` or a string, a typo'd key, `"1"` where `1` is expected. Defects those inputs trigger are findings, at whatever severity their impact earns. A wrong or misleading error message (names the wrong file, leaves out the bad value) is a LOW or MEDIUM finding, not noise. Security exploitability belongs to review-security, and "is it fast enough" belongs to review-performance.
 
 ## Dimension anchors
 

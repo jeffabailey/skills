@@ -113,17 +113,22 @@ Evaluate each domain below. Score each dimension from 1–10 with file:line evid
 # Project Fitness Report
 
 **Date:** YYYY-MM-DD
-**Scope:** [what was reviewed]
+**Target:** [what was reviewed]
+Config: [copied from resolver output]
+Effective weights: [copied from resolver output]
 
 ## Overall Score: X.X / 10
 
 | Domain | Score | Status |
 |--------|-------|--------|
-| Architecture | X/10 | ✅/⚠️/❌ |
-| Security | X/10 | ✅/⚠️/❌ |
+| Architecture | X.X/10 | ✅/⚠️/❌ |
+| Security | X.X/10 | ✅/⚠️/❌ |
+| Accessibility | N/A | Skipped - [reason] |
 | ... |
 
-Status: 8–10 = ✅ Healthy, 5–7 = ⚠️ Needs Attention, 1–4 = ❌ Critical
+Arithmetic: [Σ(weight × score) / Σ(weight) over scored domains, written out]
+
+Status from `statusThresholds` lower bounds: ≥ healthy[0] (default 8) = ✅ Healthy, ≥ needsAttention[0] (default 5) = ⚠️ Needs Attention, lower = ❌ Critical. A fractional score such as 7.5 is Needs Attention. Any CRITICAL finding caps the overall at 4.0.
 
 ## Top 10 Action Items (Priority Order)
 

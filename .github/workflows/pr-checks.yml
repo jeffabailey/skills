@@ -137,7 +137,7 @@ jobs:
 
       # Rules come from [tool.ruff] in pyproject.toml; the version is pinned here.
       - name: Run ruff
-        run: uvx ruff@0.16.9 check scripts .github/scripts tests
+        run: uvx ruff@0.16.9 check scripts .github/scripts tests skills
 
   engine-config-unit-tests:
     name: Engine config unit tests

@@ -1,6 +1,6 @@
 # Algorithm & Data Structure Fitness Checklist
 
-Detailed checklist for reviewing code against algorithm correctness, data structure appropriateness, concurrency safety, and edge case handling fundamentals. Use alongside the review-algorithms skill to systematically evaluate each dimension.
+Detailed checklist for reviewing code against algorithm correctness, data structure appropriateness, concurrency safety, and edge case handling fundamentals. Use alongside the review-algorithms skill to systematically evaluate each dimension. Severity definitions and score anchors live in `rubric.md`, not here.
 
 ---
 
@@ -20,6 +20,8 @@ Detailed checklist for reviewing code against algorithm correctness, data struct
 ### Graph and Tree Traversal
 - [ ] **BFS vs DFS chosen correctly** -- BFS used for shortest path in unweighted graphs and level-order processing. DFS used for exhaustive search, cycle detection, and backtracking. The wrong choice produces incorrect results, not just slower results.
 - [ ] **Cycle handling** -- Graph traversals track visited nodes to prevent infinite loops in cyclic graphs. Recursion depth is bounded for trees that could be deeply nested.
+- [ ] **Walk-up and chain bounds correct** -- Loops that walk from a path up to a root (config discovery, parent lookups) include both ends they should: the starting node and the root or anchor. Verify with a target at depth 0, 1, and 2.
+- [ ] **Merge precedence matches documentation** -- Layered config, defaults, and overrides merge in the documented order; later layers win key by key (or replace whole sections) as documented, and nested dicts are not shallow-overwritten by accident.
 - [ ] **Topological sort for dependencies** -- Dependency ordering uses topological sort (Kahn's algorithm or DFS-based). Cycle detection is included to surface circular dependencies.
 
 ### Algorithmic Patterns
@@ -144,6 +146,10 @@ Source: [Fundamentals of Concurrency and Parallelism](https://jeffbailey.us/blog
 - [ ] **Unicode length vs byte length** -- String length operations use character count (or grapheme cluster count) rather than byte length where user-visible length matters. UTF-8 characters can be 1-4 bytes.
 - [ ] **String normalization** -- String comparison and hashing normalize Unicode forms (NFC, NFD) when comparing strings from different sources that may use different normalization.
 - [ ] **Locale-aware comparison** -- String sorting and comparison that is user-visible uses locale-aware collation rather than byte-order comparison.
+
+### Validation vs Use
+- [ ] **Validator and consumer agree** -- Everything the validator accepts, every downstream consumer handles (unknown keys, empty sections, null values, NaN/inf, out-of-range numbers). Check by running the consumer on input that passes validation.
+- [ ] **Rejected input fails at the boundary** -- Invalid input produces a clear error where it enters, not a traceback several layers later.
 
 ### Type Coercion
 - [ ] **No implicit precision loss** -- Conversions from float to int, long to int, or double to float are explicit and checked for precision loss or truncation.

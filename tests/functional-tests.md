@@ -108,6 +108,14 @@ For each test scenario:
 **When:** Run `/review:review-performance`
 **Then:** Algorithmic Efficiency score flags O(n^2) with evidence
 
+### Test: Finds the hot path in ML inference code
+
+**Given:** A batch script that loads a sentence-transformer model and calls `encode` on every item each run, with no stored embeddings
+**When:** Run `/review:review-performance`
+**Then:**
+- A finding cites the re-encode line and is filed under Caching Strategy or Resource Utilization, per references/rubric.md
+- Dimensions with nothing to evaluate (for example Database Design for code with no DB access) show `N/A — reason`, and the overall line names the averaged dimensions
+
 ## review-algorithms
 
 ### Test: Detects wrong data structure choice
@@ -165,7 +173,18 @@ For each test scenario:
 
 **Given:** HTML with images lacking alt attributes
 **When:** Run `/review:review-accessibility`
-**Then:** Screen Reader Support score reflects the gap
+**Then:** Screen Reader Support score reflects the gap; the missing alt is one finding with
+Dimension: Screen Reader Support and is not scored again under Semantic HTML
+
+### Test: Focused contrast check computes ratios
+
+**Given:** A CSS file with light and dark theme custom properties, one text token under 4.5:1
+**When:** Ask "check color contrast in <file>"
+**Then:**
+- Report has a Direct Answer naming the failing token, file:line, and a ratio from scripts/contrast.py
+- Both themes are evaluated
+- Dimensions other than Color/Contrast are `N/A — not requested`
+- Report path is docs/accessibility-review-<slug>.md, not docs/accessibility-review.md
 
 ### Test: Detects non-semantic HTML
 
@@ -196,11 +215,12 @@ For each test scenario:
 **Then:**
 - Report contains scores (1-10) for: Structural Complexity, Comprehensibility, Technical Debt, Coupling/Dependency Depth, Code Smell Density
 - Each score has at least one file:line evidence citation
-- Report written to `docs/maintainability-review.md`
+- Report written to `docs/maintainability-review.md` at the repository root (or `docs/maintainability-review-<scope-slug>.md` when the review targets a subdirectory)
+- Metrics Summary values match `skills/review-maintainability/scripts/metrics.py` output for the target
 
 ### Test: Detects high cyclomatic complexity
 
-**Given:** Function with deeply nested conditionals (4+ levels)
+**Given:** Function with deeply nested conditionals (5+ levels, over the rubric's finding threshold of 4)
 **When:** Run `/review:review-maintainability`
 **Then:** Structural Complexity score reflects the nesting with specific file:line reference
 
@@ -229,6 +249,21 @@ For each test scenario:
 **When:** Run `/review:review-full`
 **Then:** Accessibility section notes "Skipped - no frontend code detected"
 
+### Test: Pending changes use the changed files' config
+
+**Given:** An uncommitted change under a directory with a module fitness-config.json override
+**When:** Run `/review:review-full`
+**Then:**
+- `validate` and `show` run with `--path` set to each changed file
+- The report's `Config:` line names the override, and the printed Arithmetic line uses its weights
+- Process is N/A when the diff touches no docs, CI, dependency, or contributor files
+
+### Test: Invalid config stops the review
+
+**Given:** An override whose merged weights sum to 110
+**When:** Run `/review:review-full`
+**Then:** The skill reports the `validate` error and writes no report
+
 ## review-jit-test-gen
 
 ### Test: Generates tests for changed code
@@ -246,6 +281,16 @@ For each test scenario:
 **Given:** File with changes that are already well-tested
 **When:** Run `/review:review-jit-test-gen`
 **Then:** Reports that existing coverage is sufficient, generates only gap-filling tests
+
+### Test: Proves the new tests catch the change
+
+**Given:** A modified source file whose new behavior no existing test covers
+**When:** Run `/review:review-jit-test-gen`
+**Then:**
+- The report lists plausible regressions before the tests, and each test names the one it targets
+- The new tests pass on the change and at least one fails on the parent version (or a hand-made mutant), with pass/fail counts for both in the report
+- The working tree afterwards holds only the user's change plus the kept tests
+- Any test that fails on the change itself is reported as a question ("used to X, now Y; intended?") and is not committed
 
 ## review-apply
 
@@ -497,3 +542,35 @@ These are the `@manual` agent-eval scenarios in `tests/acceptance/fitness-config
 **Then:**
 - `paygate`: each threshold change carries a reason, `security.confidenceThreshold` stays within 1-10, and status bands are contiguous and non-overlapping over 1-10
 - `jeffbaileyblog`: the three threshold sections equal the baseline
+
+## ask-why
+
+### Test: Causal question gathers evidence and finds the breaking change
+
+**Given:** This repo, and the question "Why was the Fitness Review GitHub workflow failing around Oct 3-4 2026?"
+**When:** Run `/ask-why` with that question
+**Then:**
+- Output has `## Question` (with a **Premise check** line), `## Classification`, `## Evidence checked`, `## Investigation`, `## Answer`, in that order
+- Classification is Causal → Five Whys
+- Evidence checked lists git history and CI run logs, and has a "Not reachable" line
+- Root cause: `.github/workflows/fitness-review.yml` passes `SOURCE_DIR DEST_DIR` to `scripts/install-skills.sh`, which (after c1b89e0) accepted at most one argument; fixed in 24284c8 (PR #55)
+- Premise check notes the failures began before Oct 3-4 if run history shows it
+- Next Steps names the fixing commit and whether a run since the fix verified it
+- `git status` is unchanged
+
+### Test: Placement question scores candidates and names the deciding criterion
+
+**Given:** This repo, and "Where should a check that every skill has entries in tests/trigger-tests.md and tests/functional-tests.md belong: tests/skill-structure-tests.sh, scripts/fitness_config, or a new pr-checks.yml job?"
+**When:** Run `/ask-why` with that question
+**Then:**
+- Classification is Placement → Placement analysis
+- A table scores all three candidates 1-5 on responsibility fit, dependency direction, existing analogues, wiring cost, and change alignment, with totals
+- The pr-checks.yml job is identified as wiring (where a check runs), not a home for its logic
+- Recommends tests/skill-structure-tests.sh and names the deciding criterion
+- `git status` is unchanged
+
+### Test: Read-only
+
+**Given:** Any question
+**When:** Run `/ask-why`
+**Then:** No files in the project are created or modified, and no issues, comments, or workflow runs are created

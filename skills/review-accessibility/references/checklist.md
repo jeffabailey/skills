@@ -33,7 +33,7 @@ Baseline standard: WCAG 2.1 Level AA.
 - [ ] Every `<input>`, `<select>`, and `<textarea>` has an associated `<label>`
 - [ ] Labels connected via `for`/`id` attribute pairing, or by wrapping the input
 - [ ] Appropriate input types used (`email`, `tel`, `url`, `number`, `search`)
-- [ ] Required fields marked with `required` attribute and `aria-required="true"`
+- [ ] Required fields marked with the native `required` attribute (`aria-required="true"` only on custom, non-native inputs)
 - [ ] Placeholder text does not replace labels
 - [ ] Form groups use `<fieldset>` and `<legend>` where appropriate
 
@@ -43,13 +43,6 @@ Baseline standard: WCAG 2.1 Level AA.
 - [ ] No `<div role="button">` when `<button>` would work
 - [ ] No `<div role="navigation">` when `<nav>` would work
 
-### Images and Media
-- [ ] Informative images have descriptive `alt` text that conveys meaning
-- [ ] Decorative images have `alt=""` (empty alt attribute)
-- [ ] Complex images (charts, diagrams) have extended descriptions
-- [ ] `<img>` elements never omit the `alt` attribute entirely
-- [ ] Video has captions; audio has transcripts
-
 ### Lists and Tables
 - [ ] Ordered and unordered lists use `<ol>`/`<ul>` with `<li>`, not styled divs
 - [ ] Data tables use `<th>` with `scope` attribute for headers
@@ -58,7 +51,17 @@ Baseline standard: WCAG 2.1 Level AA.
 
 ---
 
-## 2. ARIA Usage
+## 2. Screen Reader Support (text alternatives and ARIA)
+
+Alt text and other text alternatives are scored here, not under Semantic HTML: they decide what assistive technology announces (WCAG 1.1.1).
+
+### Text Alternatives (Images and Media)
+- [ ] Informative images have descriptive `alt` text that conveys meaning
+- [ ] Decorative images have `alt=""` (empty alt attribute)
+- [ ] Complex images (charts, diagrams) have extended descriptions
+- [ ] `<img>` elements never omit the `alt` attribute entirely
+- [ ] Video has captions; audio has transcripts
+
 
 ### The First Rule of ARIA
 - [ ] ARIA is used only when no native HTML element provides the needed semantics
@@ -135,8 +138,9 @@ Baseline standard: WCAG 2.1 Level AA.
 ## 4. Color and Contrast
 
 ### Text Contrast (WCAG 2.1 AA)
-- [ ] Normal text (<18pt / <14pt bold): contrast ratio >= 4.5:1
+- [ ] Normal text (<18pt / <14pt bold, i.e. <24px / <18.66px bold): contrast ratio >= 4.5:1
 - [ ] Large text (>=18pt / >=14pt bold): contrast ratio >= 3:1
+- [ ] Ratios computed with `scripts/contrast.py` for every theme (light, dark, high-contrast), never estimated
 - [ ] Text inside buttons, inputs, and other UI components meets the same ratios
 
 ### Non-Text Contrast (WCAG 2.1 AA)
@@ -218,7 +222,7 @@ Baseline standard: WCAG 2.1 Level AA.
 - [ ] Heading hierarchy provides clear visual distinction at all viewport sizes
 
 ### Touch and Interaction
-- [ ] Touch targets at least 44x44px
+- [ ] Touch targets at least 44x44px (2.5.5 AAA, recommended); below 24x24px is a finding
 - [ ] Adequate spacing between touch targets to prevent mis-taps
 - [ ] Hover-dependent interactions have touch-friendly alternatives
 - [ ] No functionality available only on hover (tooltips need focus trigger too)
@@ -253,7 +257,7 @@ Baseline standard: WCAG 2.1 Level AA.
 ### 5. Error Prevention
 - [ ] Confirmation dialogs before destructive actions (delete, overwrite, submit)
 - [ ] Input constraints prevent invalid data (type="email", maxlength, pattern)
-- [ ] Disabled submit buttons until required fields are completed
+- [ ] Submit stays enabled and validation says what is missing (a disabled submit hides the reason and is skipped by keyboard and screen reader users)
 - [ ] Real-time validation for fields with specific format requirements
 
 ### 6. Recognition Rather Than Recall
@@ -296,7 +300,7 @@ These are the most frequently encountered a11y problems, compiled from the sourc
 | Missing alt text | `<img src="chart.png">` | Add `alt="Sales increased 25% from Q1 to Q2"` |
 | Clickable div | `<div onclick="submit()">Submit</div>` | Replace with `<button type="submit">Submit</button>` |
 | Missing form label | `<input placeholder="Name">` | Add `<label for="name">Name</label>` before input |
-| Low contrast | `color: #999` on `background: #fff` (2.84:1) | Use `color: #333` (12.63:1) |
+| Low contrast | `color: #999` on `background: #fff` (2.85:1) | Use `color: #333` (12.63:1) |
 | Removed focus outline | `*:focus { outline: none }` | Provide visible custom focus style |
 | Silent dynamic update | `div.textContent = 'Saved'` | Add `aria-live="polite"` to the container |
 | ARIA overuse | `<div role="button" tabindex="0">` | Replace with `<button>` |
@@ -364,7 +368,7 @@ These are the most frequently encountered a11y problems, compiled from the sourc
 ### Manual
 - Keyboard-only navigation test (Tab, Shift+Tab, Enter, Space, Escape, arrows)
 - VoiceOver (macOS: Cmd+F5), NVDA (Windows, free), JAWS (Windows)
-- WebAIM Contrast Checker
+- `scripts/contrast.py` (bundled; resolves CSS custom properties per theme) or WebAIM Contrast Checker
 - Color Oracle / Sim Daltonism (color blindness simulation)
 - Browser zoom to 200%
 - Disable JavaScript and verify core functionality

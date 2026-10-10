@@ -27,11 +27,12 @@ python3 "${CLAUDE_SKILL_DIR}/../../scripts/fitness-config.py" <command>
 
 `${CLAUDE_SKILL_DIR}` is this skill's directory; the resolver ships two levels up in the plugin's `scripts/`. If your agent does not expand the variable, substitute the directory containing this `SKILL.md`.
 
-Run every resolver command from the **anchor**: the git top-level of the target (`git -C <target> rev-parse --show-toplevel`), or the target itself when it is not in a git repository. Pass the target relative to the anchor.
+Run every resolver command from the **anchor**: the git top-level of the target (`git -C <target> rev-parse --show-toplevel`), or the target itself when it is not in a git repository. Pass the target relative to the anchor. Set `PYTHONDONTWRITEBYTECODE=1` so running the resolver does not leave `__pycache__` beside it.
 
 | Purpose | Command |
 |---|---|
 | Starting config (baseline) | `init --path <target> --dry-run` |
+| Current values of an existing config | baseline JSON piped to `init --path <target> --from - --dry-run` |
 | Check a proposal, get its fingerprint | `init --path <target> --from - --dry-run` (proposal JSON on stdin) |
 | Save a reviewed proposal | `init --path <target> --from - --expect <fingerprint>` (same JSON on stdin) |
 | Confirm what applies after saving | `show --path <target>` |
@@ -43,8 +44,14 @@ Run every resolver command from the **anchor**: the git top-level of the target 
 1. The target is the path argument, or the current folder. Print it as the first line of output: `Target: <absolute path>`.
 2. Find the anchor. If there is no git repository, say "No repository found; ancestor configs not considered."
 3. Run `init --path <target> --dry-run`. It writes nothing. Relay its header lines verbatim (`STATUS:`, `Baseline-Source:` and any chain lines) and keep the canonical JSON block as the **baseline**. The baseline is the built-in starting config at the repository root, or the merged parent configs for a subfolder.
-4. If it exits 2 saying the target is not a folder or does not exist, stop and tell the user; do not use degraded mode.
-5. If the command fails otherwise (no `python3`, the path did not expand, the resolver errors), switch to **degraded mode**: read `${CLAUDE_SKILL_DIR}/../../fitness-config.example.json` as the baseline, label it "example file (degraded)", and continue through step 5 printing the proposal for manual use. Degraded mode never saves. If the example file is also unreachable, stop and say why.
+4. If the probe exits 2 saying the target is not a folder or does not exist, stop and tell the user; do not use degraded mode.
+5. If the probe fails otherwise (no `python3`, the path did not expand, the resolver errors), switch to **degraded mode**: read `${CLAUDE_SKILL_DIR}/../../fitness-config.example.json` as the baseline, label it "example file (degraded)", and continue through step 5 printing the proposal for manual use. Degraded mode never saves. If the example file is also unreachable, stop and say why.
+6. **Existing config** (skip in degraded mode). The baseline ignores a `fitness-config.json` already at the target, but the step 5 diff compares against it. So that the table and the diff agree, pipe the baseline JSON to `init --path <target> --from - --dry-run` (writes nothing):
+   - `would-create`: no config yet. The table has no current column.
+   - `would-replace`: each diff line `path old -> new` gives a current value (`old`); every path not listed equals the baseline. Add a **current** column to the table in step 4.
+   - `unchanged`: the existing file equals the baseline. Say so; no current column.
+   - `existing-malformed`: say the existing file is not valid JSON; the current column reads `malformed`.
+   - `existing-not-a-file`: relay the error and stop; nothing can be saved there.
 
 ### Step 1: Evidence mode
 
@@ -68,7 +75,9 @@ Each evidence item is a path that a read or list tool returned, a short note on 
 
 Classify as one archetype from `references/purpose-profiles.md`, `mixed`, or `unknown`, with a confidence level from `references/purpose-signals.md`. Show the purpose in plain words, the archetype, the confidence and the evidence list.
 
-- **high:** go on to step 4.
+**A purpose stated in the request is the user's answer.** If the request already says what the project is ("it's my shell tool", "for this public website", "our payments API"), map it to an archetype and set the confidence to `user-confirmed`. Show the classification line with `confidence: user-confirmed (stated in request)` and go on to step 4 without asking. The scan still runs, because moves away from the profile need evidence. If the scan points strongly at a different archetype, say so in one line, but use the stated purpose. Ask only when the statement fits no archetype or fits two.
+
+- **high** or **user-confirmed:** go on to step 4.
 - **medium or mixed:** ask "What is the primary purpose of this project?" and offer the archetypes. For a mixed repository, add that a subfolder can get its own config later by running this skill on that folder. Do not create one.
 - **low or unknown:** ask the same question once. With no answer, say "Kept baseline: not enough evidence to tune." and propose the baseline unchanged, with no reasons.
 
@@ -76,16 +85,21 @@ If the user corrects the classification, use their answer without argument.
 
 ### Step 4: Propose
 
-1. Start from the archetype's row in `references/purpose-profiles.md`.
-2. Adjust using this project's evidence, following the rules in that file: no more than 4 points per domain from the profile, a cited reason for every move, whole numbers of at least 1, total of 100. Full review results only lower domains that do not apply; a low score never raises a weight.
+1. Start from the archetype's row in `references/purpose-profiles.md`. The profile is the reference point for judgment (ADR-007): the classification evidence from step 3 justifies the whole row, so a value taken unchanged from the profile needs no evidence of its own.
+2. Adjust using this project's evidence, following the rules in that file: no more than 4 points per domain from the **profile**, a cited reason for every move away from the profile, whole numbers of at least 1, total of 100. Full review results only lower domains that do not apply; a low score never raises a weight.
 3. Build the complete proposal: the baseline JSON with the `weights` section replaced. Keep `statusThresholds`, `security` and `scoring` from the baseline unless the evidence shows higher stakes (payments, credentials, personal data). Change a threshold only with a stated reason citing that evidence, and add a row for it to the table below. For an ordinary project, keep the starting thresholds and say there is no stakes signal to change them. The status bands must cover every score from 1 to 10 once, with no gap or overlap; the security cutoff stays between 1 and 10.
-4. Print the rationale table, one row per weight in resolver order, then one row per changed threshold:
+4. Print the rationale table, one row per weight in resolver order, then one row per changed threshold. Add the **current** column only when step 0 found an existing config:
 
-   | key | baseline | proposed | reason |
-   |---|---|---|---|
-   | `weights.<domain>` | from baseline | from proposal | one line citing an evidence path, or `(unchanged)` |
+   | key | current | baseline | profile | proposed | reason |
+   |---|---|---|---|---|---|
+   | `weights.<domain>` | existing file | from baseline | from profile row | from proposal | see below |
 
-   There is exactly one reason for each value that differs from the baseline. Keep each reason under about 100 characters.
+   The reason column has exactly one entry per row. Check these in order:
+   - proposed differs from profile: `profile ±N: <evidence path> <what it shows>`, where N is at most 4, or `user edit` for a change the user asked for. This is the only kind of reason that needs its own evidence, even when the move lands back on the baseline value.
+   - proposed equals profile and differs from baseline: `<archetype> profile`. The classification evidence from step 3 covers it.
+   - proposed equals profile and baseline: `(unchanged)`.
+
+   With no profile (unknown, kept baseline), leave the profile column as `-` and every reason `(unchanged)`. For a threshold row, the profile column is `-` and the reason cites the stakes evidence. Keep each reason under about 100 characters. Count and show the moves away from the profile, for example `Moves from profile: 3 (each within 4)`.
 5. Show the total. Apply any change the user asks for ("raise X, take it from Y"), rebalance to 100, and print the table again.
 
 The rationale is printed only. It is never written into the config file.
@@ -97,7 +111,7 @@ Pipe the proposal JSON to `init --path <target> --from - --dry-run`. This writes
 - Relay the `STATUS:` and `Proposal:` lines verbatim and show the canonical JSON block exactly as printed. The `Proposal:` value is the fingerprint.
 - `STATUS: invalid`: show each error line, fix the proposal, and run the check again.
 - `STATUS: would-create`: ask "Save this as `<target>/fitness-config.json`? [y/N]".
-- `STATUS: would-replace`: a config already exists. Show every diff line the resolver printed (`path old -> new`, then `(N values unchanged)`), then ask "Overwrite `<target>/fitness-config.json`? [y/N]".
+- `STATUS: would-replace`: a config already exists. Show every diff line the resolver printed (`path old -> new`, then `(N values unchanged)`); each `old` matches the current column of the table. Then ask "Overwrite `<target>/fitness-config.json`? [y/N]".
 - `STATUS: existing-malformed`: the current file is not valid JSON, so there is no diff. Say so, show the proposal, and ask the same overwrite question.
 - `STATUS: unchanged`: the current config already equals the proposal. Say there is nothing to save and skip to step 7.
 - `STATUS: existing-not-a-file`: something other than a file (such as a folder) is at `<target>/fitness-config.json`. Relay the error and stop; nothing can be saved there until the user moves it.
@@ -128,5 +142,5 @@ Pass `--force` only after the user said yes to the overwrite question for this f
 
 - Nothing in the project changes before step 6, except `docs/fitness-report.md` in full mode after the user agreed.
 - Every weight shown comes from the resolver output or `references/purpose-profiles.md`.
-- Every reason cites evidence that exists in the target.
+- Every move away from the profile, and every threshold change, cites evidence that exists in the target.
 - Never create per-folder configs the user did not ask for.

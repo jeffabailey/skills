@@ -2,6 +2,8 @@
 
 Detailed checklist for reviewing code against maintainability and understandability fundamentals. Use alongside the review-maintainability skill.
 
+Numbers here follow the threshold table in `rubric.md`: the first number is the healthy target, "finding above" is where an item becomes a reported finding. Run `scripts/metrics.py <target>` to measure them.
+
 Reference: https://jeffbailey.us/categories/fundamentals/
 
 ---
@@ -9,17 +11,15 @@ Reference: https://jeffbailey.us/categories/fundamentals/
 ## 1. Structural Complexity
 
 ### Cyclomatic & Cognitive Complexity
-- [ ] **Cyclomatic complexity below 10** for critical paths — Count branches, loops, and conditionals. High complexity indicates many execution paths and higher testing burden.
-- [ ] **Cognitive complexity below 15** (SonarQube-style) — Nested structures and control flow add to comprehension difficulty. Prefer early returns and extraction.
-- [ ] **No functions over 50 lines** — Long functions are hard to reason about and test. Extract helpers and name them clearly.
-- [ ] **No classes over 300 lines** — God classes accumulate responsibilities. Split by domain concept or reason-to-change.
-- [ ] **Nesting depth 4 or less** — Deep nesting obscures flow. Extract to named functions or use guard clauses.
-- [ ] **Parameter count 5 or less** — Many parameters suggest missing abstraction. Use parameter objects or builder patterns.
+- [ ] **Cyclomatic complexity 10 or less** (finding above 15) — Count branches, loops, and conditionals. High complexity indicates many execution paths and higher testing burden.
+- [ ] **Cognitive complexity 15 or less** (finding above 25, SonarQube-style, judged by reading) — Nested structures and control flow add to comprehension difficulty. Prefer early returns and extraction.
+- [ ] **Nesting depth 3 or less** (finding above 4) — Deep nesting obscures flow. Extract to named functions or use guard clauses.
+- [ ] **Parameter count 4 or less** (finding above 5) — Many parameters suggest missing abstraction. Use parameter objects or builder patterns.
 
 ### LOC Guards
-- [ ] **Functions under 30 lines** — Ideal for single-screen comprehension.
-- [ ] **Methods under 30 lines** — Same; delegate to helpers with descriptive names.
-- [ ] **Modules under 500 lines** — Large files indicate mixing of concerns or missing decomposition.
+- [ ] **Functions and methods 30 lines or less** (finding above 50) — Single-screen comprehension. Delegate to helpers with descriptive names.
+- [ ] **Classes 300 lines or less** (finding above 500) — God classes accumulate responsibilities. Split by domain concept or reason-to-change. With no classes, apply this to the largest closure factory or stateful module.
+- [ ] **Modules 500 non-blank lines or less** (finding above 1000) — Large files indicate mixing of concerns or missing decomposition.
 
 ---
 
@@ -45,12 +45,12 @@ Reference: https://jeffbailey.us/categories/fundamentals/
 ## 3. Technical Debt Indicators
 
 ### TODO / FIXME / HACK
-- [ ] **Fewer than 5 untracked items** — TODO/FIXME either have issue references or are actively triaged.
+- [ ] **Fewer than 5 untracked items** (finding at 5) — TODO/FIXME either have issue references or are actively triaged.
 - [ ] **No HACK without explanation** — Suppressed warnings and workarounds have "why" and "when to fix."
 
 ### Duplication
 - [ ] **Shared logic extracted** — Same validation, transformation, or formatting in one place.
-- [ ] **No copy-paste blocks** — Repeated code blocks extracted to named functions.
+- [ ] **No copy-paste blocks** (finding: 10+ near-identical lines in 2+ places) — Repeated code blocks extracted to named functions.
 - [ ] **DRY applied to business logic** — Domain rules live in one source of truth.
 
 ### Magic Values
@@ -78,7 +78,7 @@ Reference: https://jeffbailey.us/categories/fundamentals/
 - [ ] **Dependencies point inward** — Domain does not depend on infrastructure.
 
 ### Inheritance & Dependency Depth
-- [ ] **Inheritance depth 2–3 levels** — Deeper hierarchies are hard to reason about.
+- [ ] **Inheritance depth 3 or less** (finding above 3) — Deeper hierarchies are hard to reason about.
 - [ ] **Composition over inheritance** — Where appropriate, prefer composition.
 - [ ] **Dependency tree depth reasonable** — No 10-layer transitive stacks for simple tasks.
 - [ ] **No skip-layer imports** — Boundaries respected; no presentation importing from data layer.
@@ -88,8 +88,8 @@ Reference: https://jeffbailey.us/categories/fundamentals/
 ## 5. Code Smell Density
 
 ### God Classes & Long Methods
-- [ ] **No classes over 500 lines** — Split by responsibility.
-- [ ] **No methods over 50 lines** — Extract and name helpers.
+- [ ] **No god classes** (class over 500 lines, or a closure factory / stateful module of that size) — Split by responsibility.
+- [ ] **No long methods** (over 50 lines) — Extract and name helpers.
 - [ ] **Single responsibility** — Each class has one reason to change.
 
 ### Feature Envy & Inappropriate Intimacy

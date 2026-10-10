@@ -19,7 +19,7 @@ This repository and the article [Fundamental Skills](https://jeffbailey.us/blog/
 
 | Skill | Purpose | Triggers |
 |-------|---------|----------|
-| `generate-commit` | Generate a conventional commit message from staged changes, review before committing. Detects the project's language/formatter and applies it. | "generate commit", "write a commit message", "commit my changes" |
+| `generate-commit` | Write a conventional commit message for what you staged, in the repo's own types and scopes, and commit after review. Runs CI's lint on staged files only, warns about secret-looking files, and suggests splitting mixed diffs. | "generate commit", "write a commit message", "commit what I staged" |
 | `ai-sanitize` | Removes AI tells from prose, UI code, and graphics (performative phrasing, emdashes, gradients, glass, eyebrows, pills, emoji, broken ASCII art), extending the project's own style guide and design system. Edits in place or reports only. | "remove AI tells", "de-slop this", "make this UI look less AI-generated" |
 | `fitness-config-init` | Creates a `fitness-config.json` with review weights that fit what the project is for. Scans the folder (or runs a full review first, if asked), proposes weights from a matching purpose profile, explains every change, and saves only the proposal you approve. | "create a fitness config", "tune review weights for this project", "initialize fitness config" |
 
@@ -252,8 +252,8 @@ cd /path/to/a/test/project
 
 # Test: review-architecture produces scores for all dimensions
 claude -p "/review:review-architecture"
-# Then check docs/architecture-review.md for:
-#   - Scores (1-10) for all 7 dimensions
+# Then check docs/architecture-review.md (docs/architecture-review-<scope-slug>.md for a scoped run) for:
+#   - Scores (1-10) for every applicable dimension; inapplicable ones marked "N/A — reason"
 #   - Each score backed by file:line evidence
 #   - Scores below 6 generate action items
 
@@ -295,7 +295,7 @@ claude -p "/review:review-security"                    # structured workflow + r
 
 # General-development skill — without vs. with
 claude -p "Commit my changes"                          # ad hoc message, no style detection
-claude -p "/generate-commit"                            # detects tooling, enforces convention, confirms
+claude -p "/generate-commit"                            # uses your staging, lints staged files, confirms
 ```
 
 Review skills should produce more findings, fewer false positives, consistent scoring, and file:line evidence that the unassisted run lacks. General-development skills should produce more consistent, convention-following output with the intended safety checks (e.g. style detection and confirmation before committing) that an ad hoc prompt skips.

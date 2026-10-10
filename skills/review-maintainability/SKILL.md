@@ -11,11 +11,10 @@ Reference: [Fundamentals of Maintainability](https://jeffbailey.us/blog/2026/02/
 
 ## Domain Knowledge
 
-For detailed scoring rubrics, severity definitions, what-good-looks-like / what-bad-looks-like criteria, and domain expertise, read `references/wisdom.md` before scoring. That file is auto-generated from:
-
-- [Fundamentals of Maintainability](https://jeffbailey.us/blog/2026/02/22/fundamentals-of-maintainability/)
-
-Use the wisdom reference when evaluating code and assigning dimension scores.
+- `references/rubric.md` is the scoring source: the single threshold table, severity definitions, 1-10 anchors per dimension, the N/A rule, and the overall-score formula. Read it first; it is short.
+- `references/checklist.md` is what to inspect during the workflow steps. Its numbers match the rubric's threshold table.
+- `references/wisdom.md` is optional background, auto-generated from [Fundamentals of Maintainability](https://jeffbailey.us/blog/2026/02/22/fundamentals-of-maintainability/). It holds no rubric. Grep it by heading for a specific question (e.g. `Mistake 3: Copy-Paste`); never read it whole.
+- `scripts/metrics.py` measures what the rubric thresholds need, so the Metrics Summary is measured rather than estimated.
 
 ## Configuration
 
@@ -31,23 +30,38 @@ Where `<target>` is the file or directory under review. The CLI walks up to disc
 
 ## Workflow
 
-1. **Read domain knowledge** — Read `references/wisdom.md` to load scoring rubrics, thresholds, and severity definitions.
+1. **Read the rubric** — Read `references/rubric.md`, then skim `references/checklist.md`.
 
-2. **Identify scope** — Use Glob/Grep to locate source files (excluding generated code, vendored libs). Determine primary language(s) and module structure.
+2. **Identify scope** — List source files and the primary language(s). Exclude generated code (`*.min.js`, `*_pb2.py`, build output) and vendored dependencies (`vendor/`, `third_party/`, copied-in libraries), and name what you excluded in the report's Target line.
+   - **Vendored code: decide by ownership, not size.** The question is whether the team maintains this copy. Review it as owned code when it has local edits or local commits (`git log -- <path>`), or when it is what actually runs (the project imports the copy, not an installed package). Say so in the Target line ("includes vendored fork of X"). Exclude it when it is an unmodified copy of a published version (compare against the version named in the manifest or lockfile when you can fetch it read-only) or when nothing in scope loads it; then name it under excluded, and report the dead copy itself under Technical Debt. If you cannot tell, treat it as owned and say why.
+   - To measure without an excluded copy that is not under `vendor/` or `third_party/`, pass `--exclude <glob>` to the metrics helper (step 4).
 
-3. **Assess structural complexity** — For each significant module or hot path, estimate or measure cyclomatic complexity, nesting depth, and LOC per function. Apply the thresholds from the wisdom reference.
+3. **Decide applicability** — For each of the five dimensions, decide whether anything in scope can be evaluated. Mark the rest `N/A — <reason>` per the rubric's N/A rule. A dimension with clean code is scored, not N/A.
 
-4. **Evaluate understandability** — Check naming clarity, control-flow readability, and whether non-obvious logic is documented. Apply the rubrics from the wisdom reference.
+4. **Measure** — Run the metrics helper on the target (add `--include-vendored` if step 2 decided vendored code is the project):
+   ```bash
+   python3 "${CLAUDE_SKILL_DIR}/scripts/metrics.py" <target> --top 15
+   ```
+   It reports max function LOC, cyclomatic complexity, nesting, parameter count, class and file size, and every TODO/FIXME/HACK/XXX and lint suppression, each with file:line, and marks rows over the finding thresholds. `--include-vendored` scans `vendor/`-style directories it skips by default; `--exclude <glob>` (repeatable) drops other paths. Python is AST-exact; brace languages are approximate, so read the code before basing a HIGH finding on a brace-language number. For unsupported languages, or functions the helper misses, measure by reading and mark the value `(read)`.
 
-5. **Count technical debt indicators** — Search for TODO, FIXME, HACK, XXX comments; duplicated logic blocks; magic numbers and strings; suppressed linter/compiler warnings. Estimate duplication percentage where feasible.
+5. **Assess structural complexity** — Start from the metrics output; read the worst functions to confirm and to judge cognitive complexity.
 
-6. **Assess coupling and dependency depth** — Trace afferent/efferent coupling (how many modules depend on this vs. how many this depends on). Check inheritance hierarchies and dependency trees for excessive depth.
+6. **Evaluate understandability** — Naming, control-flow readability, "why" comments on non-obvious logic, consistency between modules.
 
-7. **Tally code smells** — Identify god classes, long methods, feature envy, inappropriate intimacy, shotgun surgery patterns. Apply the thresholds from the wisdom reference.
+7. **Count technical debt indicators** — Use the markers and suppressions from step 4; check whether each TODO has an issue reference. Look for duplicated blocks (`diff` near-identical files; grep for a distinctive line from a suspected copy), magic values, and hardcoded configuration.
 
-8. **Score each dimension** with file:line evidence, using the rubrics from `references/wisdom.md`.
+8. **Assess coupling and dependency depth** — Trace imports: fan-in per module, cycles, skip-layer imports, inheritance depth.
 
-9. **Produce the report** with scores, evidence, and prioritized action items.
+9. **Tally code smells** — God classes (or closure factories / stateful modules in class-less code), long methods, feature envy, shotgun surgery, dead or commented-out code. Normalize per 1,000 non-blank LOC as the rubric asks.
+
+10. **Score** each applicable dimension against the rubric anchors, with file:line evidence.
+
+11. **Self-check, then write the report** (see Output Format). Before writing, confirm:
+    - every cited file:line exists and shows what the finding claims;
+    - every finding has confidence >= 7 and all eight template fields (Severity through Remediation);
+    - the overall score equals the stated computation (mean of scored dimensions, CRITICAL cap applied);
+    - Metrics Summary values match the metrics output;
+    - no secret value appears anywhere in the report (see Secrets below).
 
 ## Confidence and Severity
 
@@ -58,11 +72,15 @@ Only report findings with confidence >= 7/10. For each finding, assess:
 
 If any answer is no, do not report it. It is better to miss a theoretical issue than to flood the report with noise.
 
-For severity level definitions (CRITICAL, HIGH, MEDIUM, LOW) with domain-specific examples, consult `references/wisdom.md`.
+Severity levels (CRITICAL, HIGH, MEDIUM, LOW) are defined with maintainability examples in `references/rubric.md`. Tie severity to the threshold table: over Severe is HIGH, over Finding is MEDIUM, between Target and Finding is LOW.
+
+### Secrets
+
+Maintainability targets often contain hardcoded credentials, tokens, or session cookies. Never reproduce a secret value in Evidence, code excerpts, or remediation examples: cite the file:line and write `<redacted>` in place of the value. Here, hardcoded credentials count only as configuration-in-code debt (Technical Debt). Leave exposure, rotation, and severity to `review-security`, and add one line to the report recommending it ("Hardcoded credentials at file:line; run review-security").
 
 ## Scoring Dimensions (1-10 each)
 
-Dimensions to score (detailed rubrics including what-to-check, what-good-looks-like, and what-bad-looks-like are in `references/wisdom.md`):
+Anchors for each band are in `references/rubric.md`.
 
 1. **Structural Complexity** — Cyclomatic complexity, nesting depth, LOC per function/class, parameter count
 2. **Understandability / Comprehensibility** — Naming clarity, control-flow readability, documentation of non-obvious logic, consistency
@@ -72,21 +90,33 @@ Dimensions to score (detailed rubrics including what-to-check, what-good-looks-l
 
 ## Output Format
 
-Write the report to `docs/maintainability-review.md` with this structure:
+Write the report at the root of the repository that contains the target (the nearest ancestor with `.git`; the target directory itself if there is none), unless the user names a path:
+
+- Whole repository: `docs/maintainability-review.md`
+- A subdirectory or file set: `docs/maintainability-review-<scope-slug>.md` (e.g. `docs/maintainability-review-scripts-fitness-config.md`), so a scoped review does not overwrite the whole-repo report.
+
+Use this structure:
 
 ```markdown
 # Maintainability & Understandability Fitness Review
 
+**Target:** <path(s) reviewed; languages; N source files, N non-blank LOC; excluded: ...>
+Config: <copied from resolver output>
+Effective weights: <copied from resolver output>
+
+## Direct Answer
+(Only when the user asked a specific question, e.g. "is cli.py getting too big?" Answer it in 2-4 sentences with the numbers.)
+
 ## Summary
 
-Overall fitness score: X.X / 10 (average of dimensions)
+Overall fitness score: X.X / 10 (mean of <list of scored dimensions>) — <Healthy / Needs Attention / Critical>
 
 | Dimension | Score | Key Finding |
 |-----------|-------|-------------|
 | Structural Complexity | X/10 | ... |
 | Understandability | X/10 | ... |
 | Technical Debt Indicators | X/10 | ... |
-| Coupling and Dependency Depth | X/10 | ... |
+| Coupling and Dependency Depth | X/10 or N/A — reason | ... |
 | Code Smell Density | X/10 | ... |
 
 ## Detailed Findings
@@ -97,7 +127,7 @@ Overall fitness score: X.X / 10 (average of dimensions)
 - **Dimension:** [which scoring dimension]
 - **Location:** file:line
 - **Description:** What the issue is and why it matters.
-- **Evidence:** The specific code pattern found.
+- **Evidence:** The specific code pattern or metric found (secrets as `<redacted>`).
 - **Impact:** What could go wrong during maintenance or refactoring.
 - **Remediation:** Concrete fix with code example or specific steps.
 
@@ -110,19 +140,26 @@ Overall fitness score: X.X / 10 (average of dimensions)
 
 (repeat for each dimension)
 
-## Top 5 Action Items (by impact)
+## Action Items (up to 5, by impact)
 
 1. [CRITICAL/HIGH/MEDIUM] Description -- file:line
-2. ...
 
-## Metrics Summary (where measurable)
+(Fewer than 5 is fine; do not pad with low-value items.)
 
-| Metric | Observed | Target | Status |
-|--------|----------|--------|--------|
-| Max LOC per function | X | < 50 | ... |
-| Max nesting depth | X | < 4 | ... |
-| TODO/FIXME count | X | < 5 tracked | ... |
-| God class count (500+ LOC) | X | 0 | ... |
+## Metrics Summary
+
+Measured with scripts/metrics.py (<ast | brace (approximate)>); values marked (read) were measured by reading the code. Targets from the rubric's threshold table.
+
+| Metric | Observed | Target / Finding | Status |
+|--------|----------|------------------|--------|
+| Max LOC per function | X (file:line) | <= 30 / > 50 | ... |
+| Max cyclomatic complexity | X (file:line) | <= 10 / > 15 | ... |
+| Max nesting depth | X (file:line) | <= 3 / > 4 | ... |
+| Max parameters | X (file:line) | <= 4 / > 5 | ... |
+| Largest class (or closure/stateful module used instead) | X (file:line) | <= 300 / > 500 | ... |
+| Largest file (non-blank LOC) | X (file) | <= 500 / > 1000 | ... |
+| Untracked TODO/FIXME/HACK | X | < 5 / >= 5 | ... |
+| Lint/type suppressions | X | justified / blanket or >= 5 unjustified | ... |
 
 ## Checklist Reference
 

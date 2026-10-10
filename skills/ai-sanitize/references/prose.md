@@ -109,7 +109,7 @@ Emdashes (—) used as the default clause joiner. One is punctuation; one per pa
 
 **Fix:** emphasis is subtractive and works only because most text has none. Allow at most two or three bold or italic runs per section. Bold only short lead-in labels or true warnings. Italics for genuine stress, a term on first mention, or titles. Turn narrative bullets back into paragraphs. Remove decorative emoji; keep at most one per section when it carries tone.
 
-**Detect:** count `\*\*` per section; `grep -nP "[\x{1F300}-\x{1FAFF}\x{2728}\x{2705}]"`.
+**Detect:** count `\*\*` per section; `grep -nP "[\x{1F300}-\x{1FAFF}\x{2728}\x{2705}]"`; Title Case headings or labels that end in a colon (`grep -nE "([A-Z][a-z]+ ){2,}[A-Z][a-z]+:[[:space:]]*($|<)"`).
 
 ## 13. Hedging by habit and false balance
 

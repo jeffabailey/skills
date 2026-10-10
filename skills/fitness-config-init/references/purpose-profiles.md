@@ -21,14 +21,15 @@ For comparison, the built-in starting config (what `init --path <target> --dry-r
 |---|---|
 | One archetype, high confidence | That archetype's row |
 | Medium confidence, or `mixed` | Ask the user for the primary purpose, then use that row |
+| User-confirmed (answered, or stated in the request) | That archetype's row |
 | `unknown`, or low confidence and no answer | No row. Propose the baseline unchanged, with no reasons |
 
 `mixed` and `unknown` are classifications, not profiles. For a mixed repository, mention that a subfolder can get its own `fitness-config.json` later. Do not create one.
 
 ## Adjusting a row
 
-1. Move any single domain by at most 4 points from the profile value.
-2. Each move needs a reason that cites an evidence path from the scan or a finding from the full review. No evidence, no move.
+1. Move any single domain by at most 4 points from the profile value. The bound and the reasons are measured from the profile, not from the baseline: a value taken unchanged from the profile is justified by the classification, and its reason is just `<archetype> profile`.
+2. Each move away from the profile needs a reason that cites an evidence path from the scan or a finding from the full review. No evidence, no move.
 3. Keep every weight a whole number of at least 1 and keep the total at 100. When you raise one domain, lower another by the same amount and give that move its own reason.
 4. Full review results change applicability only. A domain the review skipped or found nothing to assess in (no UI for accessibility, no data store for data) may move toward 1. A low score never raises a weight: weights say how much a domain matters, not how healthy it is today.
 5. When the user asks for a specific change ("performance 12, take it from architecture"), apply it exactly, even beyond the 4-point bound, and note it as a user edit in the reason column.

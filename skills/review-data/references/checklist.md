@@ -1,6 +1,8 @@
 # Data Fitness Checklist
 
-Detailed checklist for reviewing code, schema definitions, migration files, and data pipeline code against data fundamentals. Use alongside the review-data skill to systematically evaluate each dimension.
+Detailed checklist for reviewing code, schema definitions, migration files, and data pipeline code against data fundamentals. Use alongside the review-data skill to systematically evaluate each dimension. Severity and score anchors live in `rubric.md`; this file says what to inspect.
+
+A documented, followed project policy (an ADR, README, or migration guide) that deliberately answers an item meets that item. Items marked *(performance)* are speed concerns: note them for review-performance, do not score them here.
 
 ---
 
@@ -31,10 +33,11 @@ Detailed checklist for reviewing code, schema definitions, migration files, and 
 - [ ] **No reserved word conflicts** -- Table and column names do not conflict with SQL reserved words (user, order, group, select, table). If they do, they are consistently quoted.
 
 ### Indexes
-- [ ] **Indexes on foreign keys** -- Every foreign key column has an index. Without indexes, JOIN operations on foreign keys perform full table scans.
-- [ ] **Indexes on filtered columns** -- Columns frequently used in WHERE clauses have indexes. Check query patterns against existing indexes.
-- [ ] **Composite indexes for multi-column queries** -- Queries that filter on multiple columns (WHERE status = 'active' AND created_at > ?) benefit from composite indexes with column order matching the query pattern.
-- [ ] **No redundant indexes** -- An index on (a, b) makes a separate index on (a) alone redundant. Redundant indexes waste storage and slow writes.
+- [ ] **Indexes backing constraints** -- UNIQUE and primary-key constraints exist as database constraints or unique indexes, not only as application checks. Partial unique indexes are used where uniqueness applies to a subset (active rows).
+- [ ] *(performance)* **Indexes on foreign keys** -- Every foreign key column has an index. Without indexes, JOIN operations on foreign keys perform full table scans.
+- [ ] *(performance)* **Indexes on filtered columns** -- Columns frequently used in WHERE clauses have indexes. Check query patterns against existing indexes.
+- [ ] *(performance)* **Composite indexes for multi-column queries** -- Queries that filter on multiple columns (WHERE status = 'active' AND created_at > ?) benefit from composite indexes with column order matching the query pattern.
+- [ ] *(performance)* **No redundant indexes** -- An index on (a, b) makes a separate index on (a) alone redundant. Redundant indexes waste storage and slow writes.
 
 Source: [Fundamentals of Databases](https://jeffbailey.us/blog/2025/09/24/fundamentals-of-databases/)
 
@@ -43,7 +46,7 @@ Source: [Fundamentals of Databases](https://jeffbailey.us/blog/2025/09/24/fundam
 ## 2. Migration Safety
 
 ### Reversibility
-- [ ] **Up and down methods** -- Every migration includes both an up (apply) and down (rollback) method. Down methods are the inverse of up methods and are tested.
+- [ ] **Up and down methods, or a documented forward-only policy** -- Every migration includes both an up (apply) and down (rollback) method that is its inverse and is tested. Alternatively, the project documents a forward-only policy (fix forward with a new migration, restore from backup for disasters) and its migrations follow it; that meets this item and the two below.
 - [ ] **Rollback tested** -- Migration rollbacks are tested in a non-production environment before deploying. A rollback that fails is worse than no rollback at all.
 - [ ] **Data preservation on rollback** -- Rolling back a migration that added a column does not lose data in that column if it has been populated. Consider whether rollback scenarios need data migration.
 
@@ -103,7 +106,7 @@ Source: [Fundamentals of Databases](https://jeffbailey.us/blog/2025/09/24/fundam
 - [ ] **INNER JOIN for required relationships** -- When both sides of the join must exist (an order must have a customer), use INNER JOIN. LEFT JOIN here would mask data integrity problems by returning rows with NULL customer data instead of surfacing the missing relationship.
 - [ ] **LEFT JOIN only when nulls are valid** -- LEFT JOIN is correct when the right side is genuinely optional (a user may or may not have a profile picture). If LEFT JOIN results always produce nulls on the right side, it may indicate a data integrity issue rather than a valid absence.
 - [ ] **No accidental cross joins** -- Queries with multiple FROM tables and no JOIN condition or WHERE clause matching produce a cartesian product. Verify that every multi-table query has an explicit join condition.
-- [ ] **JOIN conditions on indexed columns** -- Join conditions reference indexed columns. Joining on non-indexed columns causes full table scans on the joined table.
+- [ ] *(performance)* **JOIN conditions on indexed columns** -- Join conditions reference indexed columns. Joining on non-indexed columns causes full table scans on the joined table.
 
 ### Aggregation
 - [ ] **Complete GROUP BY** -- Every non-aggregated column in the SELECT list appears in the GROUP BY clause. Databases that allow partial GROUP BY (MySQL in some modes) produce non-deterministic results for the ungrouped columns.
@@ -207,7 +210,7 @@ Source: [Fundamentals of Data Engineering](https://jeffbailey.us/blog/2025/11/22
 
 1. **No foreign keys** -- Relationships exist only in application code. Orphaned records accumulate silently. Fix: add foreign key constraints with explicit ON DELETE behavior.
 2. **Everything is VARCHAR(255)** -- Column types do not match the data. Invalid values are not rejected by the database. Fix: use the most specific type (TIMESTAMP, BOOLEAN, INTEGER, DECIMAL, UUID) and add CHECK constraints.
-3. **Migrations without rollback** -- Schema changes cannot be reversed. A bad migration requires a manual fix under pressure. Fix: every migration has a tested down/rollback method.
+3. **Migrations without a recovery plan** -- Schema changes cannot be reversed and no forward-only policy says how to recover. A bad migration requires a manual fix under pressure. Fix: a tested down/rollback per migration, or a documented forward-only policy that the migrations follow.
 4. **Non-idempotent pipelines** -- Re-running a data load creates duplicate records. Fix: use UPSERT or deduplication keys and verify idempotency in tests.
 5. **No audit trail on sensitive data** -- Changes to financial records, permissions, or user data are not tracked. Fix: add an audit log table with who, what, when, and previous value.
 

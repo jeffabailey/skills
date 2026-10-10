@@ -158,7 +158,7 @@ A dark-mode toggle so large or styled that it reads as a brand element.
 
 Functional screens (dashboards, settings, lists) open with a hero: huge H1, gray subtitle, marketing copy before the controls. "Welcome to your Dashboard, Sam ✨".
 
-**Detect:** `text-4xl` or larger H1 plus a muted `<p>` subtitle at the top of authenticated or functional routes; greeting strings.
+**Detect:** `text-4xl` or larger H1 plus a muted `<p>` subtitle at the top of authenticated or functional routes; greeting strings; error and empty pages that stack an interjection H1 over the real message (`grep -niE "oops|uh.oh|whoops|well, this is awkward"`).
 
 **Fix:** a compact page title at the system's page-heading size, then the content. Drop the subtitle unless it gives information the user needs (a date range, a count, a status).
 
@@ -201,6 +201,8 @@ Stat cards, pills, badges, gradients, glass, and many colored status dots packed
 ### 31. Everything gets visual treatment
 
 Every piece of information in a card, every descriptor a badge, every section an icon, every empty area a blob, every heading decorated.
+
+**Detect:** every block wrapped in a tinted card; two calls to action that go to the same place or restate each other ("Return to Homepage" button plus "Looking for something specific? ..." card); help text that offers a feature the page does not have.
 
 **Fix:** let plain text and whitespace carry most of the page. Keep treatment for the few things the user must notice. Emphasis only works when most of the page has none.
 
@@ -262,6 +264,6 @@ Also apply `prose.md` to every visible string.
 
 New button variants, colors, radii, shadows, or spacing values that do not exist in the system; components that ignore existing typography. The AI replaced the design language instead of extending it.
 
-**Detect:** hex colors or pixel values not in the tokens file; new `Button` variants or one-off styled buttons; duplicate components (a second `Card`); arbitrary Tailwind values (`[#7c3aed]`, `p-[13px]`).
+**Detect:** hex colors or pixel values not in the tokens file; new `Button` variants or one-off styled buttons; duplicate components (a second `Card`); arbitrary Tailwind values (`[#7c3aed]`, `p-[13px]`). Framework defaults that ignore the project's palette are the same tell: Bootstrap's `#007bff|#0056b3|#f8f9fa|#dee2e6|#6c757d`, Tailwind's untouched `blue-500`/`gray-*` on a site with its own tokens (`grep -niE "#007bff|#0056b3|#f8f9fa|#dee2e6|#6c757d"`).
 
-**Fix:** map each one-off value to the nearest existing token and each new component to the existing one. Delete the duplicates.
+**Fix:** map each one-off value to the nearest existing token and each new component to the existing one. Delete the duplicates. If the file cannot import the tokens (a static page outside the build pipeline), copy the token values verbatim into local custom properties and cite the tokens file; that reuses the system rather than adding to it.

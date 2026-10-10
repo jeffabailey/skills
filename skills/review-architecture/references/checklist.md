@@ -269,7 +269,7 @@ Source: [Fundamentals of Software Design](https://jeffbailey.us/blog/2025/11/05/
 ## Quick Reference: The Seven Most Common Architecture Problems
 
 1. **Circular dependencies** -- Module A imports B, B imports A. Fix: extract shared code into a third module, or invert the dependency using interfaces.
-2. **God class** -- A class with 1000+ lines handling multiple unrelated responsibilities. Fix: split by responsibility into focused classes.
+2. **God class** -- A class with 500+ lines (or 20+ methods) handling multiple unrelated responsibilities. Fix: split by responsibility into focused classes.
 3. **Leaky layers** -- Controllers contain SQL queries or business logic. Fix: extract business logic to a service layer, data access to a repository layer.
 4. **Inconsistent naming** -- `getUser()`, `fetchOrder()`, `retrieveProduct()` for the same pattern. Fix: pick one convention and apply it everywhere.
 5. **Missing module boundaries** -- Any file can import any other file with no structure. Fix: define public interfaces per module, hide internals.

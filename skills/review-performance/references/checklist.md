@@ -190,6 +190,19 @@ Source: [Fundamentals of Data Engineering](https://jeffbailey.us/blog/2025/11/22
 
 ---
 
+## 8. CLI, CI, Batch, and ML Inference Paths
+
+These have no request handler, so the hot path is the per-item loop and the per-run startup.
+
+- [ ] **Per-item loop is the hot path** -- In a CLI or batch job, the loop over files, rows, posts, or skills is what grows. Check it for queries, HTTP calls, subprocess spawns, and file re-reads per iteration.
+- [ ] **CI jobs scale with repo size** -- Scripts that walk the whole tree, re-fetch every source, or run a subprocess per file get slower with every commit. Prefer one pass, batched calls, or changed-files-only.
+- [ ] **Model and client loaded once** -- Embedding models, tokenizers, and API clients are constructed once per process, not per item.
+- [ ] **Inference is batched** -- `encode`/`predict`/`embed` calls take lists, not one item at a time inside a loop.
+- [ ] **Embeddings and inference results are reused** -- Results for unchanged inputs are stored (keyed by content hash or ID plus model version) instead of recomputed every run.
+- [ ] **Vector comparisons are vectorized** -- Similarity over many pairs uses matrix operations or an index, not nested Python loops.
+
+---
+
 ## Quick Reference: The Five Most Common Performance Problems
 
 1. **N+1 queries** -- A database query inside a loop. Fix: batch fetch or JOIN.

@@ -73,6 +73,8 @@ Use the Task tool to launch one agent per applicable domain, passing the same sc
 
 Each domain skill also writes its own report: `docs/<domain>-review.md` for a whole-repo review, or `docs/<domain>-review-<scope-slug>.md` for a scoped one. Ask each agent to return its report path, overall score (X.X), dimension scores, findings with severity and file:line, and whether it found any CRITICAL.
 
+While the agents run, stay quiet. Say once which domains are running, then do not post a message as each one finishes ("Security is in", "Still waiting on…"); the next message should be the combined result. Break silence only for a failed agent or one still running long after the rest.
+
 ### Step 5: Collect Domain Results
 
 For each domain, take the overall the domain skill reported (mean of its scored dimensions, capped at 4.0 when it has a CRITICAL). Keep one decimal; do not round to an integer. A domain becomes N/A when:

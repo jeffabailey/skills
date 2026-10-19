@@ -2521,11 +2521,3 @@ While current WCAG 2.2 standards remain the authoritative reference, staying awa
 
 Color and contrast standards evolve, and new accessibility testing tools emerge. The Web Content Accessibility Guidelines are updated periodically, and display technologies change how colors appear. Verify current contrast ratios with testing tools and test with actual users to ensure your interfaces work for users with different color vision abilities.
 
-
----
-
-## Source: fundamentals-of-typography
-
-URL: https://jeffbailey.us/blog/2026/01/17/fundamentals-of-typography
-
-Failed to fetch content.

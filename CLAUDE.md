@@ -6,6 +6,9 @@ This project uses a local dual-graph MCP server for efficient context retrieval.
 ## MANDATORY: Always follow this order
 
 1. **Call `graph_continue` first** — before any file exploration, grep, or code reading.
+   Make it the first tool call of every session, including sessions that open with a
+   git task (`git status`/`diff`/`log` count as code reading), a skill, or a slash command.
+   Skip it only for turns that touch no repo files at all.
 
 2. **If `graph_continue` returns `needs_project=true`**: call `graph_scan` with the
    current project directory (`pwd`). Do NOT ask the user.

@@ -115,6 +115,7 @@ Should NOT trigger:
 ## review-accessibility
 
 Should trigger:
+- "Are any images missing alt text in these templates?"
 - "Check accessibility"
 - "Review a11y compliance"
 - "Is this WCAG compliant?"
@@ -247,3 +248,30 @@ Should NOT trigger:
 - "Full review" (that's review-full)
 - "Apply the fitness report" (that's review-apply)
 - "Validate my fitness-config.json" (run `scripts/fitness-config.py validate`)
+
+## ask-why
+
+Should trigger:
+- "Why is the release workflow failing?"
+- "Why did this test start breaking last week?"
+- "What was the root cause of the deploy outage? It's fixed but I don't get why"
+- "Where should this validation logic live?"
+- "Where does this check belong: the test script or a new CI job?"
+- `/ask-why "Why is X failing?"`
+
+Should NOT trigger:
+- "Fix this failing test" (use nw-bugfix)
+- "Review the architecture of this project" (use review-architecture)
+- "Write a commit message"
+
+## generate-commit
+
+Should trigger:
+- "Write a commit message for what I staged"
+- "Commit this with a conventional message"
+- "commit what I've staged, write a decent message"
+- `/generate-commit`
+
+Should NOT trigger:
+- "Review my changes before I ship" (that's review-full)
+- "Push my branch and open a PR"

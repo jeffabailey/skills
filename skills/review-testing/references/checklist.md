@@ -1,6 +1,6 @@
 # Software Testing Fitness Checklist
 
-Detailed checklist for reviewing code against software testing, quality assurance, performance testing, and debugging fundamentals. Use alongside the review-testing skill to systematically evaluate each dimension.
+Detailed checklist for reviewing code against software testing, quality assurance, performance testing, and debugging fundamentals. Use alongside the review-testing skill to systematically evaluate each dimension. Scores come from rubric.md; this file lists what to check.
 
 ---
 
@@ -148,6 +148,8 @@ Source: [Fundamentals of Software Debugging](https://jeffbailey.us/blog/2025/12/
 ---
 
 ## 6. QA Process
+
+There is no separate QA Process score. Score the Feedback Loops checks under CI Integration, and the Quality-as-a-System and Learning-from-Failures checks under Coverage Strategy (see rubric.md).
 
 ### Quality Assurance as a System
 - [ ] **Quality is built into the process, not bolted on at the end** -- Tests, reviews, and checks happen during development, not in a separate "QA phase" after code is written. Check whether CI runs checks on every PR.

@@ -219,6 +219,30 @@ Source: [Fundamentals of Privacy and Compliance](https://jeffbailey.us/blog/2025
 
 ---
 
+## 9. CI/CD Pipelines and Containers
+
+Findings here are scored under the matching dimension: expression injection under Input Validation, token permissions and `pull_request_target` under Authentication and Authorization, action and image pinning under Dependency Security, secrets under Cryptography.
+
+### GitHub Actions
+- [ ] **Expression injection in `run:`** -- Attacker-controlled contexts interpolated straight into a shell script run as code. Grep: `grep -nE '\$\{\{\s*github\.(event\.(issue|comment|pull_request|review|review_comment|discussion|pages|commits|head_commit)|head_ref)' .github/workflows/*.y*ml`, then confirm the hit is inside a `run:` block (or `actions/github-script` `script:`). Fix: pass the value through `env:` and quote `"$VAR"`. Not a finding: values passed via `env:` (the grep hits these too; check the line), `inputs.*` of type `choice`/`boolean`, `github.repository`, `github.sha`, `github.run_id`, and numeric fields such as `.number` or `.id`. Injectable fields are free text: titles, bodies, branch names (`head_ref`, `head.ref`, `head.label`), commit messages, author names and emails.
+- [ ] **`pull_request_target` and `workflow_run`** -- `grep -nE 'pull_request_target|workflow_run' .github/workflows/*`. Dangerous when the job also checks out `github.event.pull_request.head.sha`/`head.ref` and runs build, test, or install steps: fork code runs with secrets and a write token.
+- [ ] **Token permissions** -- `grep -nE '^\s*permissions:|write-all|contents:\s*write|pull-requests:\s*write|id-token:\s*write' .github/workflows/*`. Workflow-level `write` or no `permissions:` key at all (inherits the repository default) is broader than needed; declare per job.
+- [ ] **Action pinning** -- `grep -nE 'uses:\s*[^./][^@]*@' .github/workflows/* | grep -vE '@[0-9a-f]{40}'` lists refs not pinned to a SHA; flag third-party actions not pinned to a 40-character commit SHA; `@main`/`@master` is worse than a tag. First-party `actions/*` on a major tag is LOW.
+- [ ] **Credential persistence** -- `actions/checkout` without `persist-credentials: false` leaves the token in `.git/config` for later steps that run untrusted code or upload artifacts.
+- [ ] **Secrets exposure** -- `secrets.*` echoed, written to files that are uploaded as artifacts, or passed to steps that run PR code. `ACTIONS_ALLOW_UNSECURE_COMMANDS` or `set-env` usage.
+- [ ] **Self-hosted runners on public repos** -- `runs-on: self-hosted` reachable from fork PRs.
+
+### Containers and deploy config
+- [ ] **Runs as root** -- Dockerfile has no `USER` directive (or `USER root` last).
+- [ ] **Secrets in image** -- `ENV`/`ARG` holding keys or passwords, `COPY .env`, or no `.dockerignore` while `COPY . .` copies the repo.
+- [ ] **Debug or dev server in production** -- `CMD` runs `flask run`, `app.run(debug=True)`, `npm run dev`, `--reload`, or exposes a debugger port.
+- [ ] **Base image pinning** -- `FROM image:latest` or no tag; prefer an exact tag or digest.
+- [ ] **Compose exposure** -- `ports:` binding sensitive services (databases, admin UIs) to `0.0.0.0`; `privileged: true`; Docker socket mounted.
+
+Source: GitHub Security Lab, "Keeping your GitHub Actions and workflows secure"; Docker build best practices.
+
+---
+
 ## OWASP Top 10 Quick Reference
 
 Patterns to look for in code, mapped to the OWASP Top 10 (2021):
@@ -230,7 +254,7 @@ Patterns to look for in code, mapped to the OWASP Top 10 (2021):
 5. **A05: Security Misconfiguration** -- Default credentials, unnecessary features enabled, overly permissive CORS, verbose error messages, missing security headers. (Checklist section 6)
 6. **A06: Vulnerable and Outdated Components** -- Known CVEs in dependencies, unmaintained packages, no lock files. (Checklist section 5)
 7. **A07: Identification and Authentication Failures** -- Weak passwords, missing MFA, credential stuffing, broken session management. (Checklist section 2)
-8. **A08: Software and Data Integrity Failures** -- Unsigned updates, untrusted deserialization, CI/CD pipeline without integrity verification. (Checklist sections 1, 5)
+8. **A08: Software and Data Integrity Failures** -- Unsigned updates, untrusted deserialization, CI/CD pipeline without integrity verification. (Checklist sections 1, 5, 9)
 9. **A09: Security Logging and Monitoring Failures** -- No login failure logging, no authorization denial logging, no incident detection capability. (Checklist section 6)
 10. **A10: Server-Side Request Forgery** -- User-supplied URLs fetched by the server without validation, internal network access via SSRF. (Checklist section 1)
 

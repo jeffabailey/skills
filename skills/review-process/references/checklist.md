@@ -17,7 +17,7 @@ Derived from the Fundamentals series by Jeff Bailey (sources at the end).
 - [ ] How to run tests
 - [ ] How to contribute (or a link to CONTRIBUTING.md)
 - [ ] License named
-- [ ] **Pitfall:** every relative path, script, and command the README names exists in the repo (`git-evidence.sh` lists `readme_paths_missing`, including `uv run X.py`-style commands whose script exists nowhere; open each before citing, since model IDs and generated or gitignored outputs are legitimate)
+- [ ] **Pitfall:** every relative path, script, and command the README names exists in the repo (`git-evidence.sh` lists `readme_paths_missing`, including bare names like `RUN.md`, `uv run X.py` scripts, and `cd` targets that exist nowhere; script arguments resolve from the preceding `cd` in the same block; cite these after opening the line. `readme_paths_elsewhere` needs a judgment call; `readme_paths_ignored` and `readme_tokens_skipped` are not defects)
 - [ ] **Pitfall:** the README names a license, and a LICENSE file with the license text exists (a name alone grants nothing)
 
 ### Contributor documentation

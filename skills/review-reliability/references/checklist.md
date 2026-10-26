@@ -141,6 +141,15 @@ Source: [Fundamentals of Timeouts](https://jeffbailey.us/blog/2026/02/01/fundame
 - [ ] **Deterministic builds** -- Same code produces the same artifact. No time-dependent or random behavior in builds.
 - [ ] **Flaky test management** -- Flaky tests are tracked, prioritized for fixing, and quarantined if they cannot be fixed immediately. Flaky tests erode CI trust.
 
+### Job Hygiene (GitHub Actions and similar)
+- [ ] **Job timeouts** -- Every job sets `timeout-minutes` (or each long step does). The GitHub Actions default is 360 minutes, so a hung network call burns six hours of runner time and blocks the queue. Check every job in every workflow before claiming one is missing.
+- [ ] **Concurrency groups** -- Workflows that deploy, publish, or push commits set `concurrency` so two runs cannot race; PR workflows use `cancel-in-progress: true`.
+- [ ] **Pinned actions and images** -- Third-party actions pinned to a commit SHA (or at least a full version tag), job `container:` and `services:` images pinned to a version. `@main`, `@master`, or `:latest` change under you.
+- [ ] **Network calls in scripts are bounded** -- `curl`/`wget`/HTTP clients in CI scripts pass a timeout (`--max-time`, `timeout=`) and retry with backoff, so a slow upstream fails the job fast instead of hanging.
+- [ ] **Fail loudly** -- Shell steps run with `set -euo pipefail` (or the default `bash -e`); `continue-on-error` and `|| true` are used only with a stated reason. Scheduled jobs notify someone on failure.
+- [ ] **Least-privilege tokens** -- `permissions:` set at workflow or job level rather than relying on the repository default.
+- [ ] **Generated workflows fixed at the source** -- When a workflow is compiled from another file (gh-aw `*.lock.yml`, templated YAML), remediation edits the source and recompiles; edits to the compiled file are overwritten. Check that the source exists in the repo before pointing at it; if the compiled file is hand-frozen with no source, say so and fix the file directly.
+
 ### Continuous Delivery / Deployment
 - [ ] **One-command deployment** -- Deploying to any environment is a single command or button click, not a multi-step manual process.
 - [ ] **Immutable artifacts** -- Built artifacts (Docker images, binaries) are versioned with commit SHA or semantic version, not :latest. The same artifact deploys to staging and production.
@@ -270,6 +279,15 @@ Source: [Fundamentals of Networking](https://jeffbailey.us/blog/2025/12/13/funda
 - [ ] **COPY specific files** -- COPY specific files and directories, not COPY . which includes unnecessary files. A .dockerignore file excludes .git, node_modules, tests, docs, and local config.
 - [ ] **Pinned base image versions** -- Base images use specific versions or digests (node:20.11-alpine), not :latest which changes unpredictably.
 - [ ] **HEALTHCHECK instruction** -- Dockerfile includes a HEALTHCHECK or the orchestrator defines health checks. Without health checks, the orchestrator cannot detect unhealthy containers.
+
+### Docker Compose
+- [ ] **Healthcheck per long-running service** -- Each service that others depend on defines `healthcheck:` with `interval`, `timeout`, and `retries`.
+- [ ] **Readiness-gated startup** -- `depends_on` uses `condition: service_healthy` (or `service_completed_successfully` for init jobs), not a bare service list, which only waits for the container to start.
+- [ ] **Restart policy** -- `restart: unless-stopped` (or `always`) on long-running services so a crash or host reboot recovers without a person.
+- [ ] **Resource limits** -- `deploy.resources.limits` (or `mem_limit`/`cpus`) on every service, especially databases, vector stores, and model servers that will take all host memory.
+- [ ] **Pinned image tags** -- Every `image:` names a version or digest; no `:latest` and no bare image names.
+- [ ] **Persistent data on named volumes** -- Database and model data live on named volumes, with a documented backup and restore procedure.
+- [ ] **No weak default secrets** -- Passwords and keys come from an untracked `.env` or secrets; committed `.env.example` values are placeholders, and the stack does not start with a known default password.
 
 ### Orchestrator Configuration
 - [ ] **Resource limits and requests** -- CPU and memory limits prevent resource exhaustion. Requests guarantee minimum resources for scheduling.

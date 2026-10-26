@@ -12,10 +12,11 @@ Mark each item as pass, fail, **N/A** (the site has no matching interaction), or
 
 ## 0. Top Tasks
 
-- [ ] 3 to 5 top tasks written down before walking any page
+- [ ] 1 to 5 top tasks written down before walking any page (as many as the site supports), each marked confirmed by the user or Unconfirmed
 - [ ] Tasks come from real visitor data (analytics, Search Console, support questions) where available, not from what the site owner wants to promote
-- [ ] Each task walked end to end at desktop (1280px) and phone (390px) widths
-- [ ] Each task attempted by keyboard alone
+- [ ] Each task walked end to end at desktop (about 1280px); the most important one or two also at phone width (about 390px) and by keyboard alone
+- [ ] Actual viewport width and inner height recorded for both sizes
+- [ ] Page budget (about 12 distinct pages) respected; skipped checks listed as not verified
 - [ ] Steps, scroll depth, and dead ends recorded per task
 
 ## 1. Learnability — First-Time Use
@@ -40,7 +41,7 @@ Mark each item as pass, fail, **N/A** (the site has no matching interaction), or
 ## 2. Efficiency — Rapid Task Completion
 
 ### Getting to the answer
-- [ ] The page's main answer or content starts within about 1.5 screens on a phone (roughly 1,250px at 390px wide) and within the first screen on desktop; an open fix list on an error guide counts as content
+- [ ] The page's main answer or content starts within about 1.5 screens on a phone (roughly 1,250px at 390px wide) and within the first screen on desktop (judged against the recorded inner height, not an assumed one); an open fix list on an error guide counts as content
 - [ ] Long pages have a table of contents or jump links
 - [ ] Code samples, commands, and values can be copied in one action
 
@@ -70,16 +71,16 @@ Mark each item as pass, fail, **N/A** (the site has no matching interaction), or
 ### Stable structure
 - [ ] URLs are readable and predictable, so a visitor can guess or recall them
 - [ ] Old URLs redirect instead of breaking
-- [ ] HTML responses are not cached by browsers for long (check `Cache-Control` with `curl -sI`); a long `max-age` shows returning visitors stale pages
+- [ ] HTML responses are not cached by browsers for long (check `Cache-Control` with `curl -sI`); a long `max-age` shows returning visitors stale pages. A missing header is a one-line note, not a fail
 - [ ] Content is grouped by purpose, so visitors remember where a topic lives
 
 ## 4. Error Prevention and Recovery
 
 ### Dead ends
-- [ ] The 404 page explains what happened and offers search, the home page, and popular links
+- [ ] The 404 page explains what happened and offers search, the home page, and popular links (a one-page site that returns its normal page with HTTP 404 can pass if that page itself is the way forward)
 - [ ] A search with no results suggests alternatives rather than a blank page (test with a nonsense string; mark not verified if fuzzy matching always returns something)
 - [ ] No broken internal links on the walked pages
-- [ ] Diagrams, embeds, and widgets render their content, not error text (search the rendered page for "Syntax error", "Parse error", "Unsupported markdown", or "Error:")
+- [ ] Diagrams, embeds, and widgets render their content, not error text (search rendered text outside `pre` and `code` for "Syntax error", "Parse error", "Unsupported markdown", or "Error:"; code samples often show error text on purpose)
 - [ ] Diagram and chart text stays readable on a phone: at 390px wide, labels render at about 10px or more (rendered width ÷ natural width × font size), or the figure scrolls sideways instead of shrinking
 
 ### Forms (newsletter, contact, comments) — N/A if the site has none

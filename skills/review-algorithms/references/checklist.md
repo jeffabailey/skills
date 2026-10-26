@@ -150,6 +150,9 @@ Source: [Fundamentals of Concurrency and Parallelism](https://jeffbailey.us/blog
 ### Validation vs Use
 - [ ] **Validator and consumer agree** -- Everything the validator accepts, every downstream consumer handles (unknown keys, empty sections, null values, NaN/inf, out-of-range numbers). Check by running the consumer on input that passes validation.
 - [ ] **Rejected input fails at the boundary** -- Invalid input produces a clear error where it enters, not a traceback several layers later.
+- [ ] **Same rule on every path** -- A rule enforced on one entry path (single file, write proposal) is also enforced, or provably unnecessary, on the others (merged chain, read-only commands).
+- [ ] **Errors name the right thing** -- Error messages point at the file and value that are actually wrong, including after entries were skipped (parallel lists re-paired with `zip`) or a value failed a type check (`"1"` for `1`).
+- [ ] **Wrong-shape documents** -- A file holding `null`, `[]`, a number, or a string where an object is expected is rejected, not silently skipped.
 
 ### Type Coercion
 - [ ] **No implicit precision loss** -- Conversions from float to int, long to int, or double to float are explicit and checked for precision loss or truncation.

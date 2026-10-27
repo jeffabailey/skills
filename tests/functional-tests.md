@@ -574,3 +574,58 @@ These are the `@manual` agent-eval scenarios in `tests/acceptance/fitness-config
 **Given:** Any question
 **When:** Run `/ask-why`
 **Then:** No files in the project are created or modified, and no issues, comments, or workflow runs are created
+
+## agent-hygiene
+
+### Test: Inventory counts ancestor and imported files as always-loaded
+
+**Given:** `~/Projects/websites/jeffbaileyblog`, whose `CLAUDE.md` repeats the Dual-Graph Context Policy that `~/Projects/websites/CLAUDE.md` also carries
+**When:** Run `/agent-hygiene`
+**Then:**
+- The inventory table lists `CLAUDE.md`, `hugo/AGENTS.md`, nested `AGENTS.md` files, and `~/Projects/websites/CLAUDE.md` (as an ancestor), each with tier, lines, and a token estimate
+- The always-loaded total is summed
+- The ledger flags the Dual-Graph block as Duplicate with `file:line` of both copies
+- No proposal edits `~/Projects/websites/CLAUDE.md`
+
+### Test: Ledger covers every line, with evidence for stale claims
+
+**Given:** Any repo with an `AGENTS.md` naming a path that does not exist
+**When:** Run `/agent-hygiene`
+**Then:**
+- `$TMPDIR/agent-hygiene/<repo-name>/ledger.md` classifies every line of every always-loaded file exactly once as keep, cut, move, or rewrite
+- The missing path is flagged Stale with the failing `ls` as evidence
+
+### Test: Three tiers of rising radicalness, verified before anything changes
+
+**Given:** Any repo with an `AGENTS.md` over 100 lines
+**When:** Run `/agent-hygiene`
+**Then:**
+- Three subagents are dispatched in one message
+- `tier-1/`, `tier-2/`, and `tier-3/` each exist with a `PLAN.md` that traces every keep, move, and rewrite ledger line
+- Tier 1 adds no files; tier 2 moves reference behind pointers; tier 3 has the smallest always-loaded size
+- The comparison table shows lines and tokens for today and each tier, followed by a recommendation and a question asking which tier to apply
+- `git status` is unchanged until the user picks a tier
+
+### Test: User goals bind every tier
+
+**Given:** Any repo
+**When:** Run `/agent-hygiene move all style rules to CODING_STANDARDS.md`
+**Then:** Every tier's `PLAN.md` places the style rules in `CODING_STANDARDS.md`, including tier 1, where the goal overrides the no-new-files default
+
+### Test: Soft dependency on writing-for-agents
+
+**Given:** A session where `mattpocock-skills:writing-for-agents` is not installed
+**When:** Run `/agent-hygiene`
+**Then:**
+- The skill says the audit will be rougher without it and gives the `/plugin install mattpocock-skills@claude-plugins-official` command
+- It continues and produces the ledger from `references/rubric.md`
+
+### Test: Apply changes only the chosen tier
+
+**Given:** A completed comparison
+**When:** Answer "tier 2"
+**Then:**
+- Only tier 2's files are copied into the repo; files the plan deletes are listed before removal
+- Every pointer in the changed files resolves
+- Markdown lint runs on the changed files if the repo has it
+- Nothing is committed unless asked

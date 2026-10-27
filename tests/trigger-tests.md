@@ -275,3 +275,18 @@ Should trigger:
 Should NOT trigger:
 - "Review my changes before I ship" (that's review-full)
 - "Push my branch and open a PR"
+
+## agent-hygiene
+
+Should trigger:
+- "My AGENTS.md is a hot mess, clean it up"
+- "This CLAUDE.md is bloated, slim it down"
+- "Remove the no-ops from our agent instructions"
+- "Use progressive disclosure in AGENTS.md and move the coding rules to CODING_STANDARDS.md"
+- `/agent-hygiene`
+
+Should NOT trigger:
+- "Write a new skill for releasing" (use skill-creator or writing-for-agents)
+- "Create a CLAUDE.md for this repo" (use init)
+- "Remove AI tells from this README" (that's ai-sanitize)
+- "Review the process docs in this repo" (that's review-process)

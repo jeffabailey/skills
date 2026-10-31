@@ -234,6 +234,18 @@ Should NOT trigger:
 - "Review the usability of https://example.com" (that's review-usability)
 - "Write a commit message" (that's generate-commit)
 
+## version-skills
+
+Should trigger:
+- "Bump the version of this skill"
+- "Add versions to my skills"
+- "Check that the skill versions went up"
+- `/version-skills`
+
+Should NOT trigger:
+- "Cut a release of this app" (use a release skill)
+- "Write a commit message" (that's generate-commit)
+
 ## fitness-config-init
 
 Should trigger:

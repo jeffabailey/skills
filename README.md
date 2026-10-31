@@ -22,6 +22,7 @@ This repository and the article [Fundamental Skills](https://jeffbailey.us/blog/
 | `generate-commit` | Write a conventional commit message for what you staged, in the repo's own types and scopes, and commit after review. Runs CI's lint on staged files only, warns about secret-looking files, and suggests splitting mixed diffs. | "generate commit", "write a commit message", "commit what I staged" |
 | `ai-sanitize` | Removes AI tells from prose, UI code, and graphics (performative phrasing, emdashes, gradients, glass, eyebrows, pills, emoji, broken ASCII art), extending the project's own style guide and design system. Edits in place or reports only. | "remove AI tells", "de-slop this", "make this UI look less AI-generated" |
 | `agent-hygiene` | Audits the instruction files agents read (AGENTS.md, CLAUDE.md, rules, skills) for no-ops, duplication, stale claims, and sprawl, then has three subagents propose restructurings of rising radicalness (prune, disclose, rebuild) and applies the one you pick. Soft dependency: invokes [`mattpocock-skills:writing-for-agents`](https://github.com/mattpocock/skills) when installed and falls back to its bundled rubric when not. | "clean up my AGENTS.md", "my CLAUDE.md is a mess", "use progressive disclosure" |
+| `version-skills` | Raises `metadata.version` in changed skills and the plugin version in both manifests together, with a bundled script, then proves nothing changed without a rise. | "bump skill versions", "version this skill", "check skill versions", `/version-skills` |
 | `fitness-config-init` | Creates a `fitness-config.json` with review weights that fit what the project is for. Scans the folder (or runs a full review first, if asked), proposes weights from a matching purpose profile, explains every change, and saves only the proposal you approve. | "create a fitness config", "tune review weights for this project", "initialize fitness config" |
 
 ### Project fitness review
@@ -320,6 +321,10 @@ skills/
       prose.md              # Writing tells and rewrites
       ui.md                 # Interface tells, detection patterns, fixes
       graphics.md           # SVG, ASCII, diagram, chart, and image tells
+  version-skills/           # general-development skill (skill and plugin versions)
+    SKILL.md
+    scripts/
+      skill_version.py      # bump and check
   fitness-config-init/      # general-development skill (purpose-fit fitness-config.json)
     SKILL.md
     references/

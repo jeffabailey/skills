@@ -428,6 +428,28 @@ Dimension: Screen Reader Support and is not scored again under Semantic HTML
 - The banner is removed or regenerated with a real tool, and the fix is checked by rendering
 - Icons are normalized to one stroke width and size, or the finding says not verified if rendering was unavailable
 
+## version-skills
+
+`tests/test_skill_version.py` covers the bundled script. These scenarios cover the agent's choices around it.
+
+### Test: Picks the level from what a caller sees
+
+**Given:** A skill repo with a new mode added to one skill and a typo fixed in another
+**When:** Run `/version-skills`
+**Then:**
+- It runs `bump minor`, the highest level either change needs
+- `check` exits 0
+- It reports each new version and why that level fit
+- Nothing is committed unless asked
+
+### Test: Adopts versions in a repo without them
+
+**Given:** A skill repo where no `SKILL.md` has `metadata.version`
+**When:** Run `/version-skills`
+**Then:**
+- It uses `bump minor --all`, so every skill starts at `1.0.0` and the plugin version rises once
+- Skills outside `skills/`, such as `.agents/`, are untouched
+
 ## fitness-config-init
 
 These are the `@manual` agent-eval scenarios in `tests/acceptance/fitness-config-init/`. Pytest never runs them. The resolver side of the skill (validation, fingerprint, save, rollback) is covered by `uv run pytest tests`.

@@ -1,6 +1,8 @@
 ---
 name: review-full
 description: Runs a comprehensive project fitness review combining architecture, security, reliability, testing, performance, algorithms, data, accessibility, process, and maintainability analysis. Use when the user says "full review", "comprehensive review", "project fitness", "review everything", or wants all review skills run on current changes before shipping.
+metadata:
+  version: "1.0.0"
 ---
 
 # Full Project Fitness Review

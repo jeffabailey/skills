@@ -2,6 +2,8 @@
 name: fitness-config-init
 description: Creates a fitness-config.json for a project with review weights that fit what the project is for. Scans the folder (or runs a full review first, if asked), classifies its purpose, proposes weights starting from a matching purpose profile, explains every change, and saves only the proposal the user approved. Use when the user says /fitness-config-init, asks to "create a fitness config", "set up fitness-config.json", "initialize fitness config", "tune review weights for this project", "weight the review for this repo", or wants the fitness review to reflect a project's purpose instead of the defaults.
 argument-hint: '[fast|full] [path] - evidence mode and target folder (defaults: ask, current folder)'
+metadata:
+  version: "1.0.0"
 ---
 
 # Fitness Config Init

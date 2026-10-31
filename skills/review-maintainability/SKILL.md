@@ -1,6 +1,8 @@
 ---
 name: review-maintainability
 description: Analyzes code for maintainability, understandability, and simplicity fitness, producing scores (1-10) across structural complexity, comprehensibility, technical debt indicators, coupling/dependency depth, and code smell density. Use when the user says /review:review-maintainability, requests a maintainability review, asks about code complexity or understandability, wants cyclomatic/cognitive complexity analysis, or needs simplicity/maintainability fitness scores. Triggers on "maintainability review", "understandability", "code complexity", "cognitive complexity", "cyclomatic complexity", "simplicity", "code smells". Only reports findings with confidence >= 7/10.
+metadata:
+  version: "1.0.0"
 ---
 
 # Maintainability & Understandability Fitness Review

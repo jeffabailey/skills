@@ -1,6 +1,8 @@
 ---
 name: generate-commit
 description: Writes a conventional commit message for what the user has staged, matching the types and scopes in the repo's own git log, runs the project's CI lint on the staged files only, shows the message for review, and commits only after the user confirms. Respects the user's staging, warns about secret-looking or scratch files, and suggests splitting diffs that mix unrelated changes. Use when the user says /generate-commit, "write a commit message", "commit what I staged", "commit this", or wants a reviewed conventional commit.
+metadata:
+  version: "1.0.0"
 ---
 
 # Generate Commit

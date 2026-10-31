@@ -3,6 +3,8 @@ name: agent-hygiene
 description: "Cleans up the instruction files agents read in a repo (AGENTS.md, CLAUDE.md, GEMINI.md, nested agent files, Cursor and Copilot rules, skills, subagent definitions). Audits every line for no-ops, duplication, stale claims, restated config, negation, and sprawl, then runs three subagents that each propose a restructuring, each more radical than the last: prune, progressive disclosure, rebuild. Compares them by always-loaded size and lost instructions, and applies only the one the user picks. Use when the user says /agent-hygiene, says their AGENTS.md or CLAUDE.md is a mess, bloated, or contradictory, asks to remove no-ops, use progressive disclosure, move rules into CODING_STANDARDS.md, or slim down agent instructions."
 user-invocable: true
 argument-hint: '[path or focus] - Optional subtree to audit and extra goals, e.g. "move style rules to CODING_STANDARDS.md"'
+metadata:
+  version: "1.0.0"
 ---
 
 # Agent Hygiene

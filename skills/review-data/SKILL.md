@@ -1,6 +1,8 @@
 ---
 name: review-data
 description: Analyzes database schema design, migration safety, data integrity, query correctness, data modeling, and pipeline quality, producing fitness scores (1-10) with file:line evidence. Use when the user says /review:review-data, requests a data review, asks about schema design, migration safety, data integrity, query correctness, data modeling, or pipeline quality. Distinct from review-performance (which asks "are queries fast?"); this asks "is the schema correct? are migrations safe? will data integrity hold?" Only reports findings with confidence >= 7/10.
+metadata:
+  version: "1.0.0"
 ---
 
 # Data Fitness Review

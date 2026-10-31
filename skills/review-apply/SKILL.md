@@ -1,6 +1,8 @@
 ---
 name: review-apply
 description: Pulls a fitness report from a GitHub issue or from a local fitness report, addresses the action items by updating the codebase, and closes the issue when done. Use when the user says "apply review", "fix review issues", "address review feedback", "apply fitness report", "work through the action items", or provides a GitHub issue URL or number containing a fitness report, even if they don't say "fitness". Not for producing a new report (that's review-full).
+metadata:
+  version: "1.0.0"
 ---
 
 # Apply Fitness Report

@@ -1,6 +1,8 @@
 ---
 name: review-reliability
 description: Analyzes code and configuration (application code, Docker Compose or IaC stacks, and CI-only pipelines) for production reliability fitness, producing scores (1-10) across observability, availability design, timeout/retry hygiene, CI/CD maturity, incident readiness, capacity planning, and container/deploy hygiene. Use when the user says /review:review-reliability, requests a reliability review, says check observability, asks if the system is production ready, wants a monitoring setup review, asks about CI/CD pipeline quality, or wants an operational readiness assessment. Only reports findings with confidence >= 7/10.
+metadata:
+  version: "1.0.0"
 ---
 
 # Reliability Fitness Review

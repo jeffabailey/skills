@@ -1,6 +1,8 @@
 ---
 name: review-usability
 description: Reviews a live website's usability by walking its real user tasks in a browser and scoring learnability, efficiency, memorability, error prevention, and satisfaction. Before scoring, it downloads the current Fundamentals of Software Usability article from jeffbailey.us to set its rubric, falling back to a bundled copy when offline. Use when the user says /review:usability, asks to improve a website's usability, wants a usability audit or task walkthrough of a URL, or asks why visitors struggle to find or finish things on a site. For code-level accessibility or WCAG checks of templates and components, use review-accessibility instead. Only reports findings with confidence >= 7/10.
+metadata:
+  version: "1.0.0"
 ---
 
 # Website Usability Review

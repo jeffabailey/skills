@@ -1,6 +1,8 @@
 ---
 name: review-architecture
 description: Analyzes code for software architecture fitness, producing scores (1-10) across coupling, cohesion, layering, modularity, naming, API design, and maintainability. Use when the user says /review:review-architecture, requests an architecture review, asks about coupling and cohesion, wants to analyze design or check code structure, asks to review naming or API design, or needs architecture fitness scores. Triggers on "architecture review", "coupling and cohesion", "analyze design", "check code structure", "review naming", "API design". Only reports findings with confidence >= 7/10.
+metadata:
+  version: "1.0.0"
 ---
 
 # Software Architecture Fitness Review

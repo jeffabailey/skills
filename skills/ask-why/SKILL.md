@@ -3,6 +3,8 @@ name: ask-why
 description: "Investigates a question about a codebase or system and answers it from evidence, without changing anything. Gathers evidence first (git history and blame, CI run logs, tests, ADRs and docs), then uses Five Whys for 'why is X failing / why did X break', a scored placement analysis for 'where should Y live' (module, layer, script, package, CI job, or bounded context), and structured explanation, description, or a decision matrix for how/what/which questions. Checks the question's premise and says what evidence it could not reach. Use when the user says /ask-why, asks 'why is this failing', 'why did this break', 'what was the root cause', 'where does this belong', 'where should this check/code live', or wants a root cause explained for a bug that is already fixed. Read-only: no code is written or changed."
 user-invocable: true
 argument-hint: '[question] - The question you want to investigate'
+metadata:
+  version: "1.0.0"
 ---
 
 # ASK-WHY: Structured Question Investigation

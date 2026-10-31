@@ -1,6 +1,8 @@
 ---
 name: ai-sanitize
 description: Removes the tells that make prose, user interfaces, and graphics read as AI-generated, then reports what changed. Rewrites performative phrasing, contrast framing, triads, signposting, emdashes, and marketing filler in prose; strips purple gradients, glassmorphism, pulsing badges, eyebrow labels, pill-everything, emoji decoration, and landing-page treatment of functional screens from UI code; and cleans decorative blobs, misaligned SVGs, broken ASCII art, and rainbow palettes from graphics and diagrams. Use when the user says /ai-sanitize, asks to "remove AI tells", "de-slop", "make this sound less like AI", "make this UI look less AI-generated", "humanize this copy", or asks why a page or draft feels generated. Edits in place by default; pass "report" to list tells without editing.
+metadata:
+  version: "1.0.0"
 ---
 
 # AI Sanitize

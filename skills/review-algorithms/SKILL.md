@@ -1,6 +1,8 @@
 ---
 name: review-algorithms
 description: Analyzes code for algorithm/data structure correctness, concurrency safety, and edge case handling, producing fitness scores (1-10) across algorithm choice, data structure selection, complexity awareness, concurrency safety, edge case handling, and correctness patterns. Use when the user says /review:review-algorithms, requests an algorithm review, asks about correctness of data structure choices, wants a concurrency safety check, asks about edge case coverage, or wants to verify algorithmic complexity. This is NOT a performance review -- it asks "is this correct and appropriate?" not "is this fast enough?" Only reports findings with confidence >= 7/10.
+metadata:
+  version: "1.0.0"
 ---
 
 # Algorithm & Data Structure Fitness Review

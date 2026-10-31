@@ -1,6 +1,8 @@
 ---
 name: review-performance
 description: Analyzes code for performance and scalability issues, producing fitness scores (1-10) across algorithmic efficiency, database design, caching strategy, scalability readiness, resource utilization, and data pipeline efficiency. Covers services, CLIs, CI scripts, batch jobs, and ML inference code. Use when the user says /review:performance, requests a performance review, asks for scalability analysis, wants to find N+1 queries or Big-O hot paths, asks why something gets slow as data grows, or needs performance fitness scores before shipping. Only reports findings with confidence >= 7/10.
+metadata:
+  version: "1.0.0"
 ---
 
 # Performance and Scalability Fitness Review

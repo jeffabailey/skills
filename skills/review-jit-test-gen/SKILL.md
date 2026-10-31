@@ -1,6 +1,8 @@
 ---
 name: review-jit-test-gen
 description: Generates just-in-time catching tests for changed code. Analyzes pending changes to find uncovered paths and writes focused tests that catch regressions at the moment of change. Use when the user says "generate tests", "jit tests", "test generation", "write tests for changes", or wants tests for recently modified code.
+metadata:
+  version: "1.0.0"
 ---
 
 # JIT Test Generation

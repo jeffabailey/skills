@@ -1,6 +1,8 @@
 ---
 name: review-security
 description: Analyzes code, CI/CD workflows, and container config for security vulnerabilities and compliance risks, producing fitness scores (1-10) across input validation, authentication/authorization, data protection, dependency security, error handling/logging, and cryptography. Use when the user says "security review", "check vulnerabilities", "audit security", "security issues", /review:review-security, asks to audit GitHub Actions workflows or a Dockerfile for security, or wants security fitness scores before shipping. Only reports findings with confidence >= 7/10.
+metadata:
+  version: "1.0.0"
 ---
 
 # Security Fitness Review

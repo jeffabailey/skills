@@ -1,6 +1,8 @@
 ---
 name: review-accessibility
 description: Reviews frontend code for accessibility and usability fitness, scoring across semantic HTML, keyboard navigation, screen reader support, color/contrast, progressive enhancement, responsive design, and usability heuristics. Computes WCAG contrast ratios with a bundled script that resolves CSS custom properties per theme (light/dark). Use when the user says /review:accessibility, requests an accessibility audit, asks for a11y review, wants WCAG compliance check, asks to check color contrast, alt text, or keyboard navigation in templates, components, or CSS, or needs usability evaluation of frontend code. For walking a live site's tasks in a browser, use review-usability. Only reports findings with confidence >= 7/10.
+metadata:
+  version: "1.0.0"
 ---
 
 # Accessibility and Usability Fitness Review

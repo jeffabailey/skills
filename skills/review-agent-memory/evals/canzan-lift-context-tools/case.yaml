@@ -1,0 +1,4 @@
+schema_version: "1.1"
+name: canzan-lift-context-tools
+expected_outcome: |
+  A ranked report for canzan-lift that measures which context tools are actually used versus mandated, identifies churn from transcripts, and recommends consolidation and structural fixes with evidence.

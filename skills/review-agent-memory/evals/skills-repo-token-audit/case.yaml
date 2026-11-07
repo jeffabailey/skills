@@ -1,0 +1,4 @@
+schema_version: "1.1"
+name: skills-repo-token-audit
+expected_outcome: |
+  A ranked report of improvements for ~/Projects/skills grounded in its auto-memory, instruction files, and transcript evidence with numbers, with savings estimates, and an offer to apply rather than edits.

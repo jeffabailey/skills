@@ -1,0 +1,4 @@
+schema_version: "1.1"
+name: reality-base-compaction-churn
+expected_outcome: |
+  A ranked report for the-reality-base that quantifies compactions, subagent fan-out and context-store usage from transcripts, and proposes structural fixes with savings estimates.

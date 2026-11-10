@@ -1,7 +1,7 @@
 # Domain Knowledge Reference
 
 Auto-generated from blog posts. Do not edit manually.
-Last updated: 2026-09-28
+Last updated: 2026-11-09
 
 ---
 
@@ -1287,4 +1287,4 @@ API standards and best practices evolve. Verify current information and test wit
 [ISO 4217]: https://www.iso.org/iso-4217-currency-codes.html
 [Google API Improvement Proposals]: https://google.aip.dev
 [JSON Schema]: https://json-schema.org/
-[Roy Fielding Dissertation]: https://www.ics.uci.edu/~fielding/pubs/dissertation/top.htm
+[Roy Fielding Dissertation]: https://web.archive.org/web/20261022092702/https://ics.uci.edu/~fielding/pubs/dissertation/top.htm

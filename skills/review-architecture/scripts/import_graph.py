@@ -18,6 +18,7 @@ from __future__ import annotations
 import argparse
 import ast
 import json
+import os
 import re
 import sys
 from pathlib import Path
@@ -45,8 +46,12 @@ def is_test(path: Path) -> bool:
 
 def collect(root: Path, include_tests: bool) -> tuple[list[Path], int]:
     files, skipped_tests = [], 0
-    for p in sorted(root.rglob("*")):
-        if not p.is_file() or any(part in SKIP_DIRS for part in p.relative_to(root).parts):
+    found = []
+    for dirpath, dirnames, filenames in os.walk(root):
+        dirnames[:] = [d for d in dirnames if d not in SKIP_DIRS]  # prune: never descend
+        found.extend(Path(dirpath) / f for f in filenames if f not in SKIP_DIRS)
+    for p in sorted(found):
+        if not p.is_file():
             continue
         if p.suffix not in PY_EXT and p.suffix not in JS_EXT:
             continue
@@ -87,23 +92,47 @@ def py_imports(path: Path):
             yield node, id(node) in deferred_nodes
 
 
-def lookup(dotted: str, names: dict[str, Path], absolute: bool) -> str | None:
-    """Match a dotted name to an internal module. Absolute imports may carry
-    leading package components above ROOT (`from pkg.mod import x` when ROOT
-    is pkg/), so try each suffix."""
+def packages_above(root: Path) -> tuple[str, ...]:
+    """The package path that can prefix an absolute import of a module under ROOT:
+    ROOT's own name, preceded by each parent that is a package (has __init__.py)."""
+    root = root.resolve()
+    above = [root.name]
+    parent = root.parent
+    while (parent / above[0] / "__init__.py").exists() and (parent / "__init__.py").exists():
+        above.insert(0, parent.name)
+        parent = parent.parent
+    return tuple(above)
+
+
+def lookup(dotted: str, names: dict[str, Path], absolute: bool,
+           above: tuple[str, ...] = ()) -> str | None:
+    """Match a dotted name to an internal module. An absolute import may carry
+    leading package components above ROOT (`from pkg.mod import x` when ROOT is
+    pkg/), so a prefix is dropped only when it is the tail of that package path.
+    Any other prefix (`logging.config`, `requests.utils`) names an external
+    module, even when its last part equals an internal module's name."""
     if not dotted:
         return None
+    if not absolute:
+        return dotted if dotted in names else None
     parts = dotted.split(".")
-    options = [".".join(parts[i:]) for i in range(len(parts))] if absolute else [dotted]
-    return next((o for o in options if o in names), None)
+    for i in range(len(parts)):
+        dropped = tuple(parts[:i])
+        if i and dropped != above[-i:]:
+            continue
+        option = ".".join(parts[i:])
+        if option in names:
+            return option
+    return None
 
 
-def resolve_py(node, here: str, is_pkg: bool, names: dict[str, Path]):
+def resolve_py(node, here: str, is_pkg: bool, names: dict[str, Path],
+               above: tuple[str, ...] = ()):
     """Return (internal hits, external top-level names) for one import node."""
     hits, ext = set(), set()
     if isinstance(node, ast.Import):
         for a in node.names:
-            h = lookup(a.name, names, True)
+            h = lookup(a.name, names, True, above)
             (hits.add(h) if h else ext.add(a.name.split(".")[0]))
         return hits, ext
     if node.level:
@@ -115,7 +144,7 @@ def resolve_py(node, here: str, is_pkg: bool, names: dict[str, Path]):
         base, absolute = node.module or "", True
     for a in node.names:
         sub = f"{base}.{a.name}" if base else a.name
-        h = lookup(sub, names, absolute) or lookup(base, names, absolute)
+        h = lookup(sub, names, absolute, above) or lookup(base, names, absolute, above)
         if not h and not base and node.level:
             h = "__init__" if "__init__" in names else None
         if h:
@@ -187,6 +216,7 @@ def build(root: Path, include_tests: bool) -> dict:
     py = {py_name(p.relative_to(root)): p for p in files if p.suffix in PY_EXT}
     js = {str(p.relative_to(root)): p for p in files if p.suffix in JS_EXT}
     nodes = sorted(py) + sorted(js)
+    above = packages_above(root)
     edges: dict[str, dict[str, dict]] = {n: {} for n in nodes}
     external: dict[str, set[str]] = {n: set() for n in nodes}
     loc = {}
@@ -195,7 +225,7 @@ def build(root: Path, include_tests: bool) -> dict:
         loc[name] = len(path.read_text(encoding="utf-8", errors="replace").splitlines())
         is_pkg = path.name == "__init__.py"
         for node, deferred in py_imports(path):
-            hits, ext = resolve_py(node, name, is_pkg, py)
+            hits, ext = resolve_py(node, name, is_pkg, py, above)
             external[name] |= ext
             for h in hits - {name}:
                 e = edges[name].setdefault(h, {"lines": [], "deferred": True})

@@ -64,3 +64,13 @@ def test_weights_not_summing_to_100_are_refused(tmp_path):
     result = run(resolver_file(tmp_path, weights), "architecture=9")
     assert result.returncode != 0
     assert "weights sum to 50" in result.stderr
+
+
+@pytest.mark.parametrize("score,row", [
+    ("7.96", "architecture     8.0  weight 50  Healthy"),
+    ("4.96", "architecture     5.0  weight 50  Needs Attention"),
+])
+def test_domain_rows_use_the_band_of_the_score_as_shown(tmp_path, score, row):
+    result = run(resolver_file(tmp_path, two_domain_weights()), f"architecture={score},security=8.0")
+    assert result.returncode == 0, result.stderr
+    assert row in result.stdout

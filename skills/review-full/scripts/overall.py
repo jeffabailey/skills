@@ -43,6 +43,11 @@ def load_group(path):
     return config_line, weights, eff.get("statusThresholds", {})
 
 
+def shown(score):
+    """The one-decimal score the report prints. Bands follow it, so 7.98 reads "8.0 Healthy"."""
+    return float(f"{score:.1f}")
+
+
 def status(score, thresholds):
     healthy = thresholds.get("healthy", [8, 10])[0]
     attention = thresholds.get("needsAttention", [5, 7])[0]
@@ -98,13 +103,12 @@ def main():
             if s is None or w == 0:
                 print(f"  {d:<16} N/A   weight {w}")
             else:
-                print(f"  {d:<16} {s:.1f}  weight {w}  {status(s, thresholds)}")
+                print(f"  {d:<16} {s:.1f}  weight {w}  {status(shown(s), thresholds)}")
         terms = " + ".join(f"{w}*{s:.1f}" for _, w, s in scored)
         print(f"  Arithmetic: ({terms}) / {den} = {num:.1f} / {den} = {raw:.2f}")
         if args.critical and raw > 4.0:
             print("  CRITICAL finding present: capped at 4.0")
-        # Band from the one-decimal score the report shows, so 7.98 reads "8.0 (Healthy)".
-        print(f"  Overall: {overall:.1f} ({status(float(f'{overall:.1f}'), thresholds)})")
+        print(f"  Overall: {overall:.1f} ({status(shown(overall), thresholds)})")
     if len(overalls) > 1:
         print(f"Headline overall (lowest group): {min(overalls):.1f}")
 

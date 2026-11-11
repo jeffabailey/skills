@@ -153,10 +153,14 @@ def _weight_value_violations(weights: dict) -> list[str]:
             if name in DEFAULT_WEIGHTS and not (_is_number(value) and 0 <= value <= 100)]
 
 
+def _unknown_domain_violations(weights: dict) -> list[str]:
+    return [f"weights.{name} is not a known domain ({', '.join(DEFAULT_WEIGHTS)})"
+            for name in weights if name not in DEFAULT_WEIGHTS]
+
+
 def _weights_violations(weights: dict) -> list[str]:
-    unknown = [f"weights.{name} is not a known domain ({', '.join(DEFAULT_WEIGHTS)})"
-               for name in weights if name not in DEFAULT_WEIGHTS]
-    return unknown + _weight_value_violations(weights) + _weight_sum_violations(weights)
+    return (_unknown_domain_violations(weights) + _weight_value_violations(weights)
+            + _weight_sum_violations(weights))
 
 
 def _pair_violations(name: str, section: dict) -> list[str]:
@@ -168,6 +172,13 @@ def _pair_violations(name: str, section: dict) -> list[str]:
                     for key in present
                     if _is_pair(section[key]) and not all(1 <= v <= 10 for v in section[key])]
     return malformed + out_of_scale
+
+
+def _reversed_range_violations(name: str, section: dict) -> list[str]:
+    """Consumers read a range's first number as its lower bound."""
+    return [f"{name}.{key} must list the low end first, got {value!r}"
+            for key, value in section.items()
+            if key in SECTION_DEFAULTS[name] and _is_pair(value) and value[0] > value[1]]
 
 
 def _cutoff_violations(security: dict) -> list[str]:
@@ -235,10 +246,8 @@ def _completeness_violations(proposal: dict) -> list[str]:
     fractional = [f"weights.{name} must be a whole number, got {value!r}"
                   for name, value in weights.items()
                   if name in DEFAULT_WEIGHTS and _is_number(value) and type(value) is not int]
-    reversed_ranges = [f"{name}.{key} must list the low end first, got {value!r}"
-                       for name in _RANGE_SECTIONS if isinstance(proposal.get(name), dict)
-                       for key, value in proposal[name].items()
-                       if key in SECTION_DEFAULTS[name] and _is_pair(value) and value[0] > value[1]]
+    reversed_ranges = [line for name in _RANGE_SECTIONS if isinstance(proposal.get(name), dict)
+                       for line in _reversed_range_violations(name, proposal[name])]
     return sections + fractional + reversed_ranges + _band_coverage_violations(
         proposal.get("statusThresholds"))
 
@@ -255,11 +264,19 @@ def validate_proposal(proposal) -> list[str]:
     return violations + _completeness_violations(proposal)
 
 
+def _chain_range_violations(name: str, section: dict) -> list[str]:
+    return _pair_violations(name, section) + _reversed_range_violations(name, section)
+
+
+# A chain file may be partial, so completeness and the per-file sum stay out.
+# Unknown domains and reversed ranges stay in: every review reads the merged
+# result, and both would change scores or statuses without any error.
 _CHAIN_VALUE_RULES: dict[str, Callable[[dict], list[str]]] = {
-    "weights": _weight_value_violations,
-    "statusThresholds": lambda section: _pair_violations("statusThresholds", section),
+    "weights": lambda weights: (_unknown_domain_violations(weights)
+                                + _weight_value_violations(weights)),
+    "statusThresholds": lambda section: _chain_range_violations("statusThresholds", section),
     "security": _cutoff_violations,
-    "scoring": lambda section: _pair_violations("scoring", section),
+    "scoring": lambda section: _chain_range_violations("scoring", section),
 }
 
 

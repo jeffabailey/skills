@@ -38,3 +38,24 @@ def test_a_partial_override_without_a_version_still_shows(tmp_path):
     (tmp_path / "fitness-config.json").write_text(json.dumps({"weights": {"security": 14}}))
     result = _run("show", tmp_path)
     assert result.returncode == 0, result.stderr
+
+
+@pytest.mark.parametrize("verb", ["show", "validate"])
+def test_a_misspelled_weight_domain_in_an_override_fails_closed(tmp_path, verb):
+    """A typo'd domain must not pass: the real domain would silently lose its weight."""
+    (tmp_path / "fitness-config.json").write_text(
+        json.dumps({"weights": {"algorithms": 0, "algoritms": 10}}))
+    result = _run(verb, tmp_path)
+    assert result.returncode == 1, result.stdout
+    assert "fitness-config.json" in result.stderr
+    assert "weights.algoritms is not a known domain" in result.stderr
+
+
+@pytest.mark.parametrize("verb", ["show", "validate"])
+@pytest.mark.parametrize("section,key", [("statusThresholds", "healthy"), ("scoring", "goodRange")])
+def test_a_reversed_range_in_an_override_fails_closed(tmp_path, verb, section, key):
+    """Consumers read [0] as the lower bound, so [10, 8] would misreport every status."""
+    (tmp_path / "fitness-config.json").write_text(json.dumps({section: {key: [10, 8]}}))
+    result = _run(verb, tmp_path)
+    assert result.returncode == 1, result.stdout
+    assert f"{section}.{key} must list the low end first" in result.stderr

@@ -4,7 +4,7 @@ description: "Audits a Python project for junk tests, dead code, and unused depe
 user-invocable: true
 argument-hint: "[path] [--package NAME] [--paths GLOB] - project to audit; defaults to the current Python project"
 metadata:
-  version: "1.0.1"
+  version: "1.0.2"
 ---
 
 # deslop-python

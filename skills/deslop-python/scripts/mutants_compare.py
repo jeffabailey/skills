@@ -49,8 +49,14 @@ def load(d: Path):
     codes, hashes = {}, {}
     for meta in d.rglob("*.meta"):
         data = json.loads(meta.read_text())
-        codes.update(data.get("exit_code_by_key", {}))
-        hashes.update(data.get("hash_by_function_name", {}))
+        file_codes = data.get("exit_code_by_key", {})
+        file_hashes = data.get("hash_by_function_name", {})
+        codes.update(file_codes)
+        # Qualify each hash with its module, taken from this file's own mutant keys, so
+        # same-named functions in different modules (main, run, parse) stay apart.
+        for fn in {fn_of(k) for k in file_codes}:
+            if short_fn(fn) in file_hashes:
+                hashes[fn] = file_hashes[short_fn(fn)]
     return codes, hashes
 
 
@@ -69,7 +75,7 @@ def diff(base_dir: Path, after_dir: Path, as_json: bool) -> int:
     changed_fns = sorted({k for k in bh if k in ah and bh[k] != ah[k]})
     lost, gained, only_base, only_after, changed = [], [], [], [], []
     for k, b in base.items():
-        if short_fn(fn_of(k)) in changed_fns:
+        if fn_of(k) in changed_fns:
             changed.append(k)
             continue
         if k not in after:
@@ -80,7 +86,7 @@ def diff(base_dir: Path, after_dir: Path, as_json: bool) -> int:
             lost.append({"mutant": k, "before": STATUS.get(b, b), "after": STATUS.get(a, a)})
         elif b not in KILLED and a in KILLED:
             gained.append({"mutant": k, "before": STATUS.get(b, b), "after": STATUS.get(a, a)})
-    only_after = [f"{k} [{STATUS.get(a, a)}]" for k, a in after.items() if k not in base and short_fn(fn_of(k)) not in changed_fns]
+    only_after = [f"{k} [{STATUS.get(a, a)}]" for k, a in after.items() if k not in base and fn_of(k) not in changed_fns]
 
     def count(d):
         killed = sum(1 for c in d.values() if c in KILLED)

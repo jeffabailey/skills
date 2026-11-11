@@ -77,15 +77,27 @@ def build(args, cache: Path):
 
     todo = [(k, sorted(by_fn.get(function_of(k), []))) for k, c in codes.items() if c in KILLED]
     todo = [(k, ts) for k, ts in todo if ts]
+    durations = stats.get("duration_by_test", {})
+
+    def timeout_for(tests):
+        # Like mutmut: a mutant that makes its tests run far longer than the
+        # baseline is an infinite loop, not a slow kill. A fixed long timeout
+        # made hung mutants dominate the run time.
+        if args.timeout:
+            return args.timeout
+        return 10 + 5 * sum(durations.get(t, 1.0) for t in tests)
+
     print(f"rerunning {len(todo)} killed mutants without -x ({args.jobs} jobs)", file=sys.stderr)
     result = {"tests": all_tests, "mutants": {}}
     for k, c in codes.items():
         result["mutants"][k] = {"exit_code": c, "killers": []}
     with ThreadPoolExecutor(max_workers=args.jobs) as pool:
-        futures = [pool.submit(run_one, k, ts, mutants, pythonpath, args.timeout, args.pytest_arg)
+        futures = [pool.submit(run_one, k, ts, mutants, pythonpath, timeout_for(ts), args.pytest_arg)
                    for k, ts in todo]
-        for f in futures:
+        for i, f in enumerate(futures, 1):
             key, killers = f.result()
+            if i % 50 == 0 or i == len(futures):
+                print(f"  {i}/{len(futures)}", file=sys.stderr)
             if killers is None:
                 result["mutants"][key]["rerun_timeout"] = True
             else:
@@ -99,7 +111,8 @@ def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--cache", required=True)
     ap.add_argument("-j", "--jobs", type=int, default=4)
-    ap.add_argument("--timeout", type=float, default=120)
+    ap.add_argument("--timeout", type=float, default=0,
+                    help="seconds per mutant rerun; default 10 + 5x the baseline time of its tests")
     ap.add_argument("--pytest-arg", action="append", default=[],
                     help="extra argument for pytest, repeatable (for example the project's -m filter)")
     ap.add_argument("--remove", nargs="+", default=[])

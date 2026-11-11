@@ -4,7 +4,7 @@ description: "Audits a Python project for junk tests, dead code, and unused depe
 user-invocable: true
 argument-hint: "[path] [--package NAME] [--paths GLOB] - project to audit; defaults to the current Python project"
 metadata:
-  version: "1.0.0"
+  version: "1.0.1"
 ---
 
 # deslop-python
@@ -125,6 +125,8 @@ Read `references/tool-recipes.md` for exact flags, how to scope large projects, 
    mutmut runs pytest with `-x`, so its own results credit a killed mutant to at most one test. `kill_matrix.py` reruns each killed mutant against the tests that cover its function without `-x` and records every test that fails. It reports kills and unique kills per test, tests with identical kill sets, tests whose kills are a strict subset of another's, and tests that kill nothing. That is the main evidence for categories 1, 2, and 8. `mutmut show <mutant>` prints the diff of any mutant it names. Redirect `mutmut run` to a log: its progress line rewrites itself thousands of times.
 
    Keep `.deslop-python/baseline/` untouched; it is the yardstick for every later comparison.
+
+   If every mutant ends up `not checked` with an "Expected keys" message, or the stats step fails inside a test that runs the code as a subprocess, the project layout doesn't fit mutmut. The recipes say how to work around it in a scratch copy without restructuring the user's project; say in the report which code the mutation evidence does not cover.
 
 5. **Benchmarks.** If any test takes the `benchmark` fixture, save a baseline: `uv run pytest --ignore=mutants --benchmark-only --benchmark-autosave --benchmark-storage=file://.deslop-python/bench`. Benchmarks that also run in the normal suite are slow-test candidates (category 7).
 

@@ -122,31 +122,6 @@ def test_validate_effective_enforces_sum_target(
         )
 
 
-def test_validate_effective_names_every_file_in_chain_on_sum_violation():
-    """On sum violation, error message must reference every chain entry so
-    Devin can locate the offending file even when the deepest isn't to blame.
-    """
-    weights = {**_DEFAULT_WEIGHTS_SUM_100, "data": 5}  # sum = 95
-    chain = [
-        Path("infrastructure/modules/postgresql/database/fitness-config.json"),
-        Path("infrastructure/modules/postgresql/fitness-config.json"),
-        Path("fitness-config.json"),
-    ]
-
-    result = validation.validate_effective(
-        _effective_with_weights(weights), source_chain=chain
-    )
-
-    assert result.ok is False
-    combined = "\n".join(result.errors)
-    assert "postgresql/database/fitness-config.json" in combined
-    assert "postgresql/fitness-config.json" in combined
-    standalone = combined.replace(
-        "postgresql/database/fitness-config.json", ""
-    ).replace("postgresql/fitness-config.json", "")
-    assert "fitness-config.json" in standalone
-
-
 def test_validate_effective_returns_pure_result_with_ok_and_errors_fields():
     """Purity contract + ValidationResult ADT shape.
 
@@ -165,10 +140,9 @@ def test_validate_effective_returns_pure_result_with_ok_and_errors_fields():
 
     result = validation.validate_effective(cfg, source_chain=[])
 
-    # ADT shape
-    assert hasattr(result, "ok")
-    assert hasattr(result, "errors")
-    assert isinstance(result.errors, list)
+    # The default config is valid: ok with no errors.
+    assert result.ok is True
+    assert result.errors == []
     # Purity
     assert cfg["weights"] == snapshot["weights"]
     assert cfg["statusThresholds"] == snapshot["statusThresholds"]
@@ -228,8 +202,9 @@ def test_validate_schema_versions_enforces_version_match(
             f"case={case_id}: root entry missing as standalone reference"
         )
         # Each case carries a recognizable diagnostic vocabulary.
+        if expected_keyword:
+            assert expected_keyword in combined_lower
         if case_id == "child_newer_than_root":
-            assert "version" in combined_lower
             assert "supported" in combined_lower or "1" in combined_lower
         elif case_id == "child_older_than_root_with_upgrade_hint":
             assert (
@@ -663,13 +638,22 @@ def test_an_audited_file_that_cannot_be_read_is_skipped_without_crashing():
 @given(st.lists(st.text(alphabet="abcdef", min_size=1, max_size=5), min_size=1, max_size=4, unique=True),
        st.integers(1, 30))
 def test_an_effective_sum_off_100_names_the_nearest_chain_file_first(folders, shortfall):
-    chain = [Path(folder) / "fitness-config.json" for folder in folders]
+    nested = [Path(folder) / "fitness-config.json" for folder in folders]
+    chain = [*nested, Path("fitness-config.json")]  # nearest first, root last
     weights = {**model.DEFAULT_WEIGHTS, "architecture": model.DEFAULT_WEIGHTS["architecture"] - shortfall}
 
     result = validation.validate_effective(_effective_with_weights(weights), chain)
 
     assert result.ok is False
     assert result.errors[0].startswith(f"Effective weights from {chain[0]} sum to")
+    # Every chain file is named, so the user can find the offender even when
+    # the nearest file is not to blame; the root must appear on its own.
+    combined = "\n".join(result.errors)
+    standalone = combined
+    for entry in sorted(nested, key=lambda p: len(str(p)), reverse=True):
+        assert str(entry) in combined
+        standalone = standalone.replace(str(entry), "")
+    assert "fitness-config.json" in standalone
 
 
 @st.composite

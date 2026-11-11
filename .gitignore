@@ -26,6 +26,8 @@ node_modules/
 # Per-project config (users create in their repos)
 fitness-config.json
 .fitness-config.json
+# This repo's own root config is tracked so CI reviews use its weights
+!/fitness-config.json
 
 # Generated review reports
 docs/*-review.md

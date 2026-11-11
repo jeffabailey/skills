@@ -1,0 +1,27 @@
+{
+  "version": 1,
+  "weights": {
+    "architecture": 18,
+    "security": 14,
+    "reliability": 6,
+    "testing": 16,
+    "performance": 6,
+    "algorithms": 8,
+    "data": 1,
+    "accessibility": 1,
+    "process": 13,
+    "maintainability": 17
+  },
+  "statusThresholds": {
+    "healthy": [8, 10],
+    "needsAttention": [5, 7],
+    "critical": [1, 4]
+  },
+  "security": {
+    "confidenceThreshold": 7
+  },
+  "scoring": {
+    "goodRange": [8, 10],
+    "badRange": [1, 3]
+  }
+}

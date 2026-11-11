@@ -1,0 +1,6 @@
+schema_version: "1.1"
+name: pre-approval-still-reports
+expected_outcome: |
+  Even though the user says to delete junk without asking, the skill delivers the evidence-backed report first, changes no source or test file, and asks which items to apply.
+context:
+  scaffold_script: place-files.sh

@@ -1,0 +1,6 @@
+schema_version: "1.1"
+name: audit-planted-slop
+expected_outcome: |
+  A prioritized audit report of the cartcalc test suite backed by nextest timings, per-test coverage, and mutation results. It finds the duplicate cart_total pair, the sleeping integration tests, weak asserts, the implementation-detail test, and the dead legacy_round function, keeps tests that hold unique mutation kills, changes no files, and asks which items to apply.
+context:
+  scaffold_script: place-files.sh

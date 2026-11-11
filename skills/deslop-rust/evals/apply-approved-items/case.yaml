@@ -1,0 +1,6 @@
+schema_version: "1.1"
+name: apply-approved-items
+expected_outcome: |
+  Items 1, 2, 3 and 6 of deslop-report.md are applied and nothing else changes. The suite still passes, mutation results show no lost kills against a baseline taken before the edits, and the final message gives a before/after table.
+context:
+  scaffold_script: place-files.sh

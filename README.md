@@ -22,6 +22,8 @@ This repository and the article [Fundamental Skills](https://jeffbailey.us/blog/
 | `generate-commit` | Write a conventional commit message for what you staged, in the repo's own types and scopes, and commit after review. Runs CI's lint on staged files only, warns about secret-looking files, and suggests splitting mixed diffs. | "generate commit", "write a commit message", "commit what I staged" |
 | `ai-sanitize` | Removes AI tells from prose, UI code, and graphics (performative phrasing, emdashes, gradients, glass, eyebrows, pills, emoji, broken ASCII art), extending the project's own style guide and design system. Edits in place or reports only. | "remove AI tells", "de-slop this", "make this UI look less AI-generated" |
 | `agent-hygiene` | Audits the instruction files agents read (AGENTS.md, CLAUDE.md, rules, skills) for no-ops, duplication, stale claims, and sprawl, then has three subagents propose restructurings of rising radicalness (prune, disclose, rebuild) and applies the one you pick. Soft dependency: invokes [`mattpocock-skills:writing-for-agents`](https://github.com/mattpocock/skills) when installed and falls back to its bundled rubric when not. | "clean up my AGENTS.md", "my CLAUDE.md is a mess", "use progressive disclosure" |
+| `deslop-python` | Audits a pytest suite for duplicate, weak, shadowed, slow, and implementation-detail tests, and for dead code and unused dependencies, with evidence from pytest timings, per-test pytest-cov contexts, a per-test mutmut kill matrix, and ruff, ty, vulture, radon, deptry, jscpd, and import-linter. Installs missing tools, reports first, applies only approved items, and verifies no mutation kills were lost. | "deslop my Python tests", "which pytest tests are redundant", "find dead Python code", `/deslop-python` |
+| `deslop-rust` | Audits a Rust test suite for duplicate, weak, slow, and implementation-detail tests and for dead code, with evidence from cargo-nextest timings, per-test cargo-llvm-cov overlap, and a per-test cargo-mutants kill matrix. Installs missing tools, reports first, applies only approved items, and verifies no mutation kills were lost. | "deslop my Rust tests", "which Rust tests are redundant", "speed up cargo test", `/deslop-rust` |
 | `version-skills` | Raises `metadata.version` in changed skills and the plugin version in both manifests together, with a bundled script, then proves nothing changed without a rise. | "bump skill versions", "version this skill", "check skill versions", `/version-skills` |
 | `fitness-config-init` | Creates a `fitness-config.json` with review weights that fit what the project is for. Scans the folder (or runs a full review first, if asked), proposes weights from a matching purpose profile, explains every change, and saves only the proposal you approve. | "create a fitness config", "tune review weights for this project", "initialize fitness config" |
 
@@ -321,6 +323,24 @@ skills/
       prose.md              # Writing tells and rewrites
       ui.md                 # Interface tells, detection patterns, fixes
       graphics.md           # SVG, ASCII, diagram, chart, and image tells
+  deslop-python/            # general-development skill (Python test-suite, dead-code, and dependency audit)
+    SKILL.md
+    references/
+      tool-recipes.md       # pytest-cov, mutmut, static-tool flags and pitfalls
+    scripts/
+      pytest_timings.py     # rank tests from pytest JUnit
+      coverage_overlap.py   # per-test coverage from --cov-context=test, identical/subset groups
+      kill_matrix.py        # which tests kill which mutants (reruns mutmut kills without -x)
+      mutants_compare.py    # snapshot mutmut results; lost kills between two runs
+  deslop-rust/              # general-development skill (Rust test-suite and dead-code audit)
+    SKILL.md
+    references/
+      tool-recipes.md       # nextest, llvm-cov, cargo-mutants flags and pitfalls
+    scripts/
+      nextest_timings.py    # rank tests from nextest JUnit
+      coverage_overlap.py   # per-test coverage, identical/subset groups, uncovered lines
+      kill_matrix.py        # which tests catch which mutants, from one --no-fail-fast run
+      mutants_compare.py    # lost mutation kills between two cargo-mutants runs
   version-skills/           # general-development skill (skill and plugin versions)
     SKILL.md
     scripts/

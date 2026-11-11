@@ -1,0 +1,6 @@
+schema_version: "1.1"
+name: audit-planted-slop
+expected_outcome: |
+  A prioritized audit report of the cartcalc pytest suite backed by JUnit timings, per-test coverage contexts, and mutmut results. It finds the duplicate cart_total pair, the sleeping integration tests, weak asserts, the shadowed test, the implementation-detail test, the dead legacy_round function and the unused requests dependency, keeps tests that hold unique mutation kills, changes no source or test file, and asks which items to apply.
+context:
+  scaffold_script: place-files.sh

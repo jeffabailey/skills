@@ -220,7 +220,8 @@ jobs:
         with:
           name: prompt
           path: /tmp/gh-aw/aw-prompts/prompt.txt
-          retention-days: 1
+          # Keep long enough for `gh run rerun --failed` days after a failure.
+          retention-days: 7
 
   agent:
     needs: activation
@@ -352,7 +353,17 @@ jobs:
           node-version: '24'
           package-manager-cache: false
       - name: Install awf binary
-        run: bash /opt/gh-aw/actions/install_awf_binary.sh v0.20.2
+        # The script retries for only ~25s; outer backoff rides out longer
+        # GitHub release CDN outages (HTTP 504, see issue #75).
+        run: |
+          for attempt in 1 2 3 4; do
+            bash /opt/gh-aw/actions/install_awf_binary.sh v0.20.2 && exit 0
+            [ "$attempt" -lt 4 ] || break
+            echo "::warning::awf install attempt $attempt failed; retrying in $((attempt * 30))s"
+            sleep $((attempt * 30))
+          done
+          echo "::error::awf install failed after 4 attempts"
+          exit 1
       - name: Install agent CLI
         run: ${{ steps.engine-config.outputs.install_cmd }}
       - name: Set extra engine env vars

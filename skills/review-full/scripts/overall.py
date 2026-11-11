@@ -103,7 +103,8 @@ def main():
         print(f"  Arithmetic: ({terms}) / {den} = {num:.1f} / {den} = {raw:.2f}")
         if args.critical and raw > 4.0:
             print("  CRITICAL finding present: capped at 4.0")
-        print(f"  Overall: {overall:.1f} ({status(overall, thresholds)})")
+        # Band from the one-decimal score the report shows, so 7.98 reads "8.0 (Healthy)".
+        print(f"  Overall: {overall:.1f} ({status(float(f'{overall:.1f}'), thresholds)})")
     if len(overalls) > 1:
         print(f"Headline overall (lowest group): {min(overalls):.1f}")
 

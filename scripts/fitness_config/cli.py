@@ -10,6 +10,7 @@ import argparse
 import json
 import sys
 from pathlib import Path
+from typing import NamedTuple
 
 from .adapters import config_file_at, load_legacy_config, read_chain_configs
 from .audit import cmd_audit
@@ -179,26 +180,32 @@ def cmd_validate_path(target: Path, base: Path) -> int:
 # Seeding and the write gate: init --path TARGET [--dry-run | --from - ...]
 # ---------------------------------------------------------------------------
 
+class _ChainFailure(NamedTuple):
+    """Why the anchored chain could not be read, and the exit code to return."""
+
+    message: str
+    exit_code: int
+
+
 def _read_anchored_configs(target: Path, base: Path
-                           ) -> tuple[list[Path], list[dict], tuple[str, int] | None]:
+                           ) -> tuple[list[Path], list[dict], _ChainFailure | None]:
     """The configs above target, never above the anchor (base), nearest-first.
 
-    Returns (chain, configs, None), or a failure (message, exit code): a target
-    outside the anchor is a usage error, an unreadable chain file a failure.
+    Returns (chain, configs, None), or a _ChainFailure: a target outside the
+    anchor is a usage error, an unreadable chain file a failure.
     """
     chain, outside = anchored_chain(target.resolve(strict=False), base.resolve(), Path.is_file)
     if outside is not None:
-        return [], [], (outside, EXIT_USAGE)
+        return [], [], _ChainFailure(outside, EXIT_USAGE)
     configs, unreadable = read_chain_configs(chain)
     if unreadable is not None:
-        return chain, [], (unreadable, EXIT_FAILED)
+        return chain, [], _ChainFailure(unreadable, EXIT_FAILED)
     return chain, configs, None
 
 
-def _report_failure(failure: tuple[str, int]) -> int:
-    message, exit_code = failure
-    print(message, file=sys.stderr)
-    return exit_code
+def _report_failure(failure: _ChainFailure) -> int:
+    print(failure.message, file=sys.stderr)
+    return failure.exit_code
 
 
 def cmd_init_path(target: Path, base: Path) -> int:

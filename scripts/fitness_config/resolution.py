@@ -43,7 +43,7 @@ def walk_up_chain_with_status(target: Path, stop: Path) -> WalkUpResult:
     depth_capped = False
     while True:
         candidate = cursor / CONFIG_FILENAME
-        if candidate.exists() and candidate.is_file():
+        if candidate.is_file():
             chain.append(candidate)
         if cursor == stop:
             break
@@ -71,7 +71,7 @@ def deep_merge_chain(raw_configs: list[dict]) -> dict:
     comes from the nearest config that declares one.
     """
     merged: dict = {"weights": {}}
-    # Root first, so nearer configs overwrite per domain.
+    # Root first, so nearer configs overwrite per domain (nearest wins).
     for cfg in reversed(raw_configs):
         if not isinstance(cfg, dict):
             continue

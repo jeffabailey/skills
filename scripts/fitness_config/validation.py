@@ -22,10 +22,13 @@ _RANGE_SECTIONS = ("statusThresholds", "scoring")
 
 @dataclass(frozen=True)
 class ValidationResult:
-    """ok, plus actionable error lines that name the chain files when there are any."""
+    """Actionable error lines that name the chain files; no errors means ok."""
 
-    ok: bool
     errors: list[str] = field(default_factory=list)
+
+    @property
+    def ok(self) -> bool:
+        return not self.errors
 
 
 def _sum_weights(weights: dict) -> float:
@@ -78,8 +81,8 @@ def validate_schema_versions(
         mismatched = mismatched or version != SUPPORTED_SCHEMA_VERSION
 
     if not mismatched:
-        return ValidationResult(ok=True, errors=[])
-    return ValidationResult(ok=False, errors=[
+        return ValidationResult()
+    return ValidationResult(errors=[
         "Schema version mismatch across the resolution chain "
         f"(supported schema version is {SUPPORTED_SCHEMA_VERSION}):",
         *(f"  - {entry} declares version {version}" for entry, version in declared),
@@ -100,11 +103,11 @@ def validate_effective(effective: dict, source_chain: list[Path]) -> ValidationR
     """
     total = _sum_weights(effective.get("weights") or {})
     if abs(total - 100) <= WEIGHTS_SUM_TOLERANCE:
-        return ValidationResult(ok=True, errors=[])
+        return ValidationResult()
     if not source_chain:
-        return ValidationResult(ok=False, errors=[
+        return ValidationResult(errors=[
             f"Effective weights sum to {total:g}; must sum to 100.", _SUM_FIX])
-    return ValidationResult(ok=False, errors=[
+    return ValidationResult(errors=[
         f"Effective weights from {source_chain[0]} sum to {total:g}; must sum to 100.",
         "Resolution chain (nearest first):",
         _format_chain_for_error(source_chain),
@@ -274,6 +277,6 @@ def validate_chain_values(raw_configs: list[dict], source_chain: list[Path]) -> 
         for line in (rule(cfg[name]) if isinstance(cfg[name], dict)
                      else [f"'{name}' must be an object"])]
     if not errors:
-        return ValidationResult(ok=True, errors=[])
-    return ValidationResult(ok=False, errors=[
+        return ValidationResult()
+    return ValidationResult(errors=[
         *errors, "Fix: correct the value(s) above, then run validate --path again."])

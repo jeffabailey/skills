@@ -93,15 +93,10 @@ def py_imports(path: Path):
 
 
 def packages_above(root: Path) -> tuple[str, ...]:
-    """The package path that can prefix an absolute import of a module under ROOT:
-    ROOT's own name, preceded by each parent that is a package (has __init__.py)."""
-    root = root.resolve()
-    above = [root.name]
-    parent = root.parent
-    while (parent / above[0] / "__init__.py").exists() and (parent / "__init__.py").exists():
-        above.insert(0, parent.name)
-        parent = parent.parent
-    return tuple(above)
+    """The directory names that can prefix an absolute import of a module under
+    ROOT: ROOT's own name and its ancestors. __init__.py is not required, because
+    namespace packages (PEP 420) have none."""
+    return tuple(part for part in root.resolve().parts if part != root.anchor)
 
 
 def lookup(dotted: str, names: dict[str, Path], absolute: bool,

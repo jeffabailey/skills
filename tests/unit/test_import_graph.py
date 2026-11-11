@@ -3,6 +3,8 @@
 import importlib.util
 from pathlib import Path
 
+import pytest
+
 SCRIPT = Path(__file__).resolve().parents[2] / "skills/review-architecture/scripts/import_graph.py"
 spec = importlib.util.spec_from_file_location("import_graph", SCRIPT)
 import_graph = importlib.util.module_from_spec(spec)
@@ -61,3 +63,15 @@ def test_skipped_directories_are_never_walked(tmp_path, monkeypatch):
     files, _ = import_graph.collect(root, include_tests=False)
     assert [p.name for p in files] == ["app.py"]
     assert not {"node_modules", "dep", ".venv", "lib"} & set(visited)
+
+
+@pytest.mark.parametrize("inits", [
+    ["sub/__init__.py"],   # ROOT is a package, its parent is a namespace package
+    [],                    # PEP 420: no __init__.py anywhere
+    ["__init__.py"],       # parent is a package, ROOT is a namespace package
+])
+def test_a_fully_qualified_import_resolves_through_namespace_packages(tmp_path, inits):
+    write(tmp_path / "top", {**{rel: "" for rel in inits},
+                             "sub/a.py": "import top.sub.b\nfrom top.sub.c import y\n",
+                             "sub/b.py": "", "sub/c.py": "y = 1\n"})
+    assert edges(tmp_path / "top" / "sub") == {("a", "b"), ("a", "c")}

@@ -141,8 +141,14 @@ def indent_metrics(rel, text):
 
 
 # ---------------------------------------------------------------- brace languages
-def strip_code(text):
-    """Blank out comments and string contents, keeping newlines and offsets."""
+RUST_CHAR_RE = re.compile(r"'(?:\\[^\n]+?|[^'\\\n])'")
+
+
+def strip_code(text, rust=False):
+    """Blank out comments and string contents, keeping newlines and offsets.
+
+    In Rust a quote that does not open a char literal is a lifetime ('a, 'static)
+    and stays as code."""
     out, i, n = [], 0, len(text)
     while i < n:
         c, nxt = text[i], text[i + 1] if i + 1 < n else ""
@@ -151,6 +157,9 @@ def strip_code(text):
             j = text.find(close, i + 2)
             j = n if j < 0 else j + (0 if nxt == "/" else 2)
             out.append(re.sub(r"[^\n]", " ", text[i:j]))
+        elif rust and c == "'" and not RUST_CHAR_RE.match(text, i):
+            out.append(c)
+            j = i + 1
         elif c in "\"'`":
             j = _string_end(text, i, c)
             closed = j < n and text[j] == c
@@ -222,7 +231,7 @@ def _block_end(code, open_idx):
 
 
 def brace_metrics(rel, text):
-    code = strip_code(text)
+    code = strip_code(text, rust=str(rel).endswith(".rs"))
 
     def line_of(idx):
         return code.count("\n", 0, idx) + 1

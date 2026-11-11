@@ -390,8 +390,9 @@ def check_css(files, bg_token=None, only_theme=None, show_tokens=False, fails_on
                     row = ("UNRES", None, need, kind, val, hexof(bg) if bg else "?", where)
                     rows.setdefault(row, []).append(sel)
                     continue
-                cr = round(ratio(fg, bg, dark), 2)
-                v = _verdict(cr, need, kind)
+                raw = ratio(fg, bg, dark)
+                v = _verdict(raw, need, kind)  # WCAG thresholds are not rounded
+                cr = round(raw, 2)
                 if fails_only and v == "PASS":
                     continue
                 row = (v, cr, need, kind, f"{val} = {hexof(fg)}", f"{hexof(bg)} ({bg_src})", where)

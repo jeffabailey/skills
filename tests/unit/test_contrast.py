@@ -37,3 +37,12 @@ def test_theme_tokens_and_overrides(tmp_path):
     # the dark-only override replaces the base color instead of being checked alone
     assert "3.77 | 4.5 | text | var(--bg) = #111111 -> #8b4fd6 (rule) | " in dark
     assert "#fff = #ffffff" not in dark
+
+
+def test_a_ratio_just_under_the_threshold_fails_in_the_rule_check(tmp_path):
+    """#1b8577 on white is 4.4987: it displays as 4.50 but does not meet 4.5."""
+    css = tmp_path / "t.css"
+    css.write_text(":root { --bg: #fff; }\n.note { color: #1b8577; }\n")
+    out = contrast.check_css([str(css)])
+    row = next(line for line in out.splitlines() if ".note" in line)
+    assert not row.lstrip("| ").startswith("PASS"), row

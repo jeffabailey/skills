@@ -722,6 +722,12 @@ jobs:
         with:
           name: prompt
           path: /tmp/gh-aw/aw-prompts
+      - name: Add deterministic review context
+        env:
+          GH_AW_PROMPT: /tmp/gh-aw/aw-prompts/prompt.txt
+        run: |
+          python3 .github/scripts/review-context.py "$GITHUB_WORKSPACE" --prompt "$GH_AW_PROMPT" > /tmp/gh-aw/review-context.txt
+          cat /tmp/gh-aw/review-context.txt >> "$GH_AW_PROMPT"
       - name: Clean git credentials
         run: bash /opt/gh-aw/actions/clean_git_credentials.sh
       - name: Execute agent CLI

@@ -33,7 +33,7 @@ skills/review-<domain>/
 ```
 
 - `SKILL.md` must include: YAML frontmatter with `name` and `description` (including trigger phrases) and a `## Workflow` section. Domain review skills must also include a `## Scoring Dimensions` section. Utility skills (`review-full`, `review-jit-test-gen`, `review-apply`) may omit scoring dimensions.
-- Default scoring weights live in the resolver's built-in defaults (`scripts/fitness_config`) and must match the weights listed in `README.md` and the table below. `skills/review-full/SKILL.md` must not hardcode weights.
+- The resolver's built-in defaults live in `scripts/fitness_config` and must match the weights listed in `README.md` and the table below. A repository may own its review policy in a tracked root `fitness-config.json` (or a scoped override); that effective configuration takes precedence over the built-in defaults. Keep the documentation clear about which values are defaults and which values this repository has chosen. `skills/review-full/SKILL.md` must not hardcode weights.
 - Trigger phrases must be domain-specific. Avoid general phrases that overlap with other skills (see [ADR 0001](docs/adrs/0001-skill-based-review-architecture.md)).
 
 ### Naming
@@ -43,7 +43,9 @@ skills/review-<domain>/
 
 ### Scoring weights
 
-The current domain weights (used by `review-full`) are:
+The table below documents the built-in defaults used when a repository has no `fitness-config.json`. This repository owns a different policy in its tracked root `fitness-config.json`; review runs resolve that file and should report the effective weights in their provenance lines. Do not copy the repository-specific values into this default table.
+
+The current built-in domain weights (used by `review-full`) are:
 
 | Domain | Weight |
 |--------|--------|

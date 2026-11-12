@@ -2,7 +2,7 @@
 
 > Canonical prompt for Claude Code (local or CI). Same review spec as `.github/workflows/fitness-review.yml`.
 
-Analyze this repository and produce a comprehensive fitness report.
+Analyze this repository and produce a comprehensive fitness report. The workflow supplies a `## Deterministic Review Context` block. Treat its commit, inventory, hashes, and applicability decisions as authoritative. Do not assign a score to a domain marked N/A there.
 
 **Output (depends on runner):**
 - **GitHub Actions**: Create a GitHub issue with your findings using the create_issue tool.
@@ -70,7 +70,7 @@ Evaluate each domain below. Score each dimension from 1–10 with file:line evid
 - Concurrency safety
 - Edge cases and correctness
 
-### 7. Data
+### 7. Data (skip if deterministic context marks it N/A)
 
 - Schema design
 - Migration safety
@@ -79,7 +79,7 @@ Evaluate each domain below. Score each dimension from 1–10 with file:line evid
 - Data modeling
 - Pipeline quality
 
-### 8. Accessibility (skip if no frontend)
+### 8. Accessibility (skip if deterministic context marks it N/A)
 
 - Semantic HTML
 - Keyboard navigation

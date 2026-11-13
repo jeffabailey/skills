@@ -2,7 +2,7 @@
 name: review-reliability
 description: Analyzes code and configuration (application code, Docker Compose or IaC stacks, and CI-only pipelines) for production reliability fitness, producing scores (1-10) across observability, availability design, timeout/retry hygiene, CI/CD maturity, incident readiness, capacity planning, and container/deploy hygiene. Use when the user says /review:review-reliability, requests a reliability review, says check observability, asks if the system is production ready, wants a monitoring setup review, asks about CI/CD pipeline quality, or wants an operational readiness assessment. Only reports findings with confidence >= 7/10.
 metadata:
-  version: "1.0.0"
+  version: "1.1.0"
 ---
 
 # Reliability Fitness Review
@@ -24,7 +24,7 @@ Reference: [Fundamentals of Reliability Engineering](https://jeffbailey.us/blog/
 
 ## Configuration
 
-Invoke the resolver CLI to obtain effective weights and thresholds for the review target. Never load `fitness-config.json` directly.
+Use the prompt's `## Resolved Config` block; with none, invoke the resolver CLI. Never load `fitness-config.json` directly.
 
 ```bash
 python3 "${CLAUDE_SKILL_DIR}/../../scripts/fitness-config.py" show --path <target>
@@ -32,7 +32,7 @@ python3 "${CLAUDE_SKILL_DIR}/../../scripts/fitness-config.py" show --path <targe
 
 `${CLAUDE_SKILL_DIR}` is this skill's directory; the resolver ships two levels up in the plugin's `scripts/`. If your agent does not expand the variable, substitute the directory containing this `SKILL.md`.
 
-Where `<target>` is the file or directory under review. The CLI walks up to discover any module override and merges it with the root config. Include the `Config:` and `Effective weights:` lines from the resolver output within the first 10 lines of the final report as the provenance trail (AC-03.1, AC-08.2). The `effective` object inside the JSON block delimited by `<!-- BEGIN_EFFECTIVE_CONFIG_JSON -->` / `<!-- END_EFFECTIVE_CONFIG_JSON -->` carries weights, status thresholds, security, and scoring for any programmatic needs.
+`<target>` is the file or directory under review; module overrides above it merge with the root config. Include the `Config:` and `Effective weights:` lines within the first 10 lines of the report as the provenance trail (AC-03.1, AC-08.2). The JSON block between `<!-- BEGIN_EFFECTIVE_CONFIG_JSON -->` and `<!-- END_EFFECTIVE_CONFIG_JSON -->` carries weights, status thresholds, security, and scoring.
 
 The resolver walks up from the target, so a target outside the tree that holds `fitness-config.json` (a copied checkout, a sandbox, a sibling repo) resolves to `Config: built-in defaults (no fitness-config.json found)`. Copy that line as reported; do not copy or create a config file to change the answer. If you expected a project config, add one sentence under the provenance lines saying the target is outside its tree. Use `effective.statusThresholds` for the status band; the cross-skill weights are provenance only for this single-domain report.
 
@@ -40,24 +40,24 @@ The resolver walks up from the target, so a target outside the tree that holds `
 
 1. **Load the rubric** -- Read `references/rubric.md`, then skim `references/checklist.md`.
 
-2. **Scope and classify the target** -- Decide what is under review (whole repo, a subdirectory such as `.github`, or files) and its type: application code, deploy config (Docker Compose, Kubernetes, Helm, Terraform), CI-only (workflows and CI scripts), or a mix. Look for source files and HTTP/DB clients, `docker-compose*.yml`/`compose*.yml`, manifests, `*.tf`, and `.github/workflows/` or other pipeline files. Run the resolver on the target.
+2. **Scope and classify the target** -- Decide what is under review (whole repo, a subdirectory such as `.github`, or files) and its type: application code, deploy config (Docker Compose, Kubernetes, Helm, Terraform), CI-only (workflows and CI scripts), or a mix. Read the type from the `languages`, `containers`, `iac`, and `ci` rows of the `## Scope Inventory` in the prompt; with none, run `python3 "${CLAUDE_SKILL_DIR}/../../scripts/review-context.py" <target> --inventory`. Resolve the config (see Configuration).
 
 3. **Decide applicability** -- Use the target-type table in rubric.md to mark each dimension scored or N/A, with a one-line reason for each N/A. A missing thing that should exist (no CI for shipped code, no healthchecks in a production compose file) is a finding, not N/A.
 
 4. **Map failure boundaries** -- App code: HTTP clients, gRPC stubs, DB/cache/queue connectors, external APIs. Compose/IaC: services, their images, volumes, ports, and `depends_on` edges. CI: jobs, the actions and images they use, and network calls in scripts. These are where reliability patterns must exist.
 
-5. **Check each applicable dimension against checklist.md**:
+5. **Check each applicable dimension against checklist.md**. Run `python3 "${CLAUDE_SKILL_DIR}/../../scripts/ci-facts.py" <target> --no-scanners`. Its `file:line` rows settle job `timeout-minutes` (default 360), pinning, `concurrency`, `USER`, and Compose healthcheck, restart, and limits. Trust them; judge which gaps matter.
    - Observability: logging format and fields, metrics/exporters, tracing, alert definitions.
-   - Availability: health checks, readiness-gated startup, restart policy, replicas, graceful shutdown, SLOs.
-   - Timeout/retry: explicit timeouts on every outbound call; in CI, `timeout-minutes` on every job (check each job in each workflow; the default is 360 minutes) and timeouts on `curl`/HTTP calls in scripts; backoff and bounded retries.
-   - CI/CD: tests on PRs, merge blocking, pinned actions and images, `concurrency`, artifact versioning, deploy gates, rollback. For generated workflows (gh-aw `*.lock.yml` or a "generated" header), point fixes at the source file after confirming it exists in the repo.
-   - Incident readiness: alerts with severities, runbooks, backup/restore docs, on-call, postmortems.
+   - Availability: health checks, readiness-gated startup, replicas, graceful shutdown, SLOs.
+   - Timeout/retry: a timeout on each outbound call (`curl` in CI scripts too), backoff, bounded retries.
+   - CI/CD: tests on PRs, merge blocking, artifact versioning, deploy gates, rollback. For generated workflows (gh-aw `*.lock.yml` or a "generated" header), point fixes at the source file if the repo has it.
+   - Incident readiness: alerts with severities, runbooks, backup/restore, on-call, postmortems.
    - Capacity: CPU/memory limits, pool sizes, autoscaling, load tests, rate limits.
-   - Container/deploy: image pinning, base images, non-root, secrets handling, healthchecks, orchestrator rollout settings.
+   - Container/deploy: base images, secrets handling, rollout settings.
 
 6. **Score** each applicable dimension against the rubric.md anchors with file:line evidence. Compute the overall as rubric.md defines it.
 
-7. **Self-check, then write the report** (see below).
+7. **Write the report, then check it** (see below).
 
 ## Confidence and Severity
 
@@ -84,10 +84,9 @@ Score anchors for each dimension are in `references/rubric.md`; a dimension may 
 
 Write the report to `docs/reliability-review.md` at the root of the repository that contains the target (`git -C <target> rev-parse --show-toplevel`; if the target is not in a git repo, the project directory you were pointed at, or the parent of a file or dot-directory target such as `.github`), unless the user gives a path. For a review scoped to a subdirectory or file set, write `docs/reliability-review-<scope-slug>.md` (for example `docs/reliability-review-github.md` for `.github`) so a scoped run does not replace the whole-repo report.
 
-Before writing, check:
-- Every file:line exists and says what the finding claims; every claimed absence was confirmed by searching all relevant files.
-- Every finding has confidence >= 7.
-- The overall equals the mean of the scored dimensions (with the CRITICAL cap applied), and the averaged dimensions are named.
+After writing, run `python3 "${CLAUDE_SKILL_DIR}/../../scripts/check-report.py" <report>` and fix each `FAIL` (path, line, confidence, overall) until it exits 0. Then check:
+- Each citation row it prints says what the finding claims; every claimed absence was confirmed by searching all relevant files.
+- The averaged dimensions are named.
 - No secret or password values are reproduced; refer to them by file:line only.
 
 ```markdown

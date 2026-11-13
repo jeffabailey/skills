@@ -2,7 +2,7 @@
 name: review-security
 description: Analyzes code, CI/CD workflows, and container config for security vulnerabilities and compliance risks, producing fitness scores (1-10) across input validation, authentication/authorization, data protection, dependency security, error handling/logging, and cryptography. Use when the user says "security review", "check vulnerabilities", "audit security", "security issues", /review:review-security, asks to audit GitHub Actions workflows or a Dockerfile for security, or wants security fitness scores before shipping. Only reports findings with confidence >= 7/10.
 metadata:
-  version: "1.0.0"
+  version: "1.1.0"
 ---
 
 # Security Fitness Review
@@ -14,12 +14,12 @@ Reference: [Fundamentals of Software Security](https://jeffbailey.us/blog/2025/1
 ## Domain Knowledge
 
 - `references/rubric.md` is the scoring source: severity definitions, 1-10 anchors per dimension, the N/A rule, and the overall-score formula. It is short; read it first so scores are repeatable across runs.
-- `references/checklist.md` is what to check during each workflow step, including section 9 (CI/CD and containers) with ready-made grep patterns.
+- `references/checklist.md` is what to check during each workflow step, including section 9 (CI/CD and containers).
 - `references/wisdom.md` is optional background, auto-synced from the two articles above. It has no rubric. Grep it by heading for a specific question (`grep -n '^##' references/wisdom.md`); never read it whole, it is about 15k tokens.
 
 ## Configuration
 
-Invoke the resolver CLI to obtain the effective `security.confidenceThreshold`. Never load `fitness-config.json` directly.
+Use the prompt's `## Resolved Config` block; with none, invoke the resolver CLI for `security.confidenceThreshold`. Never load `fitness-config.json` directly.
 
 ```bash
 python3 "${CLAUDE_SKILL_DIR}/../../scripts/fitness-config.py" show --path <target>
@@ -27,26 +27,21 @@ python3 "${CLAUDE_SKILL_DIR}/../../scripts/fitness-config.py" show --path <targe
 
 `${CLAUDE_SKILL_DIR}` is this skill's directory; the resolver ships two levels up in the plugin's `scripts/`. If your agent does not expand the variable, substitute the directory containing this `SKILL.md`.
 
-Read `effective.security.confidenceThreshold` from the JSON block delimited by `<!-- BEGIN_EFFECTIVE_CONFIG_JSON -->` / `<!-- END_EFFECTIVE_CONFIG_JSON -->`. The default is 7. Include the `Config:` and `Effective weights:` lines from the resolver within the first 10 lines of the report as the provenance trail (AC-03.1, AC-08.2).
+Read `effective.security.confidenceThreshold` from the JSON block delimited by `<!-- BEGIN_EFFECTIVE_CONFIG_JSON -->` / `<!-- END_EFFECTIVE_CONFIG_JSON -->`. The default is 7. Include the `Config:` and `Effective weights:` lines within the first 10 lines of the report as provenance (AC-03.1, AC-08.2).
 
 ## Workflow
 
 1. **Load the rubric** — Read `references/rubric.md`, and skim the section headings of `references/checklist.md` so you know where each step's checks live.
 
-2. **Identify scope and threat surface** — Use Grep/Glob to find request handlers, API endpoints, authentication flows, data access layers, form handlers, configuration files, dependency manifests, `.github/workflows/`, `Dockerfile*`, and `docker-compose*.yml`. Map the attack surface: external inputs (including issue/PR text that workflows consume), trust boundaries, data stores, third-party integrations. For very large generated files (e.g. compiled workflow lock files), grep for expressions, `permissions:`, and `uses:` rather than reading them end to end.
+2. **Identify scope and threat surface** — Take manifests, CI, Dockerfiles, and Compose files from the prompt's `## Scope Inventory`; with none, run `python3 "${CLAUDE_SKILL_DIR}/../../scripts/review-context.py" <target> --inventory`. Grep/Glob for request handlers, API endpoints, authentication flows, data access layers, form handlers, and configuration files. Map the attack surface: external inputs (including issue/PR text that workflows consume), trust boundaries, data stores, third-party integrations. Do not read very large generated files (e.g. compiled workflow lock files) end to end; step 4 gives their rows.
 
 3. **Decide applicability** — For each of the six dimensions, decide whether anything in scope can be evaluated. Mark the rest `N/A — <reason>` per rubric.md. A workflows-only target usually scores Input Validation, Auth/Authz (token scope), Dependency Security (action pinning), and Cryptography only if secrets are handled.
 
-4. **Run scanners that are installed** — Check with `command -v` and run what exists; scanner output is evidence, not a verdict, so confirm each hit in the code:
-   - Secrets: `gitleaks detect --no-banner --redact -s <target>` (always `--redact`).
-   - Dependencies: `pip-audit -r requirements.txt`, `npm audit --omit=dev` (needs a lock file), or `osv-scanner -r <target>`.
-   - Workflows: `zizmor <target>/.github/workflows`; `actionlint` if zizmor is absent.
-
-   If none is installed, review manually and label CVE claims "unverified (no scanner available)". Name the scanners you ran, or that none were available, in the report.
+4. **Collect CI, container, and scanner facts** — Run `python3 "${CLAUDE_SKILL_DIR}/../../scripts/ci-facts.py" <target>` once. It prints counts and `file:line` rows for workflows, Dockerfiles, and Compose files, then the hits of each installed scanner (gitleaks with `--redact`, zizmor or actionlint, osv-scanner or pip-audit, npm audit). The rows are evidence, not a verdict: open the cited line before a row becomes a finding. Name the scanners that ran in the report; for a kind listed under `not installed`, review manually and label CVE claims "unverified (no scanner available)".
 
 5. **Analyze input handling** — Trace user-supplied data from each entry point to SQL, shell, HTML, file paths, deserializers, and outbound URLs (checklist section 1). Before flagging, confirm the input is attacker-controlled and reaches the sink without validation; do not flag code that already validates (length/type checks, allowlists) as a vulnerability.
 
-6. **Audit CI/CD and containers** — Apply checklist section 9. Run its greps for `${{ github.event.* }}` / `github.head_ref` inside `run:` or `github-script`, `pull_request_target` with a head checkout, workflow-level or missing `permissions:`, third-party `uses:` not pinned to a SHA, missing `persist-credentials: false`, and Dockerfile `USER`, `ENV` secrets, debug `CMD`, and `:latest` bases. Choice/boolean `inputs.*` and `github.sha`-style contexts are not injection.
+6. **Audit CI/CD and containers** — Judge the step 4 rows with checklist section 9 instead of re-running its greps: is the interpolated `github.event.*` value attacker-controlled free text, does a `pull_request_target` job check out the head, is each write scope needed, is an unpinned `uses:` third-party. The script does not cover debug `CMD`, echoed secrets, or Compose exposure; check those by hand. Choice/boolean `inputs.*` and `github.sha`-style contexts are not injection.
 
 7. **Audit authentication and authorization** — Checklist sections 2 and 3: password hashing, session management, tokens, authorization on every route, IDOR.
 
@@ -60,7 +55,7 @@ Read `effective.security.confidenceThreshold` from the JSON block delimited by `
 
 12. **Score each dimension** with the anchors in `references/rubric.md` and file:line evidence. Compute the overall per rubric.md, including the CRITICAL cap.
 
-13. **Self-check, then write the report** — Before writing, confirm: every cited file:line exists and says what the finding claims; every finding has confidence at or above the threshold; the overall equals the stated computation (and the cap is applied if any CRITICAL exists); no secret value appears anywhere in the report.
+13. **Write the report, then check it** — Run `python3 "${CLAUDE_SKILL_DIR}/../../scripts/check-report.py" <report> --min-confidence <threshold>` and fix each `FAIL` until it exits 0. Then confirm: each citation row says what the finding claims; no secret value appears in the report.
 
 ## Secrets rule
 

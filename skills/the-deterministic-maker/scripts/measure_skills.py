@@ -12,6 +12,7 @@ compare   Diff a saved snapshot against the skills as they are now (or against
 
 A run starts when a skill is invoked (Skill tool, slash command, or a subagent
 reading its SKILL.md) and ends at the next user prompt or skill invocation.
+A subagent that reads a SKILL.md and then edits that skill is not counted.
 Subagents a run starts are charged to it, found by the Agent call's id or by
 the harness's `attributionSkill` tag, so a skill that fans out shows its real
 cost. A skill invoked inside such a subagent is also counted as its own run.
@@ -244,6 +245,7 @@ class Run:
         self.ref_reads = 0
         self.agent_calls = 0
         self.agent_ids: list[str] = []
+        self.edits_skill = False
         self.adhoc: collections.Counter = collections.Counter()
 
 
@@ -319,6 +321,8 @@ class FileMiner:
         self.pending[b.get("id")] = (name, run)
         if run is None:
             return
+        if name in ("Edit", "Write") and f"/{run.skill}/" in path:
+            run.edits_skill = True
         if name == "Bash":
             self.bash(run, str(inp.get("command", "")))
         elif name == "Read" and self.cat.is_reference(run.skill, path):
@@ -447,6 +451,8 @@ def mine_usage(catalog: Catalog, dirs: list[Path], cutoff: float, since: str) ->
                 infos[agent_id] = subagent_info(path)
                 if catalog.resolve(infos[agent_id]["tag"]):
                     tagged.append((session, agent_id, infos[agent_id]))
+    # A subagent that reads a SKILL.md and then edits that skill is developing it, not using it.
+    runs = [r for r in runs if not (r.kind == "read-in-subagent" and r.edits_skill)]
     runs = [r for r in runs if not since or r.ts >= since]
     link_tagged_subagents(runs, tagged, catalog)
     for a in {a for r in runs for a in r.agent_ids}:

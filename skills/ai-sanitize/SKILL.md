@@ -2,7 +2,7 @@
 name: ai-sanitize
 description: Removes the tells that make prose, user interfaces, and graphics read as AI-generated, then reports what changed. Rewrites performative phrasing, contrast framing, triads, signposting, emdashes, and marketing filler in prose; strips purple gradients, glassmorphism, pulsing badges, eyebrow labels, pill-everything, emoji decoration, and landing-page treatment of functional screens from UI code; and cleans decorative blobs, misaligned SVGs, broken ASCII art, and rainbow palettes from graphics and diagrams. Use when the user says /ai-sanitize, asks to "remove AI tells", "de-slop", "make this sound less like AI", "make this UI look less AI-generated", "humanize this copy", or asks why a page or draft feels generated. Edits in place by default; pass "report" to list tells without editing.
 metadata:
-  version: "1.0.0"
+  version: "1.1.0"
 ---
 
 # AI Sanitize
@@ -58,14 +58,14 @@ How the rules apply:
 
 ### 3. Inventory the tells
 
-Walk the loaded reference(s) and record each hit: location (`file:line`, URL plus selector, or quoted phrase), catalog item, and which test it fails. Use the `Detect` hints in each reference to search quickly, then read the surrounding context before judging. A grep hit is a candidate, not a finding.
+Run `python3 "${CLAUDE_SKILL_DIR}/scripts/scan-tells.py" <target...>` once instead of typing greps. It runs the references' `Detect` patterns and prints each candidate (`file:line  rule  "match"`), hits per rule (`*` = high signal), and hits per section. A hit is a candidate, not a finding: read its context, then record the catalog item and the test it fails.
 
-The `Detect` hints are tuned to common generated output (the purple-gradient landing page, chatbot cadence). Zero grep hits does not mean clean, and many hits do not mean generated. After grepping, read the target once for tells the greps miss: framework boilerplate (Bootstrap defaults, starter-template copy), stock error-page copy ("Oops!"), duplicate calls to action, title-case headings ending in a colon.
+Zero hits is not proof of clean; many are not proof of generated. Read the target once for what the scan skips: the **By reading** hints, framework boilerplate, duplicate calls to action.
 
-Then count by category. Clusters matter more than single hits:
+Judge the cluster from the per-section counts. Clusters matter more than single hits:
 
 - **0 to 2 isolated hits: no cluster.** The target does not read generated. Say so in the report ("No cluster found: N isolated hits"), fix only hits that fail the removal test, and leave everything else alone. Changing little or nothing is a correct result. Do not invent edits to justify the run; on a human draft that is the most likely outcome.
-- **3 or more hits in one view, section, or paragraph:** the composition reads generated. Fix the highest-signal items first (the reference marks them) until the cluster breaks.
+- **3 or more hits in one view, section, or paragraph:** the composition reads generated. Fix the `*` rules first until the cluster breaks.
 
 ### 4. Fix
 
@@ -83,7 +83,8 @@ Apply the fixes each reference gives. Across all media:
 Copy the original before the first edit (`cp target /tmp/<name>.orig`, or use `git show HEAD:<path>`), then check the result against it. The scripts live in this skill's `scripts/` directory (`${CLAUDE_SKILL_DIR}/scripts/`; substitute the directory containing this `SKILL.md` if the variable is not expanded).
 
 - **Everything:** `python3 scripts/survival-check.py <original> <edited>`. It lists lost front matter, profanity and other voice words, numbers in the text, link targets, code, `<script>` blocks, and element ids. Pass `--keep WORD` for other words the author's voice depends on. Every LOST line needs a fix or a stated reason (you deleted the whole sentence on purpose) in the report.
-- **Prose:** reread the result once, start to finish. Run the reference's `Detect` greps again, including emdashes. Confirm no fact changed.
+- **Tells:** `python3 scripts/scan-tells.py <edited> --before <original>` lists hits gone and new; report mode must print `unchanged`.
+- **Prose:** reread the result once, start to finish. Confirm no fact changed.
 - **UI:** build the page if the project can, then `bash scripts/render.sh <page-or-url> <outdir> before` on the original and `... after` on the result. It writes screenshots at 1280px and at a true 390px viewport, light and dark, and prints the measured `scrollWidth` at 390px (`overflow: ok` or `FAIL`). Look at the screenshots. Do not use `chrome --headless --window-size=390,...` on its own: it lays the page out wider than 390px and clips it, which looks like a pass. Run the project's lint or test command if one exists.
 - **Graphics:** render SVG and Mermaid output and look at it. Check alignment, text legibility, and that any ASCII art spells what it claims to.
 
@@ -128,5 +129,6 @@ With no cluster and no edits, keep **Changes** with "None" and still fill in the
 - `references/prose.md`: phrase, cadence, structure, formatting, and clarity tells in writing, with rewrites.
 - `references/ui.md`: 31 interface tells grouped by color and surface, typography, components, layout, copy, and system consistency, with detection patterns and fixes.
 - `references/graphics.md`: tells in SVG, icons, ASCII art, diagrams, charts, and generated images.
+- `scripts/scan-tells.py`: runs the `Detect` patterns: hits, section counts, before/after.
 - `scripts/survival-check.py`: before/after check that facts, voice, links, code, and scripts survived the edit.
 - `scripts/render.sh`: 1280px and true 390px screenshots in light and dark, plus a measured overflow check at 390px.

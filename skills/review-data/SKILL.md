@@ -2,7 +2,7 @@
 name: review-data
 description: Analyzes database schema design, migration safety, data integrity, query correctness, data modeling, and pipeline quality, producing fitness scores (1-10) with file:line evidence. Use when the user says /review:review-data, requests a data review, asks about schema design, migration safety, data integrity, query correctness, data modeling, or pipeline quality. Distinct from review-performance (which asks "are queries fast?"); this asks "is the schema correct? are migrations safe? will data integrity hold?" Only reports findings with confidence >= 7/10.
 metadata:
-  version: "1.0.0"
+  version: "1.1.0"
 ---
 
 # Data Fitness Review
@@ -19,7 +19,7 @@ Reference: [Fundamentals of Databases](https://jeffbailey.us/blog/2025/09/24/fun
 
 ## Configuration
 
-Invoke the resolver CLI to obtain effective weights and thresholds for the review target. Never load `fitness-config.json` directly.
+Use the prompt's `## Resolved Config` block; with none, invoke the resolver CLI. Never load `fitness-config.json` directly.
 
 ```bash
 python3 "${CLAUDE_SKILL_DIR}/../../scripts/fitness-config.py" show --path <target>
@@ -27,13 +27,13 @@ python3 "${CLAUDE_SKILL_DIR}/../../scripts/fitness-config.py" show --path <targe
 
 `${CLAUDE_SKILL_DIR}` is this skill's directory; the resolver ships two levels up in the plugin's `scripts/`. If your agent does not expand the variable, substitute the directory containing this `SKILL.md`.
 
-Where `<target>` is the file or directory under review. The CLI walks up to discover any module override and merges it with the root config. Include the `Config:` and `Effective weights:` lines from the resolver output within the first 10 lines of the final report as the provenance trail (AC-03.1, AC-08.2). The `effective` object inside the JSON block delimited by `<!-- BEGIN_EFFECTIVE_CONFIG_JSON -->` / `<!-- END_EFFECTIVE_CONFIG_JSON -->` carries weights, status thresholds, security, and scoring for any programmatic needs.
+`<target>` is the file or directory under review; module overrides above it merge with the root config. Include the `Config:` and `Effective weights:` lines within the first 10 lines of the report as the provenance trail (AC-03.1, AC-08.2). The JSON block between `<!-- BEGIN_EFFECTIVE_CONFIG_JSON -->` and `<!-- END_EFFECTIVE_CONFIG_JSON -->` carries weights, status thresholds, security, and scoring.
 
 ## Workflow
 
-1. **Load the rubric** — Read `references/rubric.md`, then `references/checklist.md`. Run the resolver (see Configuration) on the target.
+1. **Load the rubric** — Read `references/rubric.md`, then `references/checklist.md`. Resolve the config (see Configuration).
 
-2. **Map data boundaries** — Grep/Glob for schema definitions (CREATE TABLE, ORM models), migration directories, SQL and query-builder calls, database configuration, and pipeline code (ETL, import/export, batch jobs, stream consumers). Skip build output, vendored dependencies, and test fixtures (`target/`, `bin/`, `obj/`, `_build/`, `dist/`, `node_modules/`, `vendor/`, `.venv/`, test dirs) unless the user asks for them. For files over ~500 lines, grep for the data-access patterns (`query`, `execute`, `BEGIN`, `FOR UPDATE`, `ON CONFLICT`, `JOIN`) and read only the surrounding ranges. Also look for documented data policies (ADRs, `docs/`, migration READMEs), because a documented choice changes what counts as a gap.
+2. **Map data boundaries** — Start from the `migrations/schemas` and `data signals` rows of the `## Scope Inventory` in the prompt (with none, run `python3 "${CLAUDE_SKILL_DIR}/../../scripts/review-context.py" <target> --inventory`); build and vendor directories are already left out. Grep for ORM models, SQL and query-builder calls, database configuration, and pipeline code (ETL, import/export, batch jobs, stream consumers), skipping test fixtures unless the user asks for them. For files over ~500 lines, grep for the data-access patterns (`query`, `execute`, `BEGIN`, `FOR UPDATE`, `ON CONFLICT`, `JOIN`) and read only the surrounding ranges. Also look for documented data policies (ADRs, `docs/`, migration READMEs), because a documented choice changes what counts as a gap.
 
 3. **Decide applicability** — For each of the six dimensions, decide whether anything in scope can be evaluated, using the N/A rule in `rubric.md`. If nothing data-related exists at all, skip to step 10 and write the short "no data layer" report described under Output Format. Do not invent scores or findings to fill the template.
 
@@ -51,7 +51,7 @@ Where `<target>` is the file or directory under review. The CLI walks up to disc
 
    For steps 4-9, use `checklist.md` for what to look at and `rubric.md` for severity and score. Route speed-only findings (missing index for a slow query, N+1, scans) to review-performance and non-data correctness bugs (parsing, regex, general concurrency) to review-algorithms: mention them in one line under "Out of scope", do not score them.
 
-10. **Score and write** — Score each applicable dimension against the `rubric.md` anchors, compute the overall per `rubric.md`, run the self-check below, then write the report.
+10. **Score and write** — Score each applicable dimension against the `rubric.md` anchors, compute the overall per `rubric.md`, write the report, then run the check under Output Format.
 
 ## Confidence and Severity
 
@@ -79,10 +79,9 @@ Score anchors for each dimension are in `references/rubric.md`. A dimension with
 
 Write the report to `docs/data-review.md` at the root of the repository that contains the target, unless the user gives a path. For a review scoped to a subdirectory or file set, write `docs/data-review-<scope-slug>.md` (e.g. `docs/data-review-crates-foundry-store.md`) so a scoped run does not replace the whole-repo report.
 
-Before writing, self-check:
-- Every file:line exists and the line says what the finding claims.
-- Every finding has confidence >= 7 and belongs to this skill (not speed, not non-data correctness).
-- The overall equals the stated computation, including the CRITICAL cap.
+After writing, run `python3 "${CLAUDE_SKILL_DIR}/../../scripts/check-report.py" <report>` and fix each `FAIL` (path, line, confidence, overall) until it exits 0. Then check:
+- Each citation row it prints says what the finding claims.
+- Every finding belongs to this skill (not speed, not non-data correctness).
 - No secret values (connection strings, passwords) are reproduced; refer to them by file:line only.
 
 ```markdown

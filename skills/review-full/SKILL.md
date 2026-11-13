@@ -2,7 +2,7 @@
 name: review-full
 description: Runs a comprehensive project fitness review combining architecture, security, reliability, testing, performance, algorithms, data, accessibility, process, and maintainability analysis. Use when the user says "full review", "comprehensive review", "project fitness", "review everything", or wants all review skills run on current changes before shipping.
 metadata:
-  version: "1.0.2"
+  version: "1.1.0"
 ---
 
 # Full Project Fitness Review
@@ -48,11 +48,19 @@ Record the scope for the `**Scope:**` line exactly (for example, `Pending change
 
 Run `validate` then `show` per the Configuration section for each target. With pending changes spanning several configs, keep one saved `show` output per group and note which files belong to which.
 
+Then run the scope inventory once, on the scope's directory (the repository root for pending changes):
+
+```bash
+python3 "${CLAUDE_SKILL_DIR}/../../scripts/review-context.py" <target> --inventory
+```
+
+It prints files and lines per language, test files per runner, CI, container, IaC, migration, and manifest files, and the frontend and data signals. Step 3 and every domain agent use it as printed.
+
 ### Step 3: Decide Which Domains Apply
 
 Mark a domain N/A, with a reason, instead of launching it when:
-- **Accessibility:** no frontend files in scope (HTML, CSS, JSX, TSX, Vue, Svelte). Reason: `Skipped - no frontend code detected`.
-- **Data:** no database code in scope (SQL, migrations, ORM models, database config). Reason: `Skipped - no database code detected`.
+- **Accessibility:** no frontend files in scope (HTML, CSS, JSX, TSX, Vue, Svelte; the inventory's `frontend files` row). Reason: `Skipped - no frontend code detected`.
+- **Data:** no database code in scope (SQL, migrations, ORM models, database config; the inventory's `data signals` and `migrations/schemas` rows). Reason: `Skipped - no database code detected`.
 - **Weight 0:** the effective weight is 0 in every config group. Reason: `Skipped - weight 0 in config`.
 - **Process, for a pending-changes scope:** the diff touches no docs, CI, dependency manifests, or contributor files. Process judges the repository, not a diff, so scoring it would dilute the real findings. Reason: `Skipped - diff touches no process files`.
 
@@ -60,7 +68,7 @@ Detect within the scope, not the whole repository, so a diff review is not padde
 
 ### Step 4: Launch the Applicable Reviews in Parallel
 
-Use the Task tool to launch one agent per applicable domain, passing the same scope (paths or changed-file list) to each:
+Use the Task tool to launch one agent per applicable domain. Put in each prompt the same scope (paths or changed-file list), the inventory output (it starts with `## Scope Inventory`), and the saved `show` output for that scope under a `## Resolved Config` heading. Say that both are final, so the agent runs neither script again:
 
 1. **Architecture** (`/review:review-architecture`) - Design, coupling, naming, API fitness
 2. **Security** (`/review:review-security`) - Vulnerability and compliance fitness

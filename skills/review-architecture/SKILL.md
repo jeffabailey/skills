@@ -2,7 +2,7 @@
 name: review-architecture
 description: Analyzes code for software architecture fitness, producing scores (1-10) across coupling, cohesion, layering, modularity, naming, API design, and maintainability. Use when the user says /review:review-architecture, requests an architecture review, asks about coupling and cohesion, wants to analyze design or check code structure, asks to review naming or API design, or needs architecture fitness scores. Triggers on "architecture review", "coupling and cohesion", "analyze design", "check code structure", "review naming", "API design". Only reports findings with confidence >= 7/10.
 metadata:
-  version: "1.0.2"
+  version: "1.1.0"
 ---
 
 # Software Architecture Fitness Review
@@ -23,7 +23,7 @@ Reference: [Fundamentals of Software Architecture](https://jeffbailey.us/blog/20
 
 ## Configuration
 
-Invoke the resolver CLI to obtain effective weights and thresholds for the review target. Never load `fitness-config.json` directly.
+Use the prompt's `## Resolved Config` block; with none, invoke the resolver CLI. Never load `fitness-config.json` directly.
 
 ```bash
 python3 "${CLAUDE_SKILL_DIR}/../../scripts/fitness-config.py" show --path <target>
@@ -31,13 +31,13 @@ python3 "${CLAUDE_SKILL_DIR}/../../scripts/fitness-config.py" show --path <targe
 
 `${CLAUDE_SKILL_DIR}` is this skill's directory; the resolver ships two levels up in the plugin's `scripts/`. If your agent does not expand the variable, substitute the directory containing this `SKILL.md`.
 
-Where `<target>` is the file or directory under review. The CLI walks up to discover any module override and merges it with the root config. Copy the `Config:` and `Effective weights:` lines from the resolver output into the report header (the template has the slot; they must land within the first 10 lines as the provenance trail, AC-03.1, AC-08.2). The weights are for the review-full aggregate; this report uses only `statusThresholds`. The `effective` object inside the JSON block delimited by `<!-- BEGIN_EFFECTIVE_CONFIG_JSON -->` / `<!-- END_EFFECTIVE_CONFIG_JSON -->` carries weights, status thresholds, security, and scoring for any programmatic needs.
+`<target>` is the file or directory under review; module overrides above it merge with the root config. Copy the `Config:` and `Effective weights:` lines into the report header (the template has the slot; they must land within the first 10 lines as provenance, AC-03.1, AC-08.2). The weights are for the review-full aggregate; this report uses only `statusThresholds`. The JSON block between `<!-- BEGIN_EFFECTIVE_CONFIG_JSON -->` and `<!-- END_EFFECTIVE_CONFIG_JSON -->` carries weights, status thresholds, security, and scoring.
 
 ## Workflow
 
 1. **Load the rubric** — Read `references/rubric.md` and `references/checklist.md`.
 
-2. **Scope the review** — Note the target (path or file set) and whether the user asked a specific question (for example "is `claude_client.py` too tangled?"). Map the structure with Glob/Grep: top-level directories, entry points, packages, dependency manifests, and where the tests for the target live (they may sit outside it). Decide what kind of system it is (script, library, CLI, layered app, services).
+2. **Scope the review** — Note the target (path or file set) and whether the user asked a specific question (for example "is `claude_client.py` too tangled?"). Take languages, manifests, and test directories (they may sit outside the target) from the prompt's `## Scope Inventory`; with none, run `python3 "${CLAUDE_SKILL_DIR}/../../scripts/review-context.py" <target> --inventory`. Find entry points and packages with Glob/Grep. Decide what kind of system it is (script, library, CLI, layered app, services).
 
 3. **Decide applicability** — For each of the 7 dimensions, decide whether anything in scope can be evaluated. Mark the rest N/A with a one-line reason (rubric.md, "N/A and evidence of absence"). A focused question narrows the emphasis, not the coverage: still score every applicable dimension, but go deepest on the ones asked about.
 
@@ -58,7 +58,7 @@ Where `<target>` is the file or directory under review. The CLI walks up to disc
 
 7. **Score** — Score each applicable dimension with the rubric.md anchors, compute the overall per rubric.md (mean of scored dimensions, CRITICAL cap at 4.0), and apply status bands.
 
-8. **Self-check, then write** — Confirm: every file:line exists and says what the finding claims; every reported finding has confidence >= 7; the overall equals the stated computation; every dimension below 6 has an action item; no secret values are reproduced (refer to secrets by file:line only). Then write the report.
+8. **Write, then check** — Write the report, run `python3 "${CLAUDE_SKILL_DIR}/../../scripts/check-report.py" <report>`, and fix each `FAIL` (path, line, confidence, overall) until it exits 0. Then confirm: each citation row says what the finding claims; every dimension below 6 has an action item; no secret values are reproduced (cite them by file:line only).
 
 ## Confidence and Severity
 

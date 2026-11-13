@@ -4,7 +4,7 @@ description: "Audits a Rust crate or workspace for junk tests and dead code usin
 user-invocable: true
 argument-hint: "[path] [--package NAME] [--files GLOB] - crate or workspace to audit; defaults to the current Cargo project"
 metadata:
-  version: "1.0.0"
+  version: "1.1.0"
 ---
 
 # deslop-rust
@@ -47,7 +47,7 @@ Keep every artifact under `target/deslop-rust/` in the project (call it `$W`). `
 
 1. Find the project: the path the user gave, else the nearest `Cargo.toml`. Note whether it is a workspace (`[workspace]`) and which packages are in scope.
 2. Check the tree: `git status --porcelain`. If there are uncommitted changes, say so; the verification later compares against this starting point, so record `git rev-parse HEAD` and keep a copy of the diff if the user wants to continue anyway.
-3. Check each tool and install only what is missing. Tell the user what you are installing; these are user-level Cargo installs (into `~/.cargo/bin`), which is how Cargo subcommands work, so they are shared by every project:
+3. Check each tool and install only what is missing. Tell the user what you are installing; these are user-level Cargo installs (`~/.cargo/bin`), shared by every project:
 
    ```bash
    cargo nextest --version  || cargo install cargo-nextest --locked
@@ -66,9 +66,9 @@ Read `references/tool-recipes.md` for exact flags, how to scope large projects, 
 1. **Timings.** Write `$W/nextest.toml` with a JUnit profile, run nextest with it, and rank tests:
 
    ```bash
-   mkdir -p target/deslop-rust/{baseline,sim,after}   # cargo mutants -o needs the directory to exist
+   mkdir -p target/deslop-rust/{baseline,sim,after}
    printf '[profile.default.junit]\npath = "junit.xml"\n' > target/deslop-rust/nextest.toml
-   cargo nextest run --tool-config-file "deslop-rust:$PWD/target/deslop-rust/nextest.toml"   # nextest requires an absolute path
+   cargo nextest run --tool-config-file "deslop-rust:$PWD/target/deslop-rust/nextest.toml"
    python3 "${CLAUDE_SKILL_DIR}/scripts/nextest_timings.py" target/nextest/default/junit.xml --top 25
    ```
 
@@ -87,7 +87,7 @@ Read `references/tool-recipes.md` for exact flags, how to scope large projects, 
    python3 "${CLAUDE_SKILL_DIR}/scripts/kill_matrix.py" target/deslop-rust/baseline/mutants.out
    ```
 
-   `--no-fail-fast` makes every test run against every mutant, so the mutant logs show *each* test that catches a mutant, not only the first. `kill_matrix.py` turns those logs into a per-test kill matrix: kills and unique kills per test, tests with identical kill sets, tests whose kills are a strict subset of another's, and tests that kill nothing. That one run is the main evidence for categories 1, 2, and 8. Use `-j 2` when other work shares the machine.
+   `--no-fail-fast` makes the mutant logs show *each* test that catches a mutant, not only the first. `kill_matrix.py` turns them into a per-test kill matrix: kills and unique kills, identical kill sets, strict subsets, and tests that kill nothing. That one run is the main evidence for categories 1, 2, and 8. Use `-j 2` when other work shares the machine.
 
    Keep `target/deslop-rust/baseline/mutants.out/` untouched; it is the yardstick for every later comparison.
 
@@ -95,15 +95,15 @@ Read `references/tool-recipes.md` for exact flags, how to scope large projects, 
 
 ## Phase 2: Read the tests and classify
 
-Tools nominate; reading confirms. For every nominated test, open the test and the code under test and decide which of the nine mission categories apply (or the junk-code category). Look at what each test *asserts*, not only what it executes:
+Tools nominate; reading confirms. Don't grep the tests; run `python3 "${CLAUDE_SKILL_DIR}/scripts/suite_scan.py" scan <path>`. It prints each labeled test (`file:line`, assert count, body lines), groups with identical bodies or equal first 3 lines, and each `#[allow(dead_code)]` item with `refs` (other mentions of its name). Labels are text matches, not verdicts (`--help` defines them). For every test the scan or Phase 1 nominates, open the test and the code under test and decide which categories apply. Look at what each test *asserts*, not only what it executes:
 
 - Same coverage + same assertions + same inputs → duplicate (category 1).
 - Same coverage, different inputs or outcomes (true vs false return, error vs ok) → **not** a duplicate; at most a parameterization candidate (3, 9).
-- Only `is_ok()`, `is_err()`, `let _ = f()`, `assert!(x > 0)` where an exact value is knowable, or no assertion at all → weak (5). The fix is usually to strengthen it, not delete it.
+- Labels `is_ok`, `is_err`, `let_`, `no-assert`, or `bound` where an exact value is knowable → weak (5). The fix is usually to strengthen it, not delete it.
 - Asserts on private layout, `#[doc(hidden)]` accessors, `Vec` capacity, internal ordering the API doesn't promise → implementation detail (6). Recommend asserting the public contract instead.
-- `thread::sleep`, real network or filesystem where a fake would do, a full integration binary for a unit-level check → slow or overhead (7). Each `tests/*.rs` file is its own binary to link; many tiny ones add build and startup time.
-- The same three lines of setup in many tests → fixture (4); recommend a helper function or builder, not a new dependency.
-- Mutation-surviving code that nothing calls (`#[allow(dead_code)]`, no references from `grep -rn`, not `pub` API) → junk code. `pub` items may be used by downstream crates; mark those high risk.
+- Label `sleep`, real network or filesystem where a fake would do, a full integration binary for a unit-level check → slow or overhead (7). Each `tests/*.rs` file is its own binary to link.
+- A same-first-lines group → fixture (4); recommend a helper function or builder, not a new dependency.
+- Mutation-surviving code that nothing calls (`#[allow(dead_code)]` with `refs 0`, not `pub`) → junk code. `pub` items may be used by downstream crates; mark those high risk.
 
 ### Prove "no independent regression protection" (category 8)
 
@@ -127,8 +127,7 @@ Write `target/deslop-rust/report.md` and show its contents in the chat. Rank by 
 ```markdown
 # Rust test-suite optimization audit: <crate>
 
-Baseline: <N> tests, <S>s summed test time, <W>s wall time; mutants <caught>/<total> caught
-(<missed> missed, <timeout> timeout); <C>% line coverage. Commit <sha>.
+<baseline line>; <C>% line coverage. Commit <sha>.
 Scope: <packages/files>; evidence not collected: <none | which tool and why>.
 
 ## Prioritized findings
@@ -147,10 +146,17 @@ Scope: <packages/files>; evidence not collected: <none | which tool and why>.
 <tests that looked redundant but hold unique kills or distinct edge cases, and why they stay>
 
 ## Totals if all items are approved
-<tests removed / merged, seconds saved per run and per mutation run, lines removed>
+<the totals line>
 ```
 
-Fill every column. **Evidence** names the tool and the number (timing, identical-coverage group, `kill_matrix.py` result, the line the weak assert is on). **Est. time saved** comes from the JUnit times of the tests removed or shortened; also give the per-mutation-run saving (seconds saved × mutants tested), because a slow test is paid once per mutant. Parameterizing saves code and maintenance more than seconds; say "~0s, -N lines" rather than inventing a number. **Risk**: Low = identical assertions or zero lost kills in the kill matrix; Medium = overlap is real but the test documents an edge case or contract that should move, not vanish; High = holds unique kills or unique lines, is public API, or names an issue or incident.
+Fill every column. **Evidence** names the tool and the number (timing, identical-coverage group, `kill_matrix.py` result, the line the weak assert is on). The Baseline line, **Est. time saved**, and the Totals come from one call; copy its numbers:
+
+```bash
+python3 "${CLAUDE_SKILL_DIR}/scripts/suite_scan.py" totals target/nextest/default/junit.xml \
+  --mutants-out target/deslop-rust/baseline --remove <tests> --shorten <test>=<seconds saved> --merge <tests>
+```
+
+Rows give seconds saved per run and per mutation run (a slow test is paid once per mutant) and lines. Parameterizing saves code and maintenance more than seconds; say "~0s, -N lines" rather than inventing a number. **Risk**: Low = identical assertions or zero lost kills in the kill matrix; Medium = overlap is real but the test documents an edge case or contract that should move, not vanish; High = holds unique kills or unique lines, is public API, or names an issue or incident.
 
 Then end with one direct question: which item numbers to apply (for example "all Low", "1-4 and 7", or "none"). Don't make changes in the same turn.
 
@@ -180,6 +186,6 @@ Run all of these and put the numbers in a before/after table:
 
    It must exit 0 (no lost kills). Mutants listed as "only in baseline" must belong to approved junk-code deletions; anything else means production code changed and is a defect to fix.
 3. Coverage: rerun `coverage_overlap.py` (or `cargo llvm-cov nextest --summary-only`) and confirm no production line that was covered before is uncovered now, apart from deleted junk code.
-4. Timing: rerun the JUnit profile and report the summed test time and wall time before and after.
+4. Timing: rerun the JUnit profile; `suite_scan.py totals <junit.xml>` prints both times.
 
 If any check fails, revert that item (`git checkout -- <file>` for that change only), say which item failed and why, and continue with the rest. End with the before/after table and the list of items applied, reverted, and still pending. Don't commit unless the user asks.

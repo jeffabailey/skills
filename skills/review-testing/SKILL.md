@@ -2,7 +2,7 @@
 name: review-testing
 description: Analyzes a codebase for software testing fitness, producing scores (1-10) across test pyramid balance, test quality, coverage strategy, performance testing, debugging support, and CI integration. Use when the user says /review:review-testing, requests a test quality review, asks about testing strategy, wants test pyramid analysis, asks about QA practices, or needs testing fitness scores before shipping. Only reports findings with confidence >= 7/10.
 metadata:
-  version: "1.0.0"
+  version: "1.1.0"
 ---
 
 # Software Testing Fitness Review
@@ -19,7 +19,7 @@ Reference: [Fundamentals of Software Testing](https://jeffbailey.us/blog/2025/11
 
 ## Configuration
 
-Invoke the resolver CLI to obtain effective weights and thresholds for the review target. Never load `fitness-config.json` directly.
+Use the prompt's `## Resolved Config` block; with none, invoke the resolver CLI. Never load `fitness-config.json` directly.
 
 ```bash
 python3 "${CLAUDE_SKILL_DIR}/../../scripts/fitness-config.py" show --path <target>
@@ -27,29 +27,23 @@ python3 "${CLAUDE_SKILL_DIR}/../../scripts/fitness-config.py" show --path <targe
 
 `${CLAUDE_SKILL_DIR}` is this skill's directory; the resolver ships two levels up in the plugin's `scripts/`. If your agent does not expand the variable, substitute the directory containing this `SKILL.md`.
 
-Where `<target>` is the file or directory under review. The CLI walks up to discover any module override and merges it with the root config. Include the `Config:` and `Effective weights:` lines from the resolver output within the first 10 lines of the final report as the provenance trail (AC-03.1, AC-08.2). The `effective` object inside the JSON block delimited by `<!-- BEGIN_EFFECTIVE_CONFIG_JSON -->` / `<!-- END_EFFECTIVE_CONFIG_JSON -->` carries weights, status thresholds, security, and scoring for any programmatic needs.
+`<target>` is the file or directory under review; module overrides above it merge with the root config. Include the `Config:` and `Effective weights:` lines within the first 10 lines of the report as the provenance trail (AC-03.1, AC-08.2). The JSON block between `<!-- BEGIN_EFFECTIVE_CONFIG_JSON -->` and `<!-- END_EFFECTIVE_CONFIG_JSON -->` carries weights, status thresholds, security, and scoring.
 
 ## Workflow
 
-1. **Load the rubric** — Read `references/rubric.md`, then skim `references/checklist.md`. Run the resolver and keep its `Config:` and `Effective weights:` lines.
+1. **Load the rubric** — Read `references/rubric.md`, then skim `references/checklist.md`. Keep the resolver's `Config:` and `Effective weights:` lines (see Configuration).
 
-2. **Scope and inventory** — Decide the target and identify what kind of project it is (service, library, CLI, script collection, polyglot). Find, per language:
-   - Test files and runners: `*_test.go` (go test), `test/*.exs` + `mix.exs` (ExUnit), `*Tests.csproj` / `[Fact]` / `[Test]` (xUnit/NUnit, dotnet test), `test_*.py` / `pytest.ini` / `pyproject.toml` (pytest), `*.test.ts` / `jest.config` / `vitest.config` / `.mocharc`, `phpunit.xml`, `*.feature` (BDD), shell test harnesses.
-   - CI: `.github/workflows/`, `.gitlab-ci.yml`, `Jenkinsfile`, `.circleci/`; pre-commit hooks; coverage config.
-   - The source under test: the main modules each test file should cover.
+2. **Scope and inventory** — Decide the target and identify what kind of project it is (service, library, CLI, script collection, polyglot). Use the `## Scope Inventory` from the prompt; with none, run `python3 "${CLAUDE_SKILL_DIR}/../../scripts/review-context.py" <target> --inventory`. It lists test files per runner, test config, CI files, and files and lines per language, with build and vendor directories left out; do not rebuild it with `ls`, `find`, or `wc`. From it, pick the source under test: the main modules each test file should cover.
 
-   Skip build and data artifacts: `_build/`, `deps/`, `bin/`, `obj/`, `target/`, `node_modules/`, `.venv/`, `dist/`, generated code, and large data or output files (anything over ~1 MB, `*.txt` dumps, fixtures you do not need to read). They are not tests even when "test" appears in the path, and reading them wastes the budget.
+   Skip generated code and large data or output files (anything over ~1 MB, `*.txt` dumps, fixtures you do not need to read). They are not tests even when "test" appears in the path, and reading them wastes the budget.
 
 3. **Decide applicability** — Using the inventory and the N/A rules in `rubric.md`, decide which of the six dimensions apply. Mark the rest `N/A — <reason>` now so later steps do not invent evidence for them. A missing practice is a low score, not N/A.
 
-4. **Map the test pyramid** — Count tests with the native collector, because file counts miss parametrized cases and multi-test files:
-   - Python: `pytest --collect-only -q` (last line gives the total; add `-m <marker>` or a path to split levels)
-   - Go: `go test -list . ./...`
-   - Elixir: `mix test --trace` (or count `test "` blocks if deps cannot be fetched)
-   - .NET: `dotnet test --list-tests`
-   - JS/TS: `npx jest --listTests` / `npx vitest list`; otherwise count `it(`/`test(` calls
-
-   Run collectors read-only and offline where possible. If a collector cannot run (missing toolchain, no network), count by grep and say so in the evidence. Classify counts into unit, integration, and E2E/acceptance, and record the suite's run time if you ran it.
+4. **Map the test pyramid** — Count the tests in one call:
+   ```bash
+   python3 "${CLAUDE_SKILL_DIR}/scripts/count-tests.py" <target>
+   ```
+   It prints tests per runner, per level, and per directory. `collector` rows come from `pytest --collect-only` or `go test -list`, which see parametrized cases; `pattern` rows count test declarations (other runners, or a missing or failing toolchain) and give the reason, so repeat that label in the evidence. Use the counts as they are; do not recount by grep. The level is a guess from path names: classify the `unlabelled` directories into unit, integration, and E2E/acceptance by reading a sample, and record the suite's run time if you ran it.
 
 5. **Evaluate test quality** — Read a representative sample at each level against checklist section 2.
 
@@ -63,10 +57,8 @@ Where `<target>` is the file or directory under review. The CLI walks up to disc
 
 10. **Score** — Score each applicable dimension against the `rubric.md` anchors with file:line evidence (or an absence citation in the rubric's format). Compute the overall per the rubric.
 
-11. **Self-check, then write the report** — Before writing, confirm:
-    - every cited file:line uses a repo-relative path (not a bare filename), exists, and says what the finding claims;
-    - every finding has confidence >= 7;
-    - the overall equals the mean of the scored dimensions (and the CRITICAL cap, if any);
+11. **Write the report, then check it** — Run `python3 "${CLAUDE_SKILL_DIR}/../../scripts/check-report.py" <report>` and fix each `FAIL` (path, line, confidence, overall) until it exits 0. Then confirm:
+    - each citation row it prints says what the finding claims;
     - no secret values are reproduced; refer to secrets by file:line only.
 
 ## Confidence and Severity

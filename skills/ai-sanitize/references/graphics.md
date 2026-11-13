@@ -8,7 +8,7 @@ You cannot judge a graphic from its source alone. Render it (open the SVG, build
 
 Blurred gradient shapes, glowing orbs, aurora backgrounds, purple-to-blue meshes that fill space without depicting anything.
 
-**Detect:** SVG `<filter>` with `feGaussianBlur` on large shapes; `<radialGradient>` or `<linearGradient>` on background `<circle>`/`<ellipse>`/`<path>`; CSS blobs (see `ui.md` item 22).
+**Detect:** `feGaussianBlur` on large shapes; `<radialGradient` or `<linearGradient` on background shapes. **By reading:** whether the shape is a background `<circle>`/`<ellipse>`/`<path>`; CSS blobs (see `ui.md` item 22).
 
 **Fix:** delete. If the graphic has no subject left, the graphic was only decoration; remove it or replace it with one that shows real content (a screenshot, a diagram, a photo).
 
@@ -16,7 +16,7 @@ Blurred gradient shapes, glowing orbs, aurora backgrounds, purple-to-blue meshes
 
 Icons or shapes a few units off-center; mismatched stroke widths, corner styles, or sizes in one set; paths that almost meet; text in SVG not centered in its box.
 
-**Detect:** mixed `stroke-width` values in one icon set; `viewBox` sizes that differ across icons in a row; odd fractional `transform="translate(...)"` offsets; `<text>` without `text-anchor="middle"`/`dominant-baseline` where centering is intended.
+**Detect by reading:** mixed `stroke-width` values in one icon set; `viewBox` sizes that differ across icons in a row; odd fractional `transform="translate(...)"` offsets; `<text>` without `text-anchor="middle"`/`dominant-baseline` where centering is intended.
 
 **Fix:** use one icon set at one size and stroke per context. Center with `viewBox` and anchors, not hand offsets. Snap coordinates to whole or half units. Replace a hand-drawn icon with the project's icon set when one exists.
 

@@ -1,0 +1,2683 @@
+{
+ "schema": 1,
+ "taken_at": "2026-11-13T17:36:51.000Z",
+ "skills_dir": "skills",
+ "args": {
+  "projects": [],
+  "projects_dir": "~/.claude/projects",
+  "days": 30,
+  "since": ""
+ },
+ "window_days": 30,
+ "scanned": {
+  "sessions": 169,
+  "transcripts": 1673,
+  "mentioning": 517
+ },
+ "skills": {
+  "agent-hygiene": {
+   "static": {
+    "name": "agent-hygiene",
+    "version": "1.0.0",
+    "description_tokens": 182,
+    "body_tokens": 1453,
+    "body_lines": 82,
+    "reference_files": 2,
+    "reference_tokens": 1412,
+    "scripts": [],
+    "unreferenced_scripts": [],
+    "recipe_blocks": [],
+    "data_step_hint_count": 8,
+    "data_step_hints": [
+     {
+      "line": 22,
+      "text": "Find every file an agent reads in the target (repo root, or the path argument):"
+     },
+     {
+      "line": 26,
+      "text": "- **Imports**: `@path` includes in `CLAUDE.md` load their target too, so count the target as always-loaded."
+     },
+     {
+      "line": 27,
+      "text": "- **Ancestors**: `CLAUDE.md` and `AGENTS.md` in directories above the repo root load too. Count them as always"
+     },
+     {
+      "line": 29,
+      "text": "Record, for each file: path, tier, line count, and a token estimate (`wc -c` \u00f7 4). Also record which files are"
+     },
+     {
+      "line": 31,
+      "text": "**Done when** the table lists every file and the always-loaded total is summed."
+     },
+     {
+      "line": 35,
+      "text": "Invoke `mattpocock-skills:writing-for-agents` for the principles behind the audit. It is a soft dependency: if"
+     },
+     {
+      "line": 41,
+      "text": "**Done when** every line of every always-loaded file appears in the ledger exactly once."
+     },
+     {
+      "line": 61,
+      "text": "For each tier, check:"
+     }
+    ]
+   },
+   "usage": {
+    "runs": 0,
+    "sessions": 0,
+    "kinds": {},
+    "runs_per_30d": 0.0,
+    "per_run": {
+     "api_calls": 0.0,
+     "output_tokens": 0.0,
+     "tool_result_tokens": 0.0,
+     "processed_tokens": 0.0,
+     "cost_eq_tokens": 0.0,
+     "subagent_tokens": 0.0,
+     "subagent_cost_eq_tokens": 0.0,
+     "total_cost_eq_tokens": 0.0,
+     "adhoc_bash_calls": 0.0
+    },
+    "total_cost_eq_tokens": 0,
+    "subagents": 0,
+    "own_script_calls": 0,
+    "adhoc_bash_calls": 0,
+    "inline_code_calls": 0,
+    "failures": 0,
+    "reference_reads": 0,
+    "agent_calls": 0,
+    "top_adhoc": []
+   }
+  },
+  "ai-sanitize": {
+   "static": {
+    "name": "ai-sanitize",
+    "version": "1.0.0",
+    "description_tokens": 198,
+    "body_tokens": 2742,
+    "body_lines": 126,
+    "reference_files": 3,
+    "reference_tokens": 7521,
+    "scripts": [
+     "render.sh",
+     "survival-check.py"
+    ],
+    "unreferenced_scripts": [],
+    "recipe_blocks": [],
+    "data_step_hint_count": 6,
+    "data_step_hints": [
+     {
+      "line": 47,
+      "text": "2. **Follow pointers.** Instruction files often delegate: \"see `content/prompts/writing-style.md`\", \"the singl"
+     },
+     {
+      "line": 48,
+      "text": "3. **Search for what nothing pointed to:** `find . -path ./node_modules -prune -o \\( -iname '*style*.md' -o -i"
+     },
+     {
+      "line": 56,
+      "text": "- Enforce a project rule only where it overlaps an AI tell. A project rule that is not about AI tells (the gui"
+     },
+     {
+      "line": 61,
+      "text": "Walk the loaded reference(s) and record each hit: location (`file:line`, URL plus selector, or quoted phrase),"
+     },
+     {
+      "line": 63,
+      "text": "The `Detect` hints are tuned to common generated output (the purple-gradient landing page, chatbot cadence). Z"
+     },
+     {
+      "line": 65,
+      "text": "Then count by category. Clusters matter more than single hits:"
+     }
+    ]
+   },
+   "usage": {
+    "runs": 43,
+    "sessions": 9,
+    "kinds": {
+     "read-in-subagent": 1,
+     "skill-tool": 42
+    },
+    "runs_per_30d": 43.0,
+    "per_run": {
+     "api_calls": 8.0,
+     "output_tokens": 11422.9,
+     "tool_result_tokens": 2921.5,
+     "processed_tokens": 987774.5,
+     "cost_eq_tokens": 179609.8,
+     "subagent_tokens": 326355.0,
+     "subagent_cost_eq_tokens": 80930.9,
+     "total_cost_eq_tokens": 260540.7,
+     "adhoc_bash_calls": 5.9
+    },
+    "total_cost_eq_tokens": 11203251,
+    "subagents": 10,
+    "own_script_calls": 11,
+    "adhoc_bash_calls": 253,
+    "inline_code_calls": 18,
+    "failures": 8,
+    "reference_reads": 4,
+    "agent_calls": 10,
+    "top_adhoc": [
+     {
+      "head": "python3",
+      "calls": 37,
+      "runs": 29
+     },
+     {
+      "head": "grep -niE",
+      "calls": 28,
+      "runs": 27
+     },
+     {
+      "head": "cat >",
+      "calls": 18,
+      "runs": 12
+     },
+     {
+      "head": "python3 -",
+      "calls": 13,
+      "runs": 6
+     },
+     {
+      "head": "grep -nE",
+      "calls": 13,
+      "runs": 10
+     },
+     {
+      "head": "grep -n -i",
+      "calls": 10,
+      "runs": 10
+     },
+     {
+      "head": "sed -n",
+      "calls": 9,
+      "runs": 7
+     },
+     {
+      "head": "wc -l",
+      "calls": 6,
+      "runs": 6
+     }
+    ]
+   }
+  },
+  "ask-why": {
+   "static": {
+    "name": "ask-why",
+    "version": "1.0.0",
+    "description_tokens": 203,
+    "body_tokens": 2531,
+    "body_lines": 166,
+    "reference_files": 0,
+    "reference_tokens": 0,
+    "scripts": [],
+    "unreferenced_scripts": [],
+    "recipe_blocks": [],
+    "data_step_hint_count": 3,
+    "data_step_hints": [
+     {
+      "line": 88,
+      "text": "**Score each candidate from 1 to 5 (higher is better)**, citing evidence for each score:"
+     },
+     {
+      "line": 98,
+      "text": "Total the five scores (out of 25) unweighted, unless the user named a priority; then say which criterion you w"
+     },
+     {
+      "line": 104,
+      "text": "1. **Mechanism**: the steps and components involved, with `file:line` for each."
+     }
+    ]
+   },
+   "usage": {
+    "runs": 4,
+    "sessions": 1,
+    "kinds": {
+     "read-in-subagent": 4
+    },
+    "runs_per_30d": 4.0,
+    "per_run": {
+     "api_calls": 12.5,
+     "output_tokens": 160.5,
+     "tool_result_tokens": 11650.8,
+     "processed_tokens": 1015369.0,
+     "cost_eq_tokens": 151290.1,
+     "subagent_tokens": 0.0,
+     "subagent_cost_eq_tokens": 0.0,
+     "total_cost_eq_tokens": 151290.1,
+     "adhoc_bash_calls": 10.8
+    },
+    "total_cost_eq_tokens": 605160,
+    "subagents": 0,
+    "own_script_calls": 0,
+    "adhoc_bash_calls": 43,
+    "inline_code_calls": 0,
+    "failures": 2,
+    "reference_reads": 0,
+    "agent_calls": 0,
+    "top_adhoc": [
+     {
+      "head": "ls",
+      "calls": 4,
+      "runs": 4
+     },
+     {
+      "head": "mkdir -p",
+      "calls": 4,
+      "runs": 4
+     },
+     {
+      "head": "gh run view",
+      "calls": 4,
+      "runs": 1
+     },
+     {
+      "head": "for id in",
+      "calls": 4,
+      "runs": 1
+     },
+     {
+      "head": "grep -n",
+      "calls": 3,
+      "runs": 3
+     },
+     {
+      "head": "git show 24284c8",
+      "calls": 2,
+      "runs": 2
+     },
+     {
+      "head": "for r in",
+      "calls": 2,
+      "runs": 1
+     },
+     {
+      "head": "timeout 60 gh",
+      "calls": 2,
+      "runs": 1
+     }
+    ]
+   }
+  },
+  "deslop-python": {
+   "static": {
+    "name": "deslop-python",
+    "version": "1.0.2",
+    "description_tokens": 266,
+    "body_tokens": 5152,
+    "body_lines": 223,
+    "reference_files": 1,
+    "reference_tokens": 2832,
+    "scripts": [
+     "coverage_overlap.py",
+     "kill_matrix.py",
+     "mutants_compare.py",
+     "pytest_timings.py"
+    ],
+    "unreferenced_scripts": [],
+    "recipe_blocks": [
+     {
+      "line": 67,
+      "commands": 6
+     },
+     {
+      "line": 100,
+      "commands": 10
+     }
+    ],
+    "data_step_hint_count": 11,
+    "data_step_hints": [
+     {
+      "line": 12,
+      "text": "Slop in a test suite is tests that cost time and attention but don't protect anything the rest of the suite do"
+     },
+     {
+      "line": 16,
+      "text": "| `pytest` (+ `--junitxml`, `--durations`) | How long does each test take, and how much of that is fixture set"
+     },
+     {
+      "line": 17,
+      "text": "| `pytest-cov` (`--cov-context=test`) | Which production lines does each test execute? Which lines does no tes"
+     },
+     {
+      "line": 64,
+      "text": "2. Check the tree: `git status --porcelain`. If there are uncommitted changes, say so; the verification later "
+     },
+     {
+      "line": 90,
+      "text": "2. **Per-test coverage overlap.** One run with test contexts records which test executes each line. The script"
+     },
+     {
+      "line": 115,
+      "text": "4. **Mutation baseline.** Estimate cost first: mutants (`uv run mutmut run` prints the count; `mutmut print-ti"
+     },
+     {
+      "line": 127,
+      "text": "Keep `.deslop-python/baseline/` untouched; it is the yardstick for every later comparison."
+     },
+     {
+      "line": 135,
+      "text": "Tools nominate; reading confirms. For every nominated test, open the test and the code under test and decide w"
+     },
+     {
+      "line": 143,
+      "text": "- `time.sleep`, real network, the real filesystem where `tmp_path` works, `subprocess` launching the CLI where"
+     },
+     {
+      "line": 146,
+      "text": "- Code nothing calls (vulture, uncovered lines, mutmut `no tests` mutants, no hits from `grep -rn`) that is no"
+     },
+     {
+      "line": 216,
+      "text": "1. `uv run pytest -q --ignore=mutants` (same flags as Phase 0) passes. The test count drops only by the remove"
+     }
+    ]
+   },
+   "usage": {
+    "runs": 1,
+    "sessions": 1,
+    "kinds": {
+     "slash": 1
+    },
+    "runs_per_30d": 1.0,
+    "per_run": {
+     "api_calls": 27.0,
+     "output_tokens": 41440.0,
+     "tool_result_tokens": 42523.0,
+     "processed_tokens": 3708082.0,
+     "cost_eq_tokens": 763976.4,
+     "subagent_tokens": 0.0,
+     "subagent_cost_eq_tokens": 0.0,
+     "total_cost_eq_tokens": 763976.4,
+     "adhoc_bash_calls": 15.0
+    },
+    "total_cost_eq_tokens": 763976,
+    "subagents": 0,
+    "own_script_calls": 7,
+    "adhoc_bash_calls": 15,
+    "inline_code_calls": 0,
+    "failures": 1,
+    "reference_reads": 1,
+    "agent_calls": 0,
+    "top_adhoc": [
+     {
+      "head": "limactl shell local-dev",
+      "calls": 4,
+      "runs": 1
+     },
+     {
+      "head": "mkdir -p",
+      "calls": 2,
+      "runs": 1
+     },
+     {
+      "head": "rex session rename",
+      "calls": 1,
+      "runs": 1
+     },
+     {
+      "head": "cat pyproject.toml",
+      "calls": 1,
+      "runs": 1
+     },
+     {
+      "head": "git grep -n",
+      "calls": 1,
+      "runs": 1
+     },
+     {
+      "head": "V() { limactl",
+      "calls": 1,
+      "runs": 1
+     },
+     {
+      "head": "cat",
+      "calls": 1,
+      "runs": 1
+     },
+     {
+      "head": "echo",
+      "calls": 1,
+      "runs": 1
+     }
+    ]
+   }
+  },
+  "deslop-rust": {
+   "static": {
+    "name": "deslop-rust",
+    "version": "1.0.0",
+    "description_tokens": 238,
+    "body_tokens": 3552,
+    "body_lines": 177,
+    "reference_files": 1,
+    "reference_tokens": 1432,
+    "scripts": [
+     "coverage_overlap.py",
+     "kill_matrix.py",
+     "mutants_compare.py",
+     "nextest_timings.py"
+    ],
+    "unreferenced_scripts": [],
+    "recipe_blocks": [
+     {
+      "line": 52,
+      "commands": 4
+     }
+    ],
+    "data_step_hint_count": 10,
+    "data_step_hints": [
+     {
+      "line": 12,
+      "text": "Slop in a test suite is tests that cost time and attention but don't protect anything the rest of the suite do"
+     },
+     {
+      "line": 16,
+      "text": "| `cargo-nextest` | How long does each test take? (JUnit timings, parallel runs) |"
+     },
+     {
+      "line": 17,
+      "text": "| `cargo-llvm-cov` | Which production lines does each test reach? Which lines does no test reach? |"
+     },
+     {
+      "line": 49,
+      "text": "2. Check the tree: `git status --porcelain`. If there are uncommitted changes, say so; the verification later "
+     },
+     {
+      "line": 75,
+      "text": "2. **Per-test coverage overlap.** Measures each test alone and reports identical-coverage groups, strict subse"
+     },
+     {
+      "line": 92,
+      "text": "Keep `target/deslop-rust/baseline/mutants.out/` untouched; it is the yardstick for every later comparison."
+     },
+     {
+      "line": 98,
+      "text": "Tools nominate; reading confirms. For every nominated test, open the test and the code under test and decide w"
+     },
+     {
+      "line": 106,
+      "text": "- Mutation-surviving code that nothing calls (`#[allow(dead_code)]`, no references from `grep -rn`, not `pub` "
+     },
+     {
+      "line": 162,
+      "text": "- **Parameterizing:** use what the project already uses (`rstest`, `test-case`, a `macro_rules!`, or a table l"
+     },
+     {
+      "line": 172,
+      "text": "1. `cargo nextest run` (same flags as Phase 0) passes, plus `cargo test --doc`. The test count drops only by t"
+     }
+    ]
+   },
+   "usage": {
+    "runs": 3,
+    "sessions": 3,
+    "kinds": {
+     "slash": 2,
+     "read-in-subagent": 1
+    },
+    "runs_per_30d": 3.0,
+    "per_run": {
+     "api_calls": 24.7,
+     "output_tokens": 29466.7,
+     "tool_result_tokens": 28327.8,
+     "processed_tokens": 3645424.0,
+     "cost_eq_tokens": 644978.9,
+     "subagent_tokens": 9802231.3,
+     "subagent_cost_eq_tokens": 1530054.4,
+     "total_cost_eq_tokens": 2175033.3,
+     "adhoc_bash_calls": 22.0
+    },
+    "total_cost_eq_tokens": 6525100,
+    "subagents": 4,
+    "own_script_calls": 6,
+    "adhoc_bash_calls": 66,
+    "inline_code_calls": 6,
+    "failures": 2,
+    "reference_reads": 2,
+    "agent_calls": 4,
+    "top_adhoc": [
+     {
+      "head": "limactl shell --workdir",
+      "calls": 14,
+      "runs": 1
+     },
+     {
+      "head": "python3 -",
+      "calls": 6,
+      "runs": 2
+     },
+     {
+      "head": "grep -n",
+      "calls": 5,
+      "runs": 2
+     },
+     {
+      "head": "cat",
+      "calls": 3,
+      "runs": 2
+     },
+     {
+      "head": "limactl shell local-dev",
+      "calls": 3,
+      "runs": 1
+     },
+     {
+      "head": "for f in",
+      "calls": 3,
+      "runs": 1
+     },
+     {
+      "head": "rex session rename",
+      "calls": 2,
+      "runs": 2
+     },
+     {
+      "head": "echo",
+      "calls": 2,
+      "runs": 1
+     }
+    ]
+   }
+  },
+  "fitness-config-init": {
+   "static": {
+    "name": "fitness-config-init",
+    "version": "1.0.0",
+    "description_tokens": 152,
+    "body_tokens": 3242,
+    "body_lines": 141,
+    "reference_files": 2,
+    "reference_tokens": 2566,
+    "scripts": [],
+    "unreferenced_scripts": [],
+    "recipe_blocks": [],
+    "data_step_hint_count": 14,
+    "data_step_hints": [
+     {
+      "line": 11,
+      "text": "Create `fitness-config.json` for a project so the review skills weigh what matters for it. A database backend "
+     },
+     {
+      "line": 17,
+      "text": "- `references/purpose-signals.md`: what to read in the fast scan, the 40-file budget, signals per archetype, a"
+     },
+     {
+      "line": 18,
+      "text": "- `references/purpose-profiles.md`: the six archetype profiles, the rules for adjusting them, and typical rati"
+     },
+     {
+      "line": 32,
+      "text": "Run every resolver command from the **anchor**: the git top-level of the target (`git -C <target> rev-parse --"
+     },
+     {
+      "line": 60,
+      "text": "- **fast** (default): a read-only scan of at most 40 files."
+     },
+     {
+      "line": 61,
+      "text": "- **full**: runs `review-full` on the target first, then the fast scan."
+     },
+     {
+      "line": 63,
+      "text": "Take the mode from the argument only if it is exactly `fast` or `full`. Otherwise use the request text: it mea"
+     },
+     {
+      "line": 69,
+      "text": "- **Fast:** follow the scan order in `references/purpose-signals.md`. Stay within 40 file reads. Do not run pr"
+     },
+     {
+      "line": 70,
+      "text": "- **Full:** run the `review-full` skill with its scope set explicitly to the target folder (never the default "
+     },
+     {
+      "line": 72,
+      "text": "- If a domain failed or has no parsable row, use fast scan evidence for that domain only and say so. The other"
+     },
+     {
+      "line": 80,
+      "text": "**A purpose stated in the request is the user's answer.** If the request already says what the project is (\"it"
+     },
+     {
+      "line": 91,
+      "text": "2. Adjust using this project's evidence, following the rules in that file: no more than 4 points per domain fr"
+     }
+    ]
+   },
+   "usage": {
+    "runs": 0,
+    "sessions": 0,
+    "kinds": {},
+    "runs_per_30d": 0.0,
+    "per_run": {
+     "api_calls": 0.0,
+     "output_tokens": 0.0,
+     "tool_result_tokens": 0.0,
+     "processed_tokens": 0.0,
+     "cost_eq_tokens": 0.0,
+     "subagent_tokens": 0.0,
+     "subagent_cost_eq_tokens": 0.0,
+     "total_cost_eq_tokens": 0.0,
+     "adhoc_bash_calls": 0.0
+    },
+    "total_cost_eq_tokens": 0,
+    "subagents": 0,
+    "own_script_calls": 0,
+    "adhoc_bash_calls": 0,
+    "inline_code_calls": 0,
+    "failures": 0,
+    "reference_reads": 0,
+    "agent_calls": 0,
+    "top_adhoc": []
+   }
+  },
+  "generate-commit": {
+   "static": {
+    "name": "generate-commit",
+    "version": "1.0.0",
+    "description_tokens": 132,
+    "body_tokens": 2084,
+    "body_lines": 116,
+    "reference_files": 0,
+    "reference_tokens": 0,
+    "scripts": [],
+    "unreferenced_scripts": [],
+    "recipe_blocks": [
+     {
+      "line": 16,
+      "commands": 4
+     },
+     {
+      "line": 105,
+      "commands": 4
+     }
+    ],
+    "data_step_hint_count": 4,
+    "data_step_hints": [
+     {
+      "line": 37,
+      "text": "- Contents (for example `git diff --cached | grep -nEi '...'`): `api[_-]?key`, `token`, `secret`, `password`, "
+     },
+     {
+      "line": 56,
+      "text": "Do not run the full test suite by default; it is slow and does not change the message. Run tests only when the"
+     },
+     {
+      "line": 72,
+      "text": "When the staged files serve unrelated purposes (for example a CI timeout, a docs fix, and a new script feature"
+     },
+     {
+      "line": 74,
+      "text": "- **Split.** Unstage everything (`git restore --staged -- .`). For each group, stage that group's paths, confi"
+     }
+    ]
+   },
+   "usage": {
+    "runs": 1,
+    "sessions": 1,
+    "kinds": {
+     "skill-tool": 1
+    },
+    "runs_per_30d": 1.0,
+    "per_run": {
+     "api_calls": 7.0,
+     "output_tokens": 2733.0,
+     "tool_result_tokens": 2992.2,
+     "processed_tokens": 1819971.0,
+     "cost_eq_tokens": 209762.9,
+     "subagent_tokens": 0.0,
+     "subagent_cost_eq_tokens": 0.0,
+     "total_cost_eq_tokens": 209762.9,
+     "adhoc_bash_calls": 5.0
+    },
+    "total_cost_eq_tokens": 209763,
+    "subagents": 0,
+    "own_script_calls": 0,
+    "adhoc_bash_calls": 5,
+    "inline_code_calls": 0,
+    "failures": 1,
+    "reference_reads": 0,
+    "agent_calls": 0,
+    "top_adhoc": [
+     {
+      "head": "git status --short",
+      "calls": 1,
+      "runs": 1
+     },
+     {
+      "head": "sed -n 129,150p",
+      "calls": 1,
+      "runs": 1
+     },
+     {
+      "head": "git diff --cached",
+      "calls": 1,
+      "runs": 1
+     },
+     {
+      "head": "sed -i",
+      "calls": 1,
+      "runs": 1
+     },
+     {
+      "head": "git commit -F",
+      "calls": 1,
+      "runs": 1
+     }
+    ]
+   }
+  },
+  "review-accessibility": {
+   "static": {
+    "name": "review-accessibility",
+    "version": "1.0.1",
+    "description_tokens": 181,
+    "body_tokens": 2869,
+    "body_lines": 153,
+    "reference_files": 3,
+    "reference_tokens": 42360,
+    "scripts": [
+     "contrast.py"
+    ],
+    "unreferenced_scripts": [],
+    "recipe_blocks": [],
+    "data_step_hint_count": 8,
+    "data_step_hints": [
+     {
+      "line": 19,
+      "text": "- `references/wisdom.md` is optional background, auto-generated from the three articles above (about 2,500 lin"
+     },
+     {
+      "line": 44,
+      "text": "3. **Decide applicability** \u2014 For each dimension, decide whether anything in scope can show it. Mark the rest "
+     },
+     {
+      "line": 46,
+      "text": "4. **Run the checklist** \u2014 Evaluate each file against `references/checklist.md`. Record file:line evidence for"
+     },
+     {
+      "line": 48,
+      "text": "5. **Compute contrast** \u2014 When Color and Contrast applies, run the script over every stylesheet that defines o"
+     },
+     {
+      "line": 56,
+      "text": "Template and HTML files are read for inline `<style>` blocks. `--fails-only` still prints unresolved (`UNRES`)"
+     },
+     {
+      "line": 62,
+      "text": "8. **Self-check, then write** \u2014 Before writing: every file:line exists and says what the finding claims; every"
+     },
+     {
+      "line": 66,
+      "text": "Only report findings with confidence >= 7/10. For each finding, assess:"
+     },
+     {
+      "line": 77,
+      "text": "Anchors for each band are in `references/rubric.md`; what to check is in `references/checklist.md`."
+     }
+    ]
+   },
+   "usage": {
+    "runs": 1,
+    "sessions": 1,
+    "kinds": {
+     "skill-tool": 1
+    },
+    "runs_per_30d": 1.0,
+    "per_run": {
+     "api_calls": 9.0,
+     "output_tokens": 14237.0,
+     "tool_result_tokens": 14237.0,
+     "processed_tokens": 925593.0,
+     "cost_eq_tokens": 229001.1,
+     "subagent_tokens": 0.0,
+     "subagent_cost_eq_tokens": 0.0,
+     "total_cost_eq_tokens": 229001.1,
+     "adhoc_bash_calls": 7.0
+    },
+    "total_cost_eq_tokens": 229001,
+    "subagents": 0,
+    "own_script_calls": 1,
+    "adhoc_bash_calls": 7,
+    "inline_code_calls": 0,
+    "failures": 0,
+    "reference_reads": 0,
+    "agent_calls": 0,
+    "top_adhoc": [
+     {
+      "head": "cat -n",
+      "calls": 2,
+      "runs": 1
+     },
+     {
+      "head": "cat",
+      "calls": 1,
+      "runs": 1
+     },
+     {
+      "head": "find . -name",
+      "calls": 1,
+      "runs": 1
+     },
+     {
+      "head": "grep -rnEi",
+      "calls": 1,
+      "runs": 1
+     },
+     {
+      "head": "ls scripts",
+      "calls": 1,
+      "runs": 1
+     },
+     {
+      "head": "grep -n",
+      "calls": 1,
+      "runs": 1
+     }
+    ]
+   }
+  },
+  "review-agent-memory": {
+   "static": {
+    "name": "review-agent-memory",
+    "version": "1.0.0",
+    "description_tokens": 288,
+    "body_tokens": 2048,
+    "body_lines": 95,
+    "reference_files": 1,
+    "reference_tokens": 2380,
+    "scripts": [
+     "collect_sources.py",
+     "mine_transcripts.py"
+    ],
+    "unreferenced_scripts": [],
+    "recipe_blocks": [],
+    "data_step_hint_count": 5,
+    "data_step_hints": [
+     {
+      "line": 31,
+      "text": "It lists, per repo: always-loaded instruction files with token estimates (including ancestor CLAUDE.md files a"
+     },
+     {
+      "line": 41,
+      "text": "Transcripts run to hundreds of megabytes and contain secrets and tool output, so never `cat`, `grep`, or Read "
+     },
+     {
+      "line": 49,
+      "text": "Walk `references/catalog.md` section by section against the two outputs. For each candidate, write down the si"
+     },
+     {
+      "line": 53,
+      "text": "- **Verify before you report.** For each candidate, check the cited file, memory, or command yourself: confirm"
+     },
+     {
+      "line": 54,
+      "text": "- **Check what the repo already does.** Before recommending a script, look for an existing make target or scri"
+     }
+    ]
+   },
+   "usage": {
+    "runs": 4,
+    "sessions": 4,
+    "kinds": {
+     "slash": 4
+    },
+    "runs_per_30d": 4.0,
+    "per_run": {
+     "api_calls": 13.5,
+     "output_tokens": 13906.5,
+     "tool_result_tokens": 11204.1,
+     "processed_tokens": 1557031.8,
+     "cost_eq_tokens": 341909.1,
+     "subagent_tokens": 0.0,
+     "subagent_cost_eq_tokens": 0.0,
+     "total_cost_eq_tokens": 341909.1,
+     "adhoc_bash_calls": 8.2
+    },
+    "total_cost_eq_tokens": 1367636,
+    "subagents": 0,
+    "own_script_calls": 13,
+    "adhoc_bash_calls": 33,
+    "inline_code_calls": 7,
+    "failures": 7,
+    "reference_reads": 1,
+    "agent_calls": 0,
+    "top_adhoc": [
+     {
+      "head": "python3 -c",
+      "calls": 6,
+      "runs": 3
+     },
+     {
+      "head": "ls",
+      "calls": 4,
+      "runs": 2
+     },
+     {
+      "head": "echo",
+      "calls": 3,
+      "runs": 2
+     },
+     {
+      "head": "cat",
+      "calls": 2,
+      "runs": 2
+     },
+     {
+      "head": "git ls-files .claude",
+      "calls": 2,
+      "runs": 1
+     },
+     {
+      "head": "cat sources.txt mine.txt",
+      "calls": 1,
+      "runs": 1
+     },
+     {
+      "head": "sed -n 1,30p",
+      "calls": 1,
+      "runs": 1
+     },
+     {
+      "head": "ls -d",
+      "calls": 1,
+      "runs": 1
+     }
+    ]
+   }
+  },
+  "review-algorithms": {
+   "static": {
+    "name": "review-algorithms",
+    "version": "1.0.0",
+    "description_tokens": 165,
+    "body_tokens": 2684,
+    "body_lines": 137,
+    "reference_files": 3,
+    "reference_tokens": 52146,
+    "scripts": [],
+    "unreferenced_scripts": [],
+    "recipe_blocks": [],
+    "data_step_hint_count": 9,
+    "data_step_hints": [
+     {
+      "line": 16,
+      "text": "- `references/rubric.md` is the scoring source: severity definitions, the proof required for HIGH and CRITICAL"
+     },
+     {
+      "line": 17,
+      "text": "- `references/checklist.md` is what to look for during steps 4-6."
+     },
+     {
+      "line": 18,
+      "text": "- `references/wisdom.md` is optional background generated from the blog posts linked above (4,000+ lines). Gre"
+     },
+     {
+      "line": 38,
+      "text": "3. **Decide which dimensions apply** -- For each of the six dimensions, decide whether anything in scope can b"
+     },
+     {
+      "line": 48,
+      "text": "Use Grep/Glob to find these, then read the code around each. Where one rule is enforced on one path (single fi"
+     },
+     {
+      "line": 52,
+      "text": "6. **Probe edge inputs** -- Running the code finds bugs that reading misses. For each hotspot, call the functi"
+     },
+     {
+      "line": 56,
+      "text": "8. **Score** each applicable dimension with file:line evidence, using the anchors in `references/rubric.md`. C"
+     },
+     {
+      "line": 67,
+      "text": "Only report findings with confidence >= 7/10. For each finding, ask:"
+     },
+     {
+      "line": 76,
+      "text": "Score anchors for each dimension are in `references/rubric.md`; what to check is in `references/checklist.md`."
+     }
+    ]
+   },
+   "usage": {
+    "runs": 3,
+    "sessions": 3,
+    "kinds": {
+     "skill-tool": 3
+    },
+    "runs_per_30d": 3.0,
+    "per_run": {
+     "api_calls": 28.3,
+     "output_tokens": 26600.0,
+     "tool_result_tokens": 47626.5,
+     "processed_tokens": 4108679.7,
+     "cost_eq_tokens": 683945.9,
+     "subagent_tokens": 0.0,
+     "subagent_cost_eq_tokens": 0.0,
+     "total_cost_eq_tokens": 683945.9,
+     "adhoc_bash_calls": 27.7
+    },
+    "total_cost_eq_tokens": 2051838,
+    "subagents": 0,
+    "own_script_calls": 0,
+    "adhoc_bash_calls": 83,
+    "inline_code_calls": 2,
+    "failures": 1,
+    "reference_reads": 0,
+    "agent_calls": 0,
+    "top_adhoc": [
+     {
+      "head": "cat -n",
+      "calls": 17,
+      "runs": 2
+     },
+     {
+      "head": "grep -n",
+      "calls": 6,
+      "runs": 1
+     },
+     {
+      "head": "mkdir -p $S",
+      "calls": 5,
+      "runs": 1
+     },
+     {
+      "head": "cat",
+      "calls": 3,
+      "runs": 3
+     },
+     {
+      "head": "rm -rf $S",
+      "calls": 3,
+      "runs": 1
+     },
+     {
+      "head": "echo",
+      "calls": 3,
+      "runs": 1
+     },
+     {
+      "head": "python3",
+      "calls": 3,
+      "runs": 2
+     },
+     {
+      "head": "grep -rn",
+      "calls": 2,
+      "runs": 1
+     }
+    ]
+   }
+  },
+  "review-apply": {
+   "static": {
+    "name": "review-apply",
+    "version": "1.0.0",
+    "description_tokens": 115,
+    "body_tokens": 2479,
+    "body_lines": 203,
+    "reference_files": 0,
+    "reference_tokens": 0,
+    "scripts": [],
+    "unreferenced_scripts": [],
+    "recipe_blocks": [
+     {
+      "line": 176,
+      "commands": 5
+     }
+    ],
+    "data_step_hint_count": 8,
+    "data_step_hints": [
+     {
+      "line": 37,
+      "text": "Use the same `<n> -R <owner>/<repo>` pair for every `gh` call in Step 6. If `<owner>/<repo>` is not this check"
+     },
+     {
+      "line": 47,
+      "text": "1. Look for the most recent open issue with the `fitness-review` label:"
+     },
+     {
+      "line": 69,
+      "text": "### Step 2: Parse Action Items"
+     },
+     {
+      "line": 71,
+      "text": "Extract the **Top 10 Action Items** section. Producers are not perfectly consistent, so parse tolerantly. All "
+     },
+     {
+      "line": 79,
+      "text": "For each item, capture:"
+     },
+     {
+      "line": 89,
+      "text": "Look at the current code for every item before classifying it. Line numbers in the report point at the code as"
+     },
+     {
+      "line": 94,
+      "text": "- **Already resolved** \u2014 The current code no longer has the problem. Cite the evidence: the `file:line` showin"
+     },
+     {
+      "line": 130,
+      "text": "For each actionable item, in priority order:"
+     }
+    ]
+   },
+   "usage": {
+    "runs": 1,
+    "sessions": 1,
+    "kinds": {
+     "read-in-subagent": 1
+    },
+    "runs_per_30d": 1.0,
+    "per_run": {
+     "api_calls": 16.0,
+     "output_tokens": 154.0,
+     "tool_result_tokens": 14073.8,
+     "processed_tokens": 1321694.0,
+     "cost_eq_tokens": 184004.1,
+     "subagent_tokens": 0.0,
+     "subagent_cost_eq_tokens": 0.0,
+     "total_cost_eq_tokens": 184004.1,
+     "adhoc_bash_calls": 15.0
+    },
+    "total_cost_eq_tokens": 184004,
+    "subagents": 0,
+    "own_script_calls": 0,
+    "adhoc_bash_calls": 15,
+    "inline_code_calls": 0,
+    "failures": 0,
+    "reference_reads": 0,
+    "agent_calls": 0,
+    "top_adhoc": [
+     {
+      "head": "git log --oneline",
+      "calls": 2,
+      "runs": 1
+     },
+     {
+      "head": "git show --stat",
+      "calls": 1,
+      "runs": 1
+     },
+     {
+      "head": "sed -n 1,200p",
+      "calls": 1,
+      "runs": 1
+     },
+     {
+      "head": "sed -n 80,200p",
+      "calls": 1,
+      "runs": 1
+     },
+     {
+      "head": "grep -n -i",
+      "calls": 1,
+      "runs": 1
+     },
+     {
+      "head": "sed -n 35,98p",
+      "calls": 1,
+      "runs": 1
+     },
+     {
+      "head": "git show 643f357",
+      "calls": 1,
+      "runs": 1
+     },
+     {
+      "head": "git show 4a68940",
+      "calls": 1,
+      "runs": 1
+     }
+    ]
+   }
+  },
+  "review-architecture": {
+   "static": {
+    "name": "review-architecture",
+    "version": "1.0.2",
+    "description_tokens": 146,
+    "body_tokens": 2600,
+    "body_lines": 148,
+    "reference_files": 3,
+    "reference_tokens": 26216,
+    "scripts": [
+     "import_graph.py"
+    ],
+    "unreferenced_scripts": [],
+    "recipe_blocks": [],
+    "data_step_hint_count": 12,
+    "data_step_hints": [
+     {
+      "line": 16,
+      "text": "- `references/rubric.md` is the scoring source: severity definitions, score anchors for each dimension, the N/"
+     },
+     {
+      "line": 18,
+      "text": "- `references/wisdom.md` is optional background, auto-generated from the articles below. It has no rubric. Gre"
+     },
+     {
+      "line": 40,
+      "text": "2. **Scope the review** \u2014 Note the target (path or file set) and whether the user asked a specific question (f"
+     },
+     {
+      "line": 42,
+      "text": "3. **Decide applicability** \u2014 For each of the 7 dimensions, decide whether anything in scope can be evaluated."
+     },
+     {
+      "line": 50,
+      "text": "It prints per-module line count, fan-in, fan-out and import lines, cycles (with import-time cycles separated f"
+     },
+     {
+      "line": 57,
+      "text": "- Drop anything below confidence 7 and count it."
+     },
+     {
+      "line": 59,
+      "text": "7. **Score** \u2014 Score each applicable dimension with the rubric.md anchors, compute the overall per rubric.md ("
+     },
+     {
+      "line": 61,
+      "text": "8. **Self-check, then write** \u2014 Confirm: every file:line exists and says what the finding claims; every report"
+     },
+     {
+      "line": 65,
+      "text": "Only report findings with confidence >= 7/10. For each finding, assess:"
+     },
+     {
+      "line": 77,
+      "text": "Score anchors for each dimension are in `references/rubric.md`; the checks are in `references/checklist.md`."
+     },
+     {
+      "line": 79,
+      "text": "1. **Coupling** \u2014 Cross-boundary import count, concrete vs abstract dependencies, shared mutable state, circul"
+     },
+     {
+      "line": 89,
+      "text": "Write the report to `docs/architecture-review.md` at the root of the repository that contains the target (`git"
+     }
+    ]
+   },
+   "usage": {
+    "runs": 3,
+    "sessions": 3,
+    "kinds": {
+     "skill-tool": 3
+    },
+    "runs_per_30d": 3.0,
+    "per_run": {
+     "api_calls": 29.0,
+     "output_tokens": 17669.0,
+     "tool_result_tokens": 25380.2,
+     "processed_tokens": 3172760.7,
+     "cost_eq_tokens": 492606.8,
+     "subagent_tokens": 0.0,
+     "subagent_cost_eq_tokens": 0.0,
+     "total_cost_eq_tokens": 492606.8,
+     "adhoc_bash_calls": 23.7
+    },
+    "total_cost_eq_tokens": 1477820,
+    "subagents": 0,
+    "own_script_calls": 3,
+    "adhoc_bash_calls": 71,
+    "inline_code_calls": 2,
+    "failures": 6,
+    "reference_reads": 0,
+    "agent_calls": 0,
+    "top_adhoc": [
+     {
+      "head": "grep -n",
+      "calls": 17,
+      "runs": 3
+     },
+     {
+      "head": "cat",
+      "calls": 7,
+      "runs": 3
+     },
+     {
+      "head": "ls",
+      "calls": 5,
+      "runs": 1
+     },
+     {
+      "head": "python3",
+      "calls": 4,
+      "runs": 2
+     },
+     {
+      "head": "echo",
+      "calls": 3,
+      "runs": 1
+     },
+     {
+      "head": "sed -i",
+      "calls": 3,
+      "runs": 2
+     },
+     {
+      "head": "for f in",
+      "calls": 2,
+      "runs": 2
+     },
+     {
+      "head": "grep -rnE",
+      "calls": 2,
+      "runs": 1
+     }
+    ]
+   }
+  },
+  "review-data": {
+   "static": {
+    "name": "review-data",
+    "version": "1.0.0",
+    "description_tokens": 140,
+    "body_tokens": 2519,
+    "body_lines": 149,
+    "reference_files": 3,
+    "reference_tokens": 32918,
+    "scripts": [],
+    "unreferenced_scripts": [],
+    "recipe_blocks": [],
+    "data_step_hint_count": 8,
+    "data_step_hints": [
+     {
+      "line": 18,
+      "text": "- `references/wisdom.md` is optional background, auto-generated from the three articles above. It has no rubri"
+     },
+     {
+      "line": 36,
+      "text": "2. **Map data boundaries** \u2014 Grep/Glob for schema definitions (CREATE TABLE, ORM models), migration directorie"
+     },
+     {
+      "line": 38,
+      "text": "3. **Decide applicability** \u2014 For each of the six dimensions, decide whether anything in scope can be evaluate"
+     },
+     {
+      "line": 54,
+      "text": "10. **Score and write** \u2014 Score each applicable dimension against the `rubric.md` anchors, compute the overall"
+     },
+     {
+      "line": 58,
+      "text": "Only report findings with confidence >= 7/10. For each finding, assess:"
+     },
+     {
+      "line": 69,
+      "text": "Score anchors for each dimension are in `references/rubric.md`. A dimension with nothing in scope is `N/A` wit"
+     },
+     {
+      "line": 83,
+      "text": "- Every file:line exists and the line says what the finding claims."
+     },
+     {
+      "line": 155,
+      "text": "When step 3 finds no schema, migrations, queries, or pipelines, write a short report instead: the H1 and prove"
+     }
+    ]
+   },
+   "usage": {
+    "runs": 3,
+    "sessions": 2,
+    "kinds": {
+     "skill-tool": 1,
+     "read-in-subagent": 2
+    },
+    "runs_per_30d": 3.0,
+    "per_run": {
+     "api_calls": 37.3,
+     "output_tokens": 9476.0,
+     "tool_result_tokens": 36587.0,
+     "processed_tokens": 4644561.3,
+     "cost_eq_tokens": 624209.3,
+     "subagent_tokens": 0.0,
+     "subagent_cost_eq_tokens": 0.0,
+     "total_cost_eq_tokens": 624209.3,
+     "adhoc_bash_calls": 35.0
+    },
+    "total_cost_eq_tokens": 1872628,
+    "subagents": 0,
+    "own_script_calls": 0,
+    "adhoc_bash_calls": 105,
+    "inline_code_calls": 5,
+    "failures": 3,
+    "reference_reads": 2,
+    "agent_calls": 2,
+    "top_adhoc": [
+     {
+      "head": "grep -n",
+      "calls": 11,
+      "runs": 3
+     },
+     {
+      "head": "cat >",
+      "calls": 6,
+      "runs": 2
+     },
+     {
+      "head": "grep -rn",
+      "calls": 5,
+      "runs": 1
+     },
+     {
+      "head": "ls",
+      "calls": 5,
+      "runs": 3
+     },
+     {
+      "head": "python3 -",
+      "calls": 5,
+      "runs": 1
+     },
+     {
+      "head": "for f in",
+      "calls": 5,
+      "runs": 2
+     },
+     {
+      "head": "cat",
+      "calls": 4,
+      "runs": 2
+     },
+     {
+      "head": "python3",
+      "calls": 4,
+      "runs": 3
+     }
+    ]
+   }
+  },
+  "review-full": {
+   "static": {
+    "name": "review-full",
+    "version": "1.0.2",
+    "description_tokens": 88,
+    "body_tokens": 2481,
+    "body_lines": 159,
+    "reference_files": 0,
+    "reference_tokens": 0,
+    "scripts": [
+     "overall.py"
+    ],
+    "unreferenced_scripts": [],
+    "recipe_blocks": [],
+    "data_step_hint_count": 6,
+    "data_step_hints": [
+     {
+      "line": 10,
+      "text": "Run the ten domain review skills in parallel and combine their results into one weighted fitness report. This "
+     },
+     {
+      "line": 27,
+      "text": "Before using any output, run the same command with `validate` in place of `show` for every target. `show` exit"
+     },
+     {
+      "line": 49,
+      "text": "Run `validate` then `show` per the Configuration section for each target. With pending changes spanning severa"
+     },
+     {
+      "line": 82,
+      "text": "For each domain, take the overall the domain skill reported (mean of its scored dimensions, capped at 4.0 when"
+     },
+     {
+      "line": 87,
+      "text": "### Step 6: Compute the Overall Score"
+     },
+     {
+      "line": 99,
+      "text": "- **Status:** a score at or above `statusThresholds.healthy[0]` is Healthy; at or above `needsAttention[0]` is"
+     }
+    ]
+   },
+   "usage": {
+    "runs": 4,
+    "sessions": 4,
+    "kinds": {
+     "slash": 1,
+     "read-in-subagent": 1,
+     "skill-tool": 2
+    },
+    "runs_per_30d": 4.0,
+    "per_run": {
+     "api_calls": 11.8,
+     "output_tokens": 8544.5,
+     "tool_result_tokens": 2949.2,
+     "processed_tokens": 2405205.0,
+     "cost_eq_tokens": 320997.4,
+     "subagent_tokens": 20056164.8,
+     "subagent_cost_eq_tokens": 3567423.0,
+     "total_cost_eq_tokens": 3888420.4,
+     "adhoc_bash_calls": 1.8
+    },
+    "total_cost_eq_tokens": 15553681,
+    "subagents": 26,
+    "own_script_calls": 3,
+    "adhoc_bash_calls": 7,
+    "inline_code_calls": 0,
+    "failures": 0,
+    "reference_reads": 0,
+    "agent_calls": 26,
+    "top_adhoc": [
+     {
+      "head": "git status --porcelain",
+      "calls": 2,
+      "runs": 2
+     },
+     {
+      "head": "python3 $R validate",
+      "calls": 2,
+      "runs": 2
+     },
+     {
+      "head": "git ls-files infrastructure",
+      "calls": 1,
+      "runs": 1
+     },
+     {
+      "head": "python3",
+      "calls": 1,
+      "runs": 1
+     },
+     {
+      "head": "ls",
+      "calls": 1,
+      "runs": 1
+     }
+    ]
+   }
+  },
+  "review-jit-test-gen": {
+   "static": {
+    "name": "review-jit-test-gen",
+    "version": "1.0.0",
+    "description_tokens": 80,
+    "body_tokens": 2684,
+    "body_lines": 143,
+    "reference_files": 1,
+    "reference_tokens": 4247,
+    "scripts": [
+     "prove-catch.sh"
+    ],
+    "unreferenced_scripts": [],
+    "recipe_blocks": [],
+    "data_step_hint_count": 5,
+    "data_step_hints": [
+     {
+      "line": 43,
+      "text": "For each changed source file:"
+     },
+     {
+      "line": 60,
+      "text": "Each test you write in Step 5 should name the regression it targets. Include this list in the report: it is th"
+     },
+     {
+      "line": 68,
+      "text": "3. Existing test files: their framework and helpers. For shell code, look for `tests/*.sh` sourcing a shared h"
+     },
+     {
+      "line": 88,
+      "text": "A test only counts if it fails on a broken version. Do this for every new test file before reporting:"
+     },
+     {
+      "line": 116,
+      "text": "For each changed file:"
+     }
+    ]
+   },
+   "usage": {
+    "runs": 0,
+    "sessions": 0,
+    "kinds": {},
+    "runs_per_30d": 0.0,
+    "per_run": {
+     "api_calls": 0.0,
+     "output_tokens": 0.0,
+     "tool_result_tokens": 0.0,
+     "processed_tokens": 0.0,
+     "cost_eq_tokens": 0.0,
+     "subagent_tokens": 0.0,
+     "subagent_cost_eq_tokens": 0.0,
+     "total_cost_eq_tokens": 0.0,
+     "adhoc_bash_calls": 0.0
+    },
+    "total_cost_eq_tokens": 0,
+    "subagents": 0,
+    "own_script_calls": 0,
+    "adhoc_bash_calls": 0,
+    "inline_code_calls": 0,
+    "failures": 0,
+    "reference_reads": 0,
+    "agent_calls": 0,
+    "top_adhoc": []
+   }
+  },
+  "review-maintainability": {
+   "static": {
+    "name": "review-maintainability",
+    "version": "1.0.1",
+    "description_tokens": 168,
+    "body_tokens": 2763,
+    "body_lines": 167,
+    "reference_files": 3,
+    "reference_tokens": 11254,
+    "scripts": [
+     "metrics.py"
+    ],
+    "unreferenced_scripts": [],
+    "recipe_blocks": [],
+    "data_step_hint_count": 9,
+    "data_step_hints": [
+     {
+      "line": 18,
+      "text": "- `references/wisdom.md` is optional background, auto-generated from [Fundamentals of Maintainability](https:/"
+     },
+     {
+      "line": 41,
+      "text": "3. **Decide applicability** \u2014 For each of the five dimensions, decide whether anything in scope can be evaluat"
+     },
+     {
+      "line": 47,
+      "text": "It reports max function LOC, cyclomatic complexity, nesting, parameter count, class and file size, and every T"
+     },
+     {
+      "line": 53,
+      "text": "7. **Count technical debt indicators** \u2014 Use the markers and suppressions from step 4; check whether each TODO"
+     },
+     {
+      "line": 57,
+      "text": "9. **Tally code smells** \u2014 God classes (or closure factories / stateful modules in class-less code), long meth"
+     },
+     {
+      "line": 70,
+      "text": "Only report findings with confidence >= 7/10. For each finding, assess:"
+     },
+     {
+      "line": 81,
+      "text": "Maintainability targets often contain hardcoded credentials, tokens, or session cookies. Never reproduce a sec"
+     },
+     {
+      "line": 85,
+      "text": "Anchors for each band are in `references/rubric.md`."
+     },
+     {
+      "line": 87,
+      "text": "1. **Structural Complexity** \u2014 Cyclomatic complexity, nesting depth, LOC per function/class, parameter count"
+     }
+    ]
+   },
+   "usage": {
+    "runs": 5,
+    "sessions": 4,
+    "kinds": {
+     "skill-tool": 3,
+     "read-in-subagent": 2
+    },
+    "runs_per_30d": 5.0,
+    "per_run": {
+     "api_calls": 20.4,
+     "output_tokens": 10767.4,
+     "tool_result_tokens": 17738.0,
+     "processed_tokens": 2008068.2,
+     "cost_eq_tokens": 325637.8,
+     "subagent_tokens": 0.0,
+     "subagent_cost_eq_tokens": 0.0,
+     "total_cost_eq_tokens": 325637.8,
+     "adhoc_bash_calls": 15.6
+    },
+    "total_cost_eq_tokens": 1628189,
+    "subagents": 0,
+    "own_script_calls": 15,
+    "adhoc_bash_calls": 78,
+    "inline_code_calls": 0,
+    "failures": 3,
+    "reference_reads": 0,
+    "agent_calls": 0,
+    "top_adhoc": [
+     {
+      "head": "grep -n",
+      "calls": 12,
+      "runs": 4
+     },
+     {
+      "head": "cat",
+      "calls": 6,
+      "runs": 4
+     },
+     {
+      "head": "grep -rn",
+      "calls": 6,
+      "runs": 2
+     },
+     {
+      "head": "sed -i",
+      "calls": 4,
+      "runs": 3
+     },
+     {
+      "head": "for f in",
+      "calls": 4,
+      "runs": 2
+     },
+     {
+      "head": "python3",
+      "calls": 3,
+      "runs": 2
+     },
+     {
+      "head": "ls",
+      "calls": 2,
+      "runs": 1
+     },
+     {
+      "head": "find . -name",
+      "calls": 2,
+      "runs": 1
+     }
+    ]
+   }
+  },
+  "review-performance": {
+   "static": {
+    "name": "review-performance",
+    "version": "1.0.0",
+    "description_tokens": 148,
+    "body_tokens": 2494,
+    "body_lines": 150,
+    "reference_files": 3,
+    "reference_tokens": 27908,
+    "scripts": [],
+    "unreferenced_scripts": [],
+    "recipe_blocks": [],
+    "data_step_hint_count": 10,
+    "data_step_hints": [
+     {
+      "line": 19,
+      "text": "- `references/checklist.md` is what to look for during the analysis steps, section by section."
+     },
+     {
+      "line": 20,
+      "text": "- `references/wisdom.md` is optional background, auto-generated from the blog posts below. It has no rubric. G"
+     },
+     {
+      "line": 46,
+      "text": "2. **Scope and resolve** \u2014 Settle the target path(s) and run the resolver for each (see Configuration). Note t"
+     },
+     {
+      "line": 48,
+      "text": "3. **Decide applicability** \u2014 For each of the six dimensions, decide whether the target has anything for it to"
+     },
+     {
+      "line": 57,
+      "text": "If the user named a symptom (\"slow as post count grows\"), start from the code that iterates over that collecti"
+     },
+     {
+      "line": 59,
+      "text": "5. **Trace data flow** \u2014 For each hot path, trace what gets queried, fetched, computed, and cached, from entry"
+     },
+     {
+      "line": 61,
+      "text": "6. **Analyze the applicable dimensions** \u2014 Work through the matching `checklist.md` sections: algorithmic comp"
+     },
+     {
+      "line": 66,
+      "text": "- every file:line exists and the line shows what the finding claims (line numbers drift as you read; fix them "
+     },
+     {
+      "line": 73,
+      "text": "Only report findings with confidence >= 7/10. For each finding, assess:"
+     },
+     {
+      "line": 84,
+      "text": "Score anchors for each dimension are in `references/rubric.md`; checks for each are in `references/checklist.m"
+     }
+    ]
+   },
+   "usage": {
+    "runs": 3,
+    "sessions": 3,
+    "kinds": {
+     "skill-tool": 3
+    },
+    "runs_per_30d": 3.0,
+    "per_run": {
+     "api_calls": 22.7,
+     "output_tokens": 14690.0,
+     "tool_result_tokens": 26365.2,
+     "processed_tokens": 2493675.0,
+     "cost_eq_tokens": 409938.3,
+     "subagent_tokens": 0.0,
+     "subagent_cost_eq_tokens": 0.0,
+     "total_cost_eq_tokens": 409938.3,
+     "adhoc_bash_calls": 21.0
+    },
+    "total_cost_eq_tokens": 1229815,
+    "subagents": 0,
+    "own_script_calls": 0,
+    "adhoc_bash_calls": 63,
+    "inline_code_calls": 2,
+    "failures": 2,
+    "reference_reads": 0,
+    "agent_calls": 0,
+    "top_adhoc": [
+     {
+      "head": "grep -nE",
+      "calls": 8,
+      "runs": 2
+     },
+     {
+      "head": "cat",
+      "calls": 5,
+      "runs": 3
+     },
+     {
+      "head": "grep -n",
+      "calls": 4,
+      "runs": 2
+     },
+     {
+      "head": "cat -n",
+      "calls": 4,
+      "runs": 1
+     },
+     {
+      "head": "for f in",
+      "calls": 3,
+      "runs": 2
+     },
+     {
+      "head": "sed -n",
+      "calls": 3,
+      "runs": 2
+     },
+     {
+      "head": "grep -rnE",
+      "calls": 2,
+      "runs": 1
+     },
+     {
+      "head": "python3 -c",
+      "calls": 2,
+      "runs": 2
+     }
+    ]
+   }
+  },
+  "review-process": {
+   "static": {
+    "name": "review-process",
+    "version": "1.0.0",
+    "description_tokens": 131,
+    "body_tokens": 2769,
+    "body_lines": 146,
+    "reference_files": 3,
+    "reference_tokens": 48104,
+    "scripts": [
+     "git-evidence.sh"
+    ],
+    "unreferenced_scripts": [],
+    "recipe_blocks": [],
+    "data_step_hint_count": 8,
+    "data_step_hints": [
+     {
+      "line": 19,
+      "text": "- `references/wisdom.md` is optional background generated from the source articles (about 45k tokens). Never r"
+     },
+     {
+      "line": 39,
+      "text": "3. **Decide applicability** \u2014 For each of the seven dimensions, decide whether anything in scope can be judged"
+     },
+     {
+      "line": 42,
+      "text": "- `git log --no-merges -n 100 --format=%s main | grep -cE '^(feat|fix|docs|style|refactor|perf|test|build|ci|c"
+     },
+     {
+      "line": 43,
+      "text": "- `git log --first-parent --merges --oneline main | wc -l` and `git log --first-parent --no-merges --format=%s"
+     },
+     {
+      "line": 44,
+      "text": "- `git ls-files | grep '/\\.github/workflows/'` for nested workflows that never run"
+     },
+     {
+      "line": 48,
+      "text": "5. **Scan the repository** \u2014 Walk `references/checklist.md` section by section with Glob, Grep, and Read: READ"
+     },
+     {
+      "line": 56,
+      "text": "Only report findings with confidence >= 7/10. For each finding, ask:"
+     },
+     {
+      "line": 68,
+      "text": "Score with the anchors in `references/rubric.md`; `references/checklist.md` lists what to inspect for each."
+     }
+    ]
+   },
+   "usage": {
+    "runs": 6,
+    "sessions": 4,
+    "kinds": {
+     "skill-tool": 3,
+     "read-in-subagent": 3
+    },
+    "runs_per_30d": 6.0,
+    "per_run": {
+     "api_calls": 18.3,
+     "output_tokens": 8840.2,
+     "tool_result_tokens": 18809.5,
+     "processed_tokens": 1802402.0,
+     "cost_eq_tokens": 297052.3,
+     "subagent_tokens": 0.0,
+     "subagent_cost_eq_tokens": 0.0,
+     "total_cost_eq_tokens": 297052.3,
+     "adhoc_bash_calls": 16.3
+    },
+    "total_cost_eq_tokens": 1782314,
+    "subagents": 0,
+    "own_script_calls": 11,
+    "adhoc_bash_calls": 98,
+    "inline_code_calls": 0,
+    "failures": 9,
+    "reference_reads": 0,
+    "agent_calls": 0,
+    "top_adhoc": [
+     {
+      "head": "grep -n",
+      "calls": 11,
+      "runs": 4
+     },
+     {
+      "head": "cat",
+      "calls": 9,
+      "runs": 6
+     },
+     {
+      "head": "grep -nE",
+      "calls": 6,
+      "runs": 2
+     },
+     {
+      "head": "grep -c",
+      "calls": 3,
+      "runs": 1
+     },
+     {
+      "head": "grep -rln",
+      "calls": 3,
+      "runs": 3
+     },
+     {
+      "head": "git show --stat",
+      "calls": 3,
+      "runs": 2
+     },
+     {
+      "head": "git log --format='%h",
+      "calls": 3,
+      "runs": 3
+     },
+     {
+      "head": "grep -rniE",
+      "calls": 3,
+      "runs": 3
+     }
+    ]
+   }
+  },
+  "review-reliability": {
+   "static": {
+    "name": "review-reliability",
+    "version": "1.0.0",
+    "description_tokens": 156,
+    "body_tokens": 2746,
+    "body_lines": 145,
+    "reference_files": 3,
+    "reference_tokens": 56546,
+    "scripts": [],
+    "unreferenced_scripts": [],
+    "recipe_blocks": [],
+    "data_step_hint_count": 8,
+    "data_step_hints": [
+     {
+      "line": 18,
+      "text": "- `references/wisdom.md` is optional background, auto-generated from the articles below (about 45k tokens). Ne"
+     },
+     {
+      "line": 43,
+      "text": "2. **Scope and classify the target** -- Decide what is under review (whole repo, a subdirectory such as `.gith"
+     },
+     {
+      "line": 45,
+      "text": "3. **Decide applicability** -- Use the target-type table in rubric.md to mark each dimension scored or N/A, wi"
+     },
+     {
+      "line": 58,
+      "text": "6. **Score** each applicable dimension against the rubric.md anchors with file:line evidence. Compute the over"
+     },
+     {
+      "line": 64,
+      "text": "Only report findings with confidence >= 7/10. For each finding, assess:"
+     },
+     {
+      "line": 73,
+      "text": "Score anchors for each dimension are in `references/rubric.md`; a dimension may be N/A when the target type ha"
+     },
+     {
+      "line": 85,
+      "text": "Write the report to `docs/reliability-review.md` at the root of the repository that contains the target (`git "
+     },
+     {
+      "line": 88,
+      "text": "- Every file:line exists and says what the finding claims; every claimed absence was confirmed by searching al"
+     }
+    ]
+   },
+   "usage": {
+    "runs": 4,
+    "sessions": 4,
+    "kinds": {
+     "skill-tool": 3,
+     "read-in-subagent": 1
+    },
+    "runs_per_30d": 4.0,
+    "per_run": {
+     "api_calls": 25.8,
+     "output_tokens": 11929.2,
+     "tool_result_tokens": 20959.4,
+     "processed_tokens": 2874982.8,
+     "cost_eq_tokens": 426299.0,
+     "subagent_tokens": 0.0,
+     "subagent_cost_eq_tokens": 0.0,
+     "total_cost_eq_tokens": 426299.0,
+     "adhoc_bash_calls": 23.5
+    },
+    "total_cost_eq_tokens": 1705196,
+    "subagents": 0,
+    "own_script_calls": 0,
+    "adhoc_bash_calls": 94,
+    "inline_code_calls": 6,
+    "failures": 6,
+    "reference_reads": 1,
+    "agent_calls": 2,
+    "top_adhoc": [
+     {
+      "head": "for f in",
+      "calls": 8,
+      "runs": 2
+     },
+     {
+      "head": "grep -n",
+      "calls": 6,
+      "runs": 3
+     },
+     {
+      "head": "python3",
+      "calls": 6,
+      "runs": 3
+     },
+     {
+      "head": "python3 -",
+      "calls": 6,
+      "runs": 1
+     },
+     {
+      "head": "cat",
+      "calls": 4,
+      "runs": 3
+     },
+     {
+      "head": "grep -rnE",
+      "calls": 4,
+      "runs": 1
+     },
+     {
+      "head": "grep -nE",
+      "calls": 4,
+      "runs": 1
+     },
+     {
+      "head": "ls",
+      "calls": 3,
+      "runs": 1
+     }
+    ]
+   }
+  },
+  "review-security": {
+   "static": {
+    "name": "review-security",
+    "version": "1.0.0",
+    "description_tokens": 141,
+    "body_tokens": 2631,
+    "body_lines": 148,
+    "reference_files": 3,
+    "reference_tokens": 26469,
+    "scripts": [],
+    "unreferenced_scripts": [],
+    "recipe_blocks": [],
+    "data_step_hint_count": 9,
+    "data_step_hints": [
+     {
+      "line": 17,
+      "text": "- `references/checklist.md` is what to check during each workflow step, including section 9 (CI/CD and contain"
+     },
+     {
+      "line": 18,
+      "text": "- `references/wisdom.md` is optional background, auto-synced from the two articles above. It has no rubric. Gr"
+     },
+     {
+      "line": 36,
+      "text": "2. **Identify scope and threat surface** \u2014 Use Grep/Glob to find request handlers, API endpoints, authenticati"
+     },
+     {
+      "line": 38,
+      "text": "3. **Decide applicability** \u2014 For each of the six dimensions, decide whether anything in scope can be evaluate"
+     },
+     {
+      "line": 55,
+      "text": "9. **Scan dependency security** \u2014 Checklist section 5: lock files, pinning, scanner results from step 4, suppl"
+     },
+     {
+      "line": 59,
+      "text": "11. **Assess cryptography and secrets** \u2014 Checklist section 7: algorithms, RNG, TLS, and hardcoded secrets (gr"
+     },
+     {
+      "line": 61,
+      "text": "12. **Score each dimension** with the anchors in `references/rubric.md` and file:line evidence. Compute the ov"
+     },
+     {
+      "line": 75,
+      "text": "Only report findings with confidence >= 7/10 (or the resolver's threshold). For each finding, assess:"
+     },
+     {
+      "line": 86,
+      "text": "Anchors for each score band are in `references/rubric.md`; the checks behind them are in `references/checklist"
+     }
+    ]
+   },
+   "usage": {
+    "runs": 4,
+    "sessions": 4,
+    "kinds": {
+     "skill-tool": 3,
+     "read-in-subagent": 1
+    },
+    "runs_per_30d": 4.0,
+    "per_run": {
+     "api_calls": 23.5,
+     "output_tokens": 14335.0,
+     "tool_result_tokens": 17497.2,
+     "processed_tokens": 2584945.8,
+     "cost_eq_tokens": 395183.7,
+     "subagent_tokens": 0.0,
+     "subagent_cost_eq_tokens": 0.0,
+     "total_cost_eq_tokens": 395183.7,
+     "adhoc_bash_calls": 22.2
+    },
+    "total_cost_eq_tokens": 1580735,
+    "subagents": 0,
+    "own_script_calls": 0,
+    "adhoc_bash_calls": 89,
+    "inline_code_calls": 0,
+    "failures": 3,
+    "reference_reads": 0,
+    "agent_calls": 0,
+    "top_adhoc": [
+     {
+      "head": "grep -nE",
+      "calls": 9,
+      "runs": 2
+     },
+     {
+      "head": "grep -n",
+      "calls": 7,
+      "runs": 2
+     },
+     {
+      "head": "grep -rnE",
+      "calls": 5,
+      "runs": 1
+     },
+     {
+      "head": "cat",
+      "calls": 4,
+      "runs": 3
+     },
+     {
+      "head": "ls",
+      "calls": 4,
+      "runs": 1
+     },
+     {
+      "head": "for f in",
+      "calls": 4,
+      "runs": 1
+     },
+     {
+      "head": "git ls-files",
+      "calls": 3,
+      "runs": 2
+     },
+     {
+      "head": "grep -rn",
+      "calls": 3,
+      "runs": 1
+     }
+    ]
+   }
+  },
+  "review-testing": {
+   "static": {
+    "name": "review-testing",
+    "version": "1.0.0",
+    "description_tokens": 113,
+    "body_tokens": 2752,
+    "body_lines": 154,
+    "reference_files": 3,
+    "reference_tokens": 22783,
+    "scripts": [],
+    "unreferenced_scripts": [],
+    "recipe_blocks": [],
+    "data_step_hint_count": 13,
+    "data_step_hints": [
+     {
+      "line": 18,
+      "text": "- `references/wisdom.md` is optional background, generated from the two Fundamentals articles. It has no rubri"
+     },
+     {
+      "line": 39,
+      "text": "- The source under test: the main modules each test file should cover."
+     },
+     {
+      "line": 45,
+      "text": "4. **Map the test pyramid** \u2014 Count tests with the native collector, because file counts miss parametrized cas"
+     },
+     {
+      "line": 46,
+      "text": "- Python: `pytest --collect-only -q` (last line gives the total; add `-m <marker>` or a path to split levels)"
+     },
+     {
+      "line": 48,
+      "text": "- Elixir: `mix test --trace` (or count `test \"` blocks if deps cannot be fetched)"
+     },
+     {
+      "line": 50,
+      "text": "- JS/TS: `npx jest --listTests` / `npx vitest list`; otherwise count `it(`/`test(` calls"
+     },
+     {
+      "line": 52,
+      "text": "Run collectors read-only and offline where possible. If a collector cannot run (missing toolchain, no network)"
+     },
+     {
+      "line": 58,
+      "text": "7. **Review performance testing** \u2014 If applicable, search for load and benchmark tooling (k6, JMeter, Gatling,"
+     },
+     {
+      "line": 62,
+      "text": "9. **Audit CI test integration** \u2014 Read CI files to confirm tests run on pull requests, with timeouts, and tha"
+     },
+     {
+      "line": 64,
+      "text": "10. **Score** \u2014 Score each applicable dimension against the `rubric.md` anchors with file:line evidence (or an"
+     },
+     {
+      "line": 74,
+      "text": "Only report findings with confidence >= 7/10. For each finding, assess:"
+     },
+     {
+      "line": 85,
+      "text": "Anchors for each band are in `references/rubric.md`."
+     }
+    ]
+   },
+   "usage": {
+    "runs": 4,
+    "sessions": 4,
+    "kinds": {
+     "skill-tool": 3,
+     "read-in-subagent": 1
+    },
+    "runs_per_30d": 4.0,
+    "per_run": {
+     "api_calls": 31.5,
+     "output_tokens": 11581.5,
+     "tool_result_tokens": 24405.4,
+     "processed_tokens": 3494114.0,
+     "cost_eq_tokens": 495992.2,
+     "subagent_tokens": 0.0,
+     "subagent_cost_eq_tokens": 0.0,
+     "total_cost_eq_tokens": 495992.2,
+     "adhoc_bash_calls": 29.0
+    },
+    "total_cost_eq_tokens": 1983969,
+    "subagents": 0,
+    "own_script_calls": 0,
+    "adhoc_bash_calls": 116,
+    "inline_code_calls": 4,
+    "failures": 3,
+    "reference_reads": 1,
+    "agent_calls": 0,
+    "top_adhoc": [
+     {
+      "head": "cat",
+      "calls": 9,
+      "runs": 4
+     },
+     {
+      "head": "grep -n",
+      "calls": 8,
+      "runs": 4
+     },
+     {
+      "head": "python3",
+      "calls": 8,
+      "runs": 3
+     },
+     {
+      "head": "ls",
+      "calls": 6,
+      "runs": 3
+     },
+     {
+      "head": "grep -rn",
+      "calls": 5,
+      "runs": 3
+     },
+     {
+      "head": "cat -n",
+      "calls": 4,
+      "runs": 2
+     },
+     {
+      "head": "grep -rlE",
+      "calls": 3,
+      "runs": 2
+     },
+     {
+      "head": "limactl shell local-dev",
+      "calls": 3,
+      "runs": 1
+     }
+    ]
+   }
+  },
+  "review-usability": {
+   "static": {
+    "name": "review-usability",
+    "version": "1.0.0",
+    "description_tokens": 172,
+    "body_tokens": 4315,
+    "body_lines": 192,
+    "reference_files": 3,
+    "reference_tokens": 13317,
+    "scripts": [],
+    "unreferenced_scripts": [],
+    "recipe_blocks": [
+     {
+      "line": 22,
+      "commands": 12
+     },
+     {
+      "line": 39,
+      "commands": 5
+     }
+    ],
+    "data_step_hint_count": 6,
+    "data_step_hints": [
+     {
+      "line": 53,
+      "text": "- **When \u2026 Fails** and **Quick Check** for each of the five dimensions: the questions each dimension is scored"
+     },
+     {
+      "line": 58,
+      "text": "Browser scripts for the walkthrough (viewport size, content offset, keyboard reach, shortcut probes, render-er"
+     },
+     {
+      "line": 77,
+      "text": "4. **Walk each task.** Use a browser automation tool if one is available (Playwright, Chrome DevTools, or a si"
+     },
+     {
+      "line": 84,
+      "text": "- **Render errors:** scan only text outside `pre` and `code`, because articles often show error messages in co"
+     },
+     {
+      "line": 93,
+      "text": "- **Empty search results:** search for a nonsense string (for example `qzxwvkjh`). If fuzzy matching still ret"
+     },
+     {
+      "line": 109,
+      "text": "Only report findings with confidence >= 7/10. For each finding, check:"
+     }
+    ]
+   },
+   "usage": {
+    "runs": 0,
+    "sessions": 0,
+    "kinds": {},
+    "runs_per_30d": 0.0,
+    "per_run": {
+     "api_calls": 0.0,
+     "output_tokens": 0.0,
+     "tool_result_tokens": 0.0,
+     "processed_tokens": 0.0,
+     "cost_eq_tokens": 0.0,
+     "subagent_tokens": 0.0,
+     "subagent_cost_eq_tokens": 0.0,
+     "total_cost_eq_tokens": 0.0,
+     "adhoc_bash_calls": 0.0
+    },
+    "total_cost_eq_tokens": 0,
+    "subagents": 0,
+    "own_script_calls": 0,
+    "adhoc_bash_calls": 0,
+    "inline_code_calls": 0,
+    "failures": 0,
+    "reference_reads": 0,
+    "agent_calls": 0,
+    "top_adhoc": []
+   }
+  },
+  "the-deterministic-maker": {
+   "static": {
+    "name": "the-deterministic-maker",
+    "version": "1.0.0",
+    "description_tokens": 264,
+    "body_tokens": 2319,
+    "body_lines": 129,
+    "reference_files": 1,
+    "reference_tokens": 1824,
+    "scripts": [
+     "measure_skills.py"
+    ],
+    "unreferenced_scripts": [],
+    "recipe_blocks": [],
+    "data_step_hint_count": 5,
+    "data_step_hints": [
+     {
+      "line": 33,
+      "text": "- **Load cost**: tokens for each description (paid in every session), each body (paid in every run), and the r"
+     },
+     {
+      "line": 34,
+      "text": "- **Use cost**: per skill, the runs found in transcripts and the mean per run: API calls, output tokens, tool-"
+     },
+     {
+      "line": 35,
+      "text": "- **Commands run by hand**: the shell commands the model typed during runs instead of calling a bundled script"
+     },
+     {
+      "line": 57,
+      "text": "For each step you suspect, apply the test in `references/patterns.md`: would two careful runs have to give the"
+     },
+     {
+      "line": 62,
+      "text": "- **Keep judgment out.** A script can find every hit; deciding which hits matter stays with the model. Most st"
+     }
+    ]
+   },
+   "usage": {
+    "runs": 4,
+    "sessions": 1,
+    "kinds": {
+     "slash": 1,
+     "read-in-subagent": 3
+    },
+    "runs_per_30d": 4.0,
+    "per_run": {
+     "api_calls": 11.8,
+     "output_tokens": 21595.5,
+     "tool_result_tokens": 15833.9,
+     "processed_tokens": 1242138.2,
+     "cost_eq_tokens": 296214.2,
+     "subagent_tokens": 0.0,
+     "subagent_cost_eq_tokens": 0.0,
+     "total_cost_eq_tokens": 296214.2,
+     "adhoc_bash_calls": 8.0
+    },
+    "total_cost_eq_tokens": 1184857,
+    "subagents": 0,
+    "own_script_calls": 14,
+    "adhoc_bash_calls": 32,
+    "inline_code_calls": 1,
+    "failures": 1,
+    "reference_reads": 3,
+    "agent_calls": 0,
+    "top_adhoc": [
+     {
+      "head": "python3",
+      "calls": 4,
+      "runs": 3
+     },
+     {
+      "head": "for s in",
+      "calls": 4,
+      "runs": 1
+     },
+     {
+      "head": "ls",
+      "calls": 3,
+      "runs": 2
+     },
+     {
+      "head": "for f in",
+      "calls": 2,
+      "runs": 2
+     },
+     {
+      "head": "cat >",
+      "calls": 2,
+      "runs": 1
+     },
+     {
+      "head": "pwd",
+      "calls": 1,
+      "runs": 1
+     },
+     {
+      "head": "limactl shell --workdir",
+      "calls": 1,
+      "runs": 1
+     },
+     {
+      "head": "python3 -m unittest",
+      "calls": 1,
+      "runs": 1
+     }
+    ]
+   }
+  },
+  "version-skills": {
+   "static": {
+    "name": "version-skills",
+    "version": "1.0.0",
+    "description_tokens": 126,
+    "body_tokens": 610,
+    "body_lines": 47,
+    "reference_files": 0,
+    "reference_tokens": 0,
+    "scripts": [
+     "skill_version.py"
+    ],
+    "unreferenced_scripts": [],
+    "recipe_blocks": [],
+    "data_step_hint_count": 1,
+    "data_step_hints": [
+     {
+      "line": 47,
+      "text": "Skills new to versioning start at `1.0.0`. Reruns before a commit compute from HEAD, so they land on the same "
+     }
+    ]
+   },
+   "usage": {
+    "runs": 5,
+    "sessions": 5,
+    "kinds": {
+     "skill-tool": 5
+    },
+    "runs_per_30d": 5.0,
+    "per_run": {
+     "api_calls": 7.2,
+     "output_tokens": 3644.6,
+     "tool_result_tokens": 805.1,
+     "processed_tokens": 1382124.8,
+     "cost_eq_tokens": 170955.4,
+     "subagent_tokens": 280573.0,
+     "subagent_cost_eq_tokens": 82980.0,
+     "total_cost_eq_tokens": 253935.4,
+     "adhoc_bash_calls": 3.4
+    },
+    "total_cost_eq_tokens": 1269677,
+    "subagents": 1,
+    "own_script_calls": 6,
+    "adhoc_bash_calls": 17,
+    "inline_code_calls": 3,
+    "failures": 0,
+    "reference_reads": 0,
+    "agent_calls": 1,
+    "top_adhoc": [
+     {
+      "head": "echo",
+      "calls": 5,
+      "runs": 1
+     },
+     {
+      "head": "python3 -",
+      "calls": 3,
+      "runs": 1
+     },
+     {
+      "head": "bash",
+      "calls": 1,
+      "runs": 1
+     },
+     {
+      "head": "Co-Authored-By: Claude Fable",
+      "calls": 1,
+      "runs": 1
+     },
+     {
+      "head": "grep -n",
+      "calls": 1,
+      "runs": 1
+     },
+     {
+      "head": "cat",
+      "calls": 1,
+      "runs": 1
+     },
+     {
+      "head": "python3",
+      "calls": 1,
+      "runs": 1
+     },
+     {
+      "head": "kill",
+      "calls": 1,
+      "runs": 1
+     }
+    ]
+   }
+  }
+ }
+}

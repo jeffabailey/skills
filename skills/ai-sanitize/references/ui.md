@@ -32,7 +32,7 @@ Gradient backgrounds, buttons, borders, text, and accents, especially purple-to-
 
 Many unrelated hues used only to tell elements apart, with no link to the product and no hierarchy (every card, tag, or stat a different color).
 
-**Detect:** count distinct hue families in one view; look for per-item color arrays (`colors = ["blue","green","purple","orange"...]`) and `bg-{color}-100 text-{color}-700` repeated across hues.
+**Detect by reading:** count distinct hue families in one view; look for per-item color arrays (`colors = ["blue","green","purple","orange"...]`) and `bg-{color}-100 text-{color}-700` repeated across hues.
 
 **Fix:** reduce to the brand's primary, one accent, neutrals, and semantic colors (success, warning, danger) used only for those meanings. Distinguish items with labels, position, or icons instead of hue.
 
@@ -40,7 +40,7 @@ Many unrelated hues used only to tell elements apart, with no link to the produc
 
 Translucent cards, blurred backdrops, frosted panels, glowing borders.
 
-**Detect:** `backdrop-filter`, `backdrop-blur`, `bg-white/10`, `bg-opacity-`, `rgba(255,255,255,0.1)`, `box-shadow` with large colored spread, `ring-*/50`.
+**Detect:** `backdrop-filter`, `backdrop-blur`, `bg-white/10`, `bg-opacity-`, `rgba(255,255,255,0.1)`, `ring-*/50`. **By reading:** `box-shadow` with large colored spread.
 
 **Fix:** solid surface token with the system's standard border or elevation. Keep blur only where content genuinely sits over moving or image content (a sheet over a map) and legibility is verified.
 
@@ -48,7 +48,7 @@ Translucent cards, blurred backdrops, frosted panels, glowing borders.
 
 A large blurred gradient shape behind an otherwise empty hero.
 
-**Detect:** absolutely positioned `div` with `blur-3xl`, `filter: blur(` over 40px, `rounded-full` plus gradient, `-z-10`, `pointer-events-none`, `aria-hidden` on a shape with no content.
+**Detect:** `blur-3xl`, `filter: blur(` over 40px. **By reading:** an absolutely positioned `div` with `rounded-full` plus gradient, `-z-10`, `pointer-events-none`, or `aria-hidden` on a shape with no content.
 
 **Fix:** delete it. If the hero feels empty after that, the hero has too little content; see item 14.
 
@@ -56,7 +56,7 @@ A large blurred gradient shape behind an otherwise empty hero.
 
 A dark theme with no light theme, and no response to `prefers-color-scheme`.
 
-**Detect:** hardcoded dark backgrounds on `html`/`body`; no `@media (prefers-color-scheme` and no theme switch; Tailwind `dark` class forced on `<html>`.
+**Detect by reading:** hardcoded dark backgrounds on `html`/`body`; no `@media (prefers-color-scheme` and no theme switch; Tailwind `dark` class forced on `<html>`.
 
 **Fix:** if the design system has light tokens, honor `prefers-color-scheme` and default to the user's setting. If it has none, report it rather than inventing a palette.
 
@@ -66,7 +66,7 @@ A dark theme with no light theme, and no response to `prefers-color-scheme`.
 
 Inter for everything, JetBrains Mono for anything technical, no typographic decision beyond picking a popular modern font.
 
-**Detect:** `font-family` values, `next/font` imports, Google Fonts links, `fontFamily` in Tailwind config.
+**Detect by reading:** `font-family` values, `next/font` imports, Google Fonts links, `fontFamily` in Tailwind config.
 
 **Fix:** if the project already has a brand or chosen typeface, use it. If Inter is the deliberate system font, keep it and fix the other tells. Do not swap to a new trending font; report the choice for a human to make.
 
@@ -74,7 +74,7 @@ Inter for everything, JetBrains Mono for anything technical, no typographic deci
 
 `//` before labels, `>` or `$` prompts before non-command text, `{ }` or `< />` around ordinary words, `_` cursors, monospace used only to look technical.
 
-**Detect:** text nodes starting with `// `, `> `, `$ `, `~/`; `font-mono` on headings, nav, or labels that are not code.
+**Detect:** `font-mono` on headings, nav, or labels that are not code. **By reading:** text nodes starting with `// `, `> `, `$ `, `~/`.
 
 **Fix:** remove the decoration and use the body or heading font. Keep monospace for code, commands, file paths, and tabular numbers.
 
@@ -82,7 +82,7 @@ Inter for everything, JetBrains Mono for anything technical, no typographic deci
 
 ALL CAPS labels with heavy letter spacing, usually as eyebrows (item 16).
 
-**Detect:** `uppercase` plus `tracking-widest|tracking-[0.2em]`, `letter-spacing: 0.1em` or more, `text-transform: uppercase`.
+**Detect:** `tracking-widest|tracking-[0.2em]`, `text-transform: uppercase`. **By reading:** `uppercase` next to a tracking class, `letter-spacing: 0.1em` or more.
 
 **Fix:** sentence case at the system's label style. Keep uppercase only for short, established conventions the system already uses (table headers, keyboard keys).
 
@@ -90,7 +90,7 @@ ALL CAPS labels with heavy letter spacing, usually as eyebrows (item 16).
 
 Headings that wrap into tall blocks with oversized line height; display sizes that do not scale down; text that looks oddly spaced at phone width.
 
-**Detect:** fixed large `font-size` with no responsive step; `leading-relaxed|leading-loose` on headings; `line-height` above 1.3 on display text.
+**Detect:** `leading-relaxed|leading-loose` on headings. **By reading:** fixed large `font-size` with no responsive step; `line-height` above 1.3 on display text.
 
 **Fix:** use the system's responsive type scale (or `clamp()` if the system uses it), heading line height about 1.1 to 1.25, and check at 390px.
 
@@ -98,7 +98,7 @@ Headings that wrap into tall blocks with oversized line height; display sizes th
 
 Monospace across the whole site to feel "developer".
 
-**Detect:** `font-mono` or a mono family on `body`, layout wrappers, or most text.
+**Detect by reading:** `font-mono` or a mono family on `body`, layout wrappers, or most text.
 
 **Fix:** body text in a proportional face from the system; monospace only for code and data.
 
@@ -108,7 +108,7 @@ Monospace across the whole site to feel "developer".
 
 Glowing or animated "Active"/"Live"/"Online" dots, especially where the state can never change.
 
-**Detect:** `animate-pulse`, `animate-ping`, `@keyframes pulse`, glow `box-shadow` on small dots, badges whose text is a constant.
+**Detect:** `animate-pulse`, `animate-ping`, `@keyframes pulse`. **By reading:** glow `box-shadow` on small dots, badges whose text is a constant.
 
 **Fix:** if the state never changes, delete the badge. If it changes, show a static indicator with a text label; animate only a transient state (connecting, syncing) and respect `prefers-reduced-motion`.
 
@@ -140,7 +140,7 @@ Pill buttons, pill badges, pill containers, pill inputs with no functional reaso
 
 Cards with very large corner radius, often combined with gradients and glass.
 
-**Detect:** `rounded-2xl|rounded-3xl` on cards; `border-radius` of 20px or more on containers.
+**Detect:** `rounded-2xl|rounded-3xl` on cards. **By reading:** `border-radius` of 20px or more on containers.
 
 **Fix:** the system's card radius. One radius scale, applied consistently.
 
@@ -158,7 +158,7 @@ A dark-mode toggle so large or styled that it reads as a brand element.
 
 Functional screens (dashboards, settings, lists) open with a hero: huge H1, gray subtitle, marketing copy before the controls. "Welcome to your Dashboard, Sam ✨".
 
-**Detect:** `text-4xl` or larger H1 plus a muted `<p>` subtitle at the top of authenticated or functional routes; greeting strings; error and empty pages that stack an interjection H1 over the real message (`grep -niE "oops|uh.oh|whoops|well, this is awkward"`).
+**Detect:** `text-4xl` or larger H1 at the top of authenticated or functional routes; error and empty pages that stack an interjection H1 over the real message (`grep -niE "oops|uh.oh|whoops|well, this is awkward"`). **By reading:** a muted `<p>` subtitle under that H1; greeting strings.
 
 **Fix:** a compact page title at the system's page-heading size, then the content. Drop the subtitle unless it gives information the user needs (a date range, a count, a status).
 
@@ -166,7 +166,7 @@ Functional screens (dashboards, settings, lists) open with a hero: huge H1, gray
 
 Small uppercase, wide-tracked, often colored text above a heading ("FEATURES" over "Everything you need").
 
-**Detect:** a small `uppercase tracking-*` element immediately before an `h1`/`h2`/`h3`; `eyebrow`, `kicker`, `overline` class names.
+**Detect:** `uppercase tracking-` on a small element immediately before a heading; `eyebrow`, `kicker`, `overline` class names.
 
 **Fix:** delete the eyebrow. If it held useful context (a category), fold it into the heading or breadcrumb.
 
@@ -220,7 +220,7 @@ Emoji in headings, buttons, nav, greetings, and empty states as decoration (✨,
 
 SVGs slightly off-center, icons on different baselines or sizes, illustrations that do not share alignment, loose elements positioned a few pixels wrong.
 
-**Detect:** render and inspect; look for magic-number offsets (`top-[3px]`, `translate-y-[1px]`, `margin-top: -2px`) and icons with mixed `w-4`/`w-5` in one row.
+**Detect:** magic-number offsets (`top-[3px]`, `translate-y-[1px]`, `margin-top: -2px`). **By reading:** render and inspect; icons with mixed `w-4`/`w-5` in one row.
 
 **Fix:** align to the grid with flex or grid alignment instead of offsets; one icon size per context. If a decorative element cannot be aligned cleanly, delete it. See `graphics.md` for SVG specifics.
 
@@ -264,6 +264,6 @@ Also apply `prose.md` to every visible string.
 
 New button variants, colors, radii, shadows, or spacing values that do not exist in the system; components that ignore existing typography. The AI replaced the design language instead of extending it.
 
-**Detect:** hex colors or pixel values not in the tokens file; new `Button` variants or one-off styled buttons; duplicate components (a second `Card`); arbitrary Tailwind values (`[#7c3aed]`, `p-[13px]`). Framework defaults that ignore the project's palette are the same tell: Bootstrap's `#007bff|#0056b3|#f8f9fa|#dee2e6|#6c757d`, Tailwind's untouched `blue-500`/`gray-*` on a site with its own tokens (`grep -niE "#007bff|#0056b3|#f8f9fa|#dee2e6|#6c757d"`).
+**Detect:** Bootstrap's default palette on a site with its own tokens (`grep -niE "#007bff|#0056b3|#f8f9fa|#dee2e6|#6c757d"`). **By reading:** hex colors or pixel values not in the tokens file; new `Button` variants or one-off styled buttons; duplicate components (a second `Card`); arbitrary Tailwind values (`[#7c3aed]`, `p-[13px]`); Tailwind's untouched `blue-500`/`gray-*`. Framework defaults that ignore the project's palette are the same tell.
 
 **Fix:** map each one-off value to the nearest existing token and each new component to the existing one. Delete the duplicates. If the file cannot import the tokens (a static page outside the build pipeline), copy the token values verbatim into local custom properties and cite the tokens file; that reuses the system rather than adding to it.

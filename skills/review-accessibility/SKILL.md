@@ -2,7 +2,7 @@
 name: review-accessibility
 description: Reviews frontend code for accessibility and usability fitness, scoring across semantic HTML, keyboard navigation, screen reader support, color/contrast, progressive enhancement, responsive design, and usability heuristics. Computes WCAG contrast ratios with a bundled script that resolves CSS custom properties per theme (light/dark). Use when the user says /review:accessibility, requests an accessibility audit, asks for a11y review, wants WCAG compliance check, asks to check color contrast, alt text, or keyboard navigation in templates, components, or CSS, or needs usability evaluation of frontend code. For walking a live site's tasks in a browser, use review-usability. Only reports findings with confidence >= 7/10.
 metadata:
-  version: "1.0.1"
+  version: "1.1.0"
 ---
 
 # Accessibility and Usability Fitness Review
@@ -20,7 +20,7 @@ Reference: [Fundamentals of Software Accessibility](https://jeffbailey.us/blog/2
 
 ## Configuration
 
-Invoke the resolver CLI to obtain effective weights and thresholds for the review target. Never load `fitness-config.json` directly.
+Use the prompt's `## Resolved Config` block; with none, invoke the resolver CLI. Never load `fitness-config.json` directly.
 
 ```bash
 python3 "${CLAUDE_SKILL_DIR}/../../scripts/fitness-config.py" show --path <target>
@@ -28,7 +28,7 @@ python3 "${CLAUDE_SKILL_DIR}/../../scripts/fitness-config.py" show --path <targe
 
 `${CLAUDE_SKILL_DIR}` is this skill's directory; the resolver ships two levels up in the plugin's `scripts/`. If your agent does not expand the variable, substitute the directory containing this `SKILL.md`.
 
-Where `<target>` is the file or directory under review. The CLI walks up to discover any module override and merges it with the root config. Copy its `Config:` and `Effective weights:` lines into the report header (the template has the slots) as the provenance trail (AC-03.1, AC-08.2). Those weights rank the ten review domains for review-full; they do not weight the seven dimensions here. Use `statusThresholds` from the `effective` JSON block (between `<!-- BEGIN_EFFECTIVE_CONFIG_JSON -->` and `<!-- END_EFFECTIVE_CONFIG_JSON -->`) for the status band when present.
+`<target>` is the file or directory under review; module overrides above it merge with the root config. Copy its `Config:` and `Effective weights:` lines into the report header as provenance (AC-03.1, AC-08.2). Those weights rank the ten review domains for review-full; they do not weight the seven dimensions here. Use `statusThresholds` from the JSON block (between `<!-- BEGIN_EFFECTIVE_CONFIG_JSON -->` and `<!-- END_EFFECTIVE_CONFIG_JSON -->`) for the status band when present.
 
 ## Modes
 
@@ -37,9 +37,9 @@ Where `<target>` is the file or directory under review. The CLI walks up to disc
 
 ## Workflow
 
-1. **Load the rubric** — Read `references/rubric.md` and `references/checklist.md`. Run the resolver.
+1. **Load the rubric** — Read `references/rubric.md` and `references/checklist.md`. Resolve the config.
 
-2. **Identify scope** — Find the HTML templates, JSX/TSX/Vue/Svelte components, CSS, and UI JavaScript. Review changed files for a diff, the named files when the user names them, otherwise the whole frontend. Note context that lives outside scope but decides a finding (base layout with the skip link, theme files that define color tokens) and read just enough of it to reach confidence 7.
+2. **Identify scope** — Frontend files are in the prompt's `## Scope Inventory`; with none, run `python3 "${CLAUDE_SKILL_DIR}/../../scripts/review-context.py" <target> --inventory`. Review the changed files for a diff, the files the user names, otherwise the whole frontend. Note context that lives outside scope but decides a finding (base layout with the skip link, theme files that define color tokens) and read just enough of it to reach confidence 7.
 
 3. **Decide applicability** — For each dimension, decide whether anything in scope can show it. Mark the rest `N/A — <reason>` using the rubric's N/A rules. A placeholder score skews the Overall here and the domain average in review-full.
 
@@ -59,7 +59,7 @@ Where `<target>` is the file or directory under review. The CLI walks up to disc
 
 7. **Identify patterns** — Systemic issues (a shared partial, a design token, a global CSS rule) are one finding listing every location, ranked above one-off issues.
 
-8. **Self-check, then write** — Before writing: every file:line exists and says what the finding claims; every finding has confidence >= 7; every ratio came from the script; the Overall equals the stated computation; any CRITICAL caps it at 4.0. Then write the report.
+8. **Write, then check** — Write the report, run `python3 "${CLAUDE_SKILL_DIR}/../../scripts/check-report.py" <report>`, fix each `FAIL` (path, line, confidence, overall) until it exits 0. Then confirm that each citation row says what the finding claims and every ratio came from the script.
 
 ## Confidence and Severity
 

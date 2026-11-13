@@ -2,7 +2,7 @@
 name: review-performance
 description: Analyzes code for performance and scalability issues, producing fitness scores (1-10) across algorithmic efficiency, database design, caching strategy, scalability readiness, resource utilization, and data pipeline efficiency. Covers services, CLIs, CI scripts, batch jobs, and ML inference code. Use when the user says /review:performance, requests a performance review, asks for scalability analysis, wants to find N+1 queries or Big-O hot paths, asks why something gets slow as data grows, or needs performance fitness scores before shipping. Only reports findings with confidence >= 7/10.
 metadata:
-  version: "1.0.0"
+  version: "1.1.0"
 ---
 
 # Performance and Scalability Fitness Review
@@ -27,7 +27,7 @@ Sources for wisdom.md:
 
 ## Configuration
 
-Invoke the resolver CLI to obtain effective weights and thresholds for the review target. Never load `fitness-config.json` directly.
+Use the prompt's `## Resolved Config` block; with none, invoke the resolver CLI. Never load `fitness-config.json` directly.
 
 ```bash
 python3 "${CLAUDE_SKILL_DIR}/../../scripts/fitness-config.py" show --path <target>
@@ -35,7 +35,7 @@ python3 "${CLAUDE_SKILL_DIR}/../../scripts/fitness-config.py" show --path <targe
 
 `${CLAUDE_SKILL_DIR}` is this skill's directory; the resolver ships two levels up in the plugin's `scripts/`. If your agent does not expand the variable, substitute the directory containing this `SKILL.md`.
 
-Where `<target>` is the file or directory under review. The CLI walks up to discover any module override and merges it with the root config. Copy the `Config:` and `Effective weights:` lines from the resolver output verbatim into the report header (see Output Format) as the provenance trail (AC-03.1, AC-08.2); they record exactly which config produced the scores, so a paraphrase or a pointer to another file breaks the trail. The `effective` object inside the JSON block delimited by `<!-- BEGIN_EFFECTIVE_CONFIG_JSON -->` / `<!-- END_EFFECTIVE_CONFIG_JSON -->` carries weights, status thresholds, security, and scoring for any programmatic needs; use its `statusThresholds` for the status band.
+`<target>` is the file or directory under review; module overrides above it merge with the root config. Copy the `Config:` and `Effective weights:` lines verbatim into the report header (see Output Format) as provenance (AC-03.1, AC-08.2); they record exactly which config produced the scores, so a paraphrase or a pointer to another file breaks the trail. The JSON block between `<!-- BEGIN_EFFECTIVE_CONFIG_JSON -->` and `<!-- END_EFFECTIVE_CONFIG_JSON -->` carries weights, status thresholds, security, and scoring; use its `statusThresholds` for the status band.
 
 The resolver resolves from the target's location, not your working directory, so pass the target as an absolute path when it lives in another repository. When the request names several targets, run the resolver once per target. If every run prints the same `Config:` and `Effective weights:` lines, copy them once. If they differ, copy each pair, prefixed with its target (`Config (scripts/): ...`), and keep all of them in the header.
 
@@ -43,7 +43,7 @@ The resolver resolves from the target's location, not your working directory, so
 
 1. **Read the rubric and checklist** — Read `references/rubric.md`, then `references/checklist.md`. Do not read `wisdom.md` up front.
 
-2. **Scope and resolve** — Settle the target path(s) and run the resolver for each (see Configuration). Note the repository root that contains the target; the report goes there.
+2. **Scope and resolve** — Settle the target path(s) and run the resolver for each (see Configuration). Note the repository root that contains the target; the report goes there. Its contents are in the prompt's `## Scope Inventory`; with none, run `python3 "${CLAUDE_SKILL_DIR}/../../scripts/review-context.py" <target> --inventory`.
 
 3. **Decide applicability** — For each of the six dimensions, decide whether the target has anything for it to evaluate (any DB access? any cache or repeated expensive work? any batch or streaming job?). Mark the rest `N/A` with a reason and a cited absence, per rubric.md. This keeps placeholder scores out of the average and out of review-full.
 
@@ -62,11 +62,9 @@ The resolver resolves from the target's location, not your working directory, so
 
 7. **Score** — Assign severities and dimension scores from `rubric.md`, each with file:line evidence. File each finding under the one dimension rubric.md assigns it.
 
-8. **Self-check, then write** — Before writing the report, re-open each cited location and confirm:
-   - every file:line exists and the line shows what the finding claims (line numbers drift as you read; fix them now);
-   - every finding has confidence >= 7;
-   - the overall equals the stated mean of the scored dimensions (with the CRITICAL cap applied);
-   - no secret values appear in the report (refer to secrets by file:line only).
+8. **Write, then check** — Write the report, run `python3 "${CLAUDE_SKILL_DIR}/../../scripts/check-report.py" <report>`, fix each `FAIL` (path, line, confidence, overall) until it exits 0. Then confirm from its cited lines, without re-opening files:
+   - each one shows what the finding claims (line numbers drift as you read; fix them now);
+   - no secret values appear in the report (cite them by file:line only).
 
 ## Confidence and Severity
 

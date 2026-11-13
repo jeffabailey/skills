@@ -48,9 +48,9 @@ Mutation testing cost is roughly `mutants × suite time ÷ jobs`. Before a full 
 
 - **Features.** Tests behind `#[cfg(feature = "...")]` don't run without the feature. Use the same feature set CI uses for all three tools, or tests will look dead that aren't.
 - **Platform cfgs.** `#[cfg(target_os = ...)]` tests only run on that platform; don't call them dead.
-- **`#[ignore]` tests** are skipped by default and by this audit's tools. List them in the report separately; ask whether they still run anywhere (`--run-ignored all`).
+- **`#[ignore]` tests** are skipped by default and by this audit's tools. The scan labels them `ignore`. List them in the report separately; ask whether they still run anywhere (`--run-ignored all`).
 - **Property tests** (`proptest`, `quickcheck`) cover input spaces, not lines. One property test can look subsumed by line coverage while it is the only thing catching overflow and boundary bugs. Rely on mutation simulation, not coverage, for these.
-- **Snapshot tests** (`insta`) assert a whole output; they look weak (one assert) but aren't.
-- **Regression tests** whose name or comment cites an issue, a CVE, or an incident stay unless the user says otherwise: mark them High risk even with zero lost kills, because the mutation catalog may not reproduce the original bug.
+- **Snapshot tests** (`insta`, scan label `snapshot`) assert a whole output; they look weak (one assert) but aren't.
+- **Regression tests** whose name or comment cites an issue, a CVE, or an incident (scan label `cites-issue`, a text match; read the others too) stay unless the user says otherwise: mark them High risk even with zero lost kills, because the mutation catalog may not reproduce the original bug.
 - **Doc tests** are part of the public contract and documentation; never recommend removing one for redundancy.
 - **Same lines, different outcome**: two tests that exercise the same lines but check `true` vs `false`, `Ok` vs `Err`, or empty vs non-empty are a parameterization candidate at most, never duplicates.

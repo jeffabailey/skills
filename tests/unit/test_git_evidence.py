@@ -1,5 +1,6 @@
-"""git-evidence.sh (review-process): README stale-path classification."""
+"""git-evidence.sh (review-process): README stale paths, releases, layout, manifests, --verify."""
 
+import os
 import shutil
 import subprocess
 from pathlib import Path
@@ -211,4 +212,188 @@ def test_bare_names_that_resolve_are_not_missing(output, name):
 def test_bare_backticked_makefile_is_checked(output):
     assert "Makefile (bare name; no tracked file has this name)" in section(
         output, "readme_paths_missing"
+    )
+
+
+# Releases, top level, manifests, and --verify.
+def run(*args):
+    return subprocess.run(
+        ["bash", str(SCRIPT), *map(str, args)], capture_output=True, text=True, timeout=60
+    )
+
+
+def block(out, name):
+    """Lines under a `== name` header up to the next blank line."""
+    lines = out.splitlines()
+    start = next(i for i, line in enumerate(lines) if line.startswith(f"== {name}"))
+    body = []
+    for line in lines[start + 1 :]:
+        if not line.strip():
+            break
+        body.append(line)
+    return body
+
+
+def commit(repo, message, date):
+    env = {"GIT_AUTHOR_DATE": date, "GIT_COMMITTER_DATE": date}
+    subprocess.run(
+        ["git", "commit", "-qm", message],
+        cwd=repo,
+        check=True,
+        capture_output=True,
+        env={**os.environ, **env},
+    )
+
+
+@pytest.fixture(scope="module")
+def tagged(tmp_path_factory):
+    repo = tmp_path_factory.mktemp("tagged")
+    git(repo, "init", "-q", "-b", "main")
+    git(repo, "config", "user.email", "t@example.com")
+    git(repo, "config", "user.name", "t")
+    files = {
+        "package.json": "{}\n",
+        "api/pyproject.toml": "[project]\n",
+        "api/uv.lock": "x\n",
+        "crates/a/Cargo.toml": "[package]\n",
+        "Cargo.lock": "x\n",
+        "requirements.txt": "# pins\nflask==3.0.0\nrequests>=2\n-r other.txt\n\n",
+        "node_modules/dep/package.json": "{}\n",
+        "CHANGELOG.md": "# Changelog\n\n## [Unreleased]\n\n## [1.1.0] - 2026-02-01\n\n## [1.0.0]\n",
+        "docs/HISTORY.md": "# History\n\nNo headings here.\n",
+        "src/app.py": "x\n",
+    }
+    for rel, text in files.items():
+        (repo / rel).parent.mkdir(parents=True, exist_ok=True)
+        (repo / rel).write_text(text)
+    (repo / "latest").symlink_to("src")
+    git(repo, "add", "-A")
+    commit(repo, "feat: init", "2026-01-01T00:00:00Z")
+    git(repo, "tag", "v1.0.0")
+    (repo / "src/app.py").write_text("y\n")
+    git(repo, "add", "-A")
+    commit(repo, "fix: second", "2026-02-01T00:00:00Z")
+    git(repo, "tag", "v1.1.0")
+    git(repo, "tag", "nightly")
+    (repo / "src/app.py").write_text("z\n")
+    git(repo, "add", "-A")
+    commit(repo, "fix: third", "2026-03-01T00:00:00Z")
+    (repo / "scratch.txt").write_text("x\n")
+    proc = run(repo)
+    assert proc.returncode == 0, proc.stderr
+    return repo, proc.stdout
+
+
+def test_releases_with_tags(tagged):
+    releases = block(tagged[1], "releases")
+    assert "tags: 3" in releases
+    assert "newest_tag: v1.1.0 2026-02-01" in releases
+    assert "commits_since_newest_tag: 1" in releases
+    assert "tag_style: v_semver 2, bare_semver 0, prefixed_semver 0, other 1" in releases
+
+
+def test_changelog_newest_version_heading(tagged):
+    releases = block(tagged[1], "releases")
+    assert "  CHANGELOG.md:5 ## [1.1.0] - 2026-02-01" in releases
+    assert "  docs/HISTORY.md (no ## heading)" in releases
+    assert any(line.startswith("changelogs: 2 ") for line in releases)
+
+
+def test_releases_without_tags(output):
+    assert block(output, "releases")[:2] == [
+        "tags: 0",
+        "changelogs: 0 (shallowest 3; newest version heading)",
+    ]
+
+
+def test_top_level_entries_have_a_type(tagged):
+    top = block(tagged[1], "top level")
+    assert "  file CHANGELOG.md" in top
+    assert "  dir api/ (2 tracked files)" in top
+    assert "  link latest" in top
+    assert "  untracked scratch.txt" in top
+    assert top == sorted(top, key=lambda line: line.split()[1])
+    assert len([line for line in top if " src/" in line]) == 1
+
+
+def test_manifests_pair_with_lockfiles(tagged):
+    out = tagged[1]
+    assert "== manifests (4 tracked; without_lockfile 1 listed first) ==" in out
+    assert block(out, "manifests") == [
+        "  package.json: NO LOCKFILE",
+        "  api/pyproject.toml: uv.lock",
+        "  crates/a/Cargo.toml: Cargo.lock (ancestor directory)",
+        "  requirements.txt: pinned 1 of 2 requirements",
+    ]
+
+
+def test_shallow_clone_is_flagged(tagged, tmp_path):
+    clone = tmp_path / "shallow"
+    subprocess.run(
+        ["git", "clone", "-q", "--depth", "1", f"file://{tagged[0]}", str(clone)],
+        check=True,
+        capture_output=True,
+    )
+    proc = run(clone)
+    assert proc.returncode == 0, proc.stderr
+    assert "shallow: true" in proc.stdout
+    assert "note: shallow clone" in proc.stdout
+    assert "commits_total: 1" in proc.stdout
+    assert "tags: 0" in block(proc.stdout, "releases")
+
+
+def test_verify_resolves_shas(tagged):
+    repo = tagged[0]
+    sha = subprocess.run(
+        ["git", "rev-parse", "--short", "HEAD"], cwd=repo, capture_output=True, text=True
+    ).stdout.strip()
+    ok = run(repo, "--verify", sha)
+    assert ok.returncode == 0
+    assert ok.stdout.splitlines() == [
+        "verify: 1 checked, 0 unresolved",
+        f"  ok {sha} 2026-03-01 fix: third",
+    ]
+    bad = run(repo, "--verify", sha, "deadbeef", "not-a-sha")
+    assert bad.returncode == 1
+    assert bad.stdout.splitlines() == [
+        "verify: 3 checked, 2 unresolved",
+        f"  ok {sha} 2026-03-01 fix: third",
+        "  UNRESOLVED deadbeef",
+        "  UNRESOLVED not-a-sha",
+    ]
+
+
+@pytest.mark.parametrize(
+    ("args", "code", "message"),
+    [
+        (["--verify"], 2, "error: --verify needs at least one sha"),
+        (["--bogus"], 2, "error: unknown option --bogus (see --help)"),
+        ([".", "ten"], 2, "error: sample-size must be a positive integer, got ten"),
+    ],
+)
+def test_bad_arguments_fail_in_one_line(tagged, args, code, message):
+    proc = subprocess.run(
+        ["bash", str(SCRIPT), *args], cwd=tagged[0], capture_output=True, text=True
+    )
+    assert proc.returncode == code
+    assert proc.stderr.strip() == message
+    assert proc.stdout == ""
+
+
+def test_missing_directory_fails_in_one_line(tmp_path):
+    proc = run(tmp_path / "nope")
+    assert proc.returncode == 1
+    assert proc.stderr.strip() == f"error: cannot cd to {tmp_path / 'nope'}"
+
+
+def test_non_git_directory_and_empty_repo_report_na(tmp_path):
+    proc = run(tmp_path)
+    assert proc.returncode == 0
+    assert proc.stdout.strip() == "git: not a git repository (history-based items are N/A)"
+    assert run(tmp_path, "--verify", "abc1234").returncode == 1
+    git(tmp_path, "init", "-q", "-b", "main")
+    proc = run(tmp_path)
+    assert proc.returncode == 0
+    assert proc.stdout.splitlines()[-1] == (
+        "git: repository has no commits (history-based items are N/A)"
     )

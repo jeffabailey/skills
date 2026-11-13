@@ -2,11 +2,19 @@
 """Maintainability metrics for review-maintainability (stdlib only).
 
 Usage:
-    python3 metrics.py <path> [<path> ...] [--top N] [--json] [--include-vendored] [--exclude GLOB ...]
+    python3 metrics.py <path> [<path> ...] [--top N] [--all] [--json] [--include-vendored] [--exclude GLOB ...]
 
 Per function: LOC, cyclomatic complexity (CC), max nesting depth, parameter
-count, with file:line. Per file: LOC. Also lists TODO/FIXME/HACK/XXX markers
-and lint/type suppressions with file:line.
+count, with file:line. Per file: LOC. Also counts TODO/FIXME/HACK/XXX markers
+(each marked untracked when its line has no issue reference), lint/type
+suppressions per file, and blocks of commented-out code, and prints the
+measurable smells per 1,000 non-blank LOC. Lists are capped at --top rows;
+--all prints every row.
+
+Commented-out code is a heuristic over full-line comments: in Python a comment
+counts when its text parses as a statement, in brace languages when a //
+comment ends in ; { or }. Other languages are not checked. Read a block before
+reporting it.
 
 Method by language:
   - Python: ast (exact). Files that do not parse fall back to indentation.
@@ -43,6 +51,54 @@ SUPPRESS_RE = re.compile(
     r"(#\s*noqa|#\s*type:\s*ignore|pylint:\s*disable|eslint-disable|@ts-ignore|@ts-expect-error|"
     r"@ts-nocheck|//\s*nolint|#\[allow\(|@SuppressWarnings|rubocop:disable|shellcheck\s+disable|"
     r"NOSONAR|istanbul\s+ignore|c8\s+ignore|pragma:\s*no\s*cover|#\s*nosec)")
+# An issue reference on the marker's own line: #123, GH-123, ABC-123, issues/123, or a URL.
+ISSUE_RE = re.compile(r"#\d+|\b[A-Z][A-Z0-9]+-\d+\b|\bissues?/\d+|https?://")
+DENSITY_MIN_LOC = 1000  # rubric.md: below this, use raw counts instead of density
+PY_CODE_NODES = (ast.Assign, ast.AugAssign, ast.Return, ast.Import, ast.ImportFrom, ast.Raise,
+                 ast.Assert, ast.Delete, ast.If, ast.For, ast.While, ast.With, ast.Try,
+                 ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)
+BRACE_COMMENT_CODE_RE = re.compile(r"^//(?!/)\s*\S.*[;{}]\s*$")
+
+
+def _py_comment_is_code(body):
+    """True when a Python comment's text parses as a statement, not as prose."""
+    if not body or SUPPRESS_RE.search("#" + body):
+        return False
+    for candidate in (body, body + " pass"):  # "if x:" needs a body to parse
+        try:
+            tree = ast.parse(candidate)
+        except (SyntaxError, ValueError, RecursionError):
+            continue
+        if len(tree.body) != 1:
+            return False
+        node = tree.body[0]
+        if isinstance(node, ast.AnnAssign):  # "note: text" parses as an annotation
+            return node.value is not None
+        if isinstance(node, ast.Expr):
+            return isinstance(node.value, (ast.Call, ast.Await, ast.Yield))
+        return isinstance(node, PY_CODE_NODES)
+    return False
+
+
+def is_commented_code(line, ext):
+    s = line.strip()
+    if ext == ".py":
+        return s.startswith("#") and not s.startswith("#!") and _py_comment_is_code(s.lstrip("#").strip())
+    if ext in BRACE_EXT:
+        return bool(BRACE_COMMENT_CODE_RE.match(s)) and not SUPPRESS_RE.search(s)
+    return False
+
+
+def commented_blocks(rel, lines, ext):
+    """Runs of consecutive commented-out code lines, as {where, lines}."""
+    blocks, start, length = [], 0, 0
+    for i, line in enumerate(lines + [""], 1):
+        if is_commented_code(line, ext):
+            start, length = (start, length + 1) if length else (i, 1)
+        elif length:
+            blocks.append({"where": f"{rel}:{start}", "lines": length})
+            length = 0
+    return blocks
 
 
 # ---------------------------------------------------------------- Python (AST)
@@ -289,7 +345,7 @@ def iter_files(paths, include_vendored, excludes=()):
 
 def analyze(paths, include_vendored=False, excludes=()):
     res = {"files": [], "functions": [], "classes": [], "markers": [], "suppressions": [],
-           "skipped_generated": [], "skipped_vendored": 0, "methods": {}}
+           "commented_out": [], "skipped_generated": [], "skipped_vendored": 0, "methods": {}}
     for full, rel in iter_files(paths, include_vendored, excludes):
         if rel is None:
             res["skipped_vendored"] += 1
@@ -310,9 +366,11 @@ def analyze(paths, include_vendored=False, excludes=()):
         for i, line in enumerate(lines, 1):
             if MARKER_RE.search(line):
                 res["markers"].append({"where": f"{rel}:{i}", "kind": MARKER_RE.search(line).group(1),
+                                       "tracked": bool(ISSUE_RE.search(line)),
                                        "text": line.strip()[:100]})
             if SUPPRESS_RE.search(line):
                 res["suppressions"].append({"where": f"{rel}:{i}", "text": line.strip()[:100]})
+        res["commented_out"] += commented_blocks(rel, lines, ext)
         if ext == ".py":
             out = python_metrics(rel, text)
         elif ext in BRACE_EXT:
@@ -330,9 +388,24 @@ def summarize(res):
     def top(rows, key):
         return max(rows, key=lambda r: r[key]) if rows else None
     f = res["functions"]
+    total_loc = sum(x["loc"] for x in res["files"])
+    over_loc = sum(x["loc"] > FINDING["loc"] for x in f)
+    over_class = sum(x["loc"] > FINDING["class_loc"] for x in res["classes"])
+    untracked = sum(not m["tracked"] for m in res["markers"])
+    blocks = len(res["commented_out"])
+    smells = over_loc + over_class + blocks
+
+    def rate(n):
+        return round(n * 1000 / total_loc, 1) if total_loc >= DENSITY_MIN_LOC else None
     return {
+        "untracked_markers": untracked, "commented_out_blocks": blocks,
+        "commented_out_lines": sum(b["lines"] for b in res["commented_out"]),
+        "measured_smells": {"long_functions": over_loc, "large_classes": over_class,
+                            "commented_out_blocks": blocks, "total": smells},
+        "per_1000_loc": {"measured_smells": rate(smells), "untracked_markers": rate(untracked),
+                         "suppressions": rate(len(res["suppressions"]))},
         "files": len(res["files"]), "functions": len(f),
-        "total_loc": sum(x["loc"] for x in res["files"]),
+        "total_loc": total_loc,
         "max_function_loc": top(f, "loc"), "max_cc": top(f, "cc"), "max_nesting": top(f, "nest"),
         "max_params": top(f, "params"), "max_class_loc": top(res["classes"], "loc"),
         "max_file_loc": top(res["files"], "loc"),
@@ -351,7 +424,50 @@ def flag(v, key):
     return "!" if v > FINDING[key] else " "
 
 
-def print_text(res, s, top_n):
+def _capped(rows, cap):
+    """The first cap rows and a '... and N more' line; cap None means every row."""
+    if cap is None or len(rows) <= cap:
+        return rows, None
+    return rows[:cap], f"  ... and {len(rows) - cap} more (--all lists every row)"
+
+
+def _print_rows(rows, cap, fmt):
+    shown, more = _capped(rows, cap)
+    for r in shown:
+        print(fmt(r))
+    if more:
+        print(more)
+
+
+def print_debt(res, s, cap):
+    print(f"\n## Markers TODO/FIXME/HACK/XXX: {len(res['markers'])} (untracked: {s['untracked_markers']}; "
+          "untracked = no issue reference on the line)")
+    _print_rows(sorted(res["markers"], key=lambda m: m["tracked"]), cap,
+                lambda m: f"  {m['where']}  {m['kind']}{'' if m['tracked'] else '  untracked'}")
+    per_file = {}
+    for m in res["suppressions"]:
+        rel, line = m["where"].rsplit(":", 1)
+        per_file.setdefault(rel, []).append(line)
+    print(f"\n## Suppressions: {len(res['suppressions'])} in {len(per_file)} files (count, file:lines)")
+    _print_rows(sorted(per_file.items(), key=lambda kv: (-len(kv[1]), kv[0])), cap,
+                lambda kv: f"  {len(kv[1]):>5} {kv[0]}:{','.join(kv[1][:8])}{',...' if len(kv[1]) > 8 else ''}")
+    blocks = sorted(res["commented_out"], key=lambda b: (-b["lines"], b["where"]))
+    print(f"\n## Commented-out code (heuristic): {s['commented_out_lines']} lines in {len(blocks)} blocks "
+          "(lines, start)")
+    _print_rows(blocks, cap, lambda b: f"  {b['lines']:>5} {b['where']}")
+    m = s["measured_smells"]
+    print(f"\n## Measured smells: {m['total']} (long functions {m['long_functions']}, large classes "
+          f"{m['large_classes']}, commented-out blocks {m['commented_out_blocks']})")
+    if s["total_loc"] >= DENSITY_MIN_LOC:
+        r = s["per_1000_loc"]
+        print(f"  per 1,000 non-blank LOC: measured smells {r['measured_smells']}, untracked markers "
+              f"{r['untracked_markers']}, suppressions {r['suppressions']}")
+        print(f"  each smell you add by reading adds {1000 / s['total_loc']:.2f} per 1,000")
+    else:
+        print(f"  under {DENSITY_MIN_LOC} non-blank LOC: use raw counts, not density")
+
+
+def print_text(res, s, top_n, cap):
     print(f"files={s['files']} functions={s['functions']} nonblank_loc={s['total_loc']}")
     methods = sorted(set(res["methods"].values()))
     print("method: " + ", ".join(methods) if methods else "method: none (no supported source files)")
@@ -380,12 +496,7 @@ def print_text(res, s, top_n):
     print("\n## Largest files (non-blank LOC)")
     for r in sorted(res["files"], key=lambda r: -r["loc"])[:top_n]:
         print(f"  {r['loc']:>5}{flag(r['loc'], 'file_loc')} {r['where']}")
-    print(f"\n## Markers TODO/FIXME/HACK/XXX: {len(res['markers'])}")
-    for m in res["markers"]:
-        print(f"  {m['where']}  {m['kind']}")
-    print(f"\n## Suppressions: {len(res['suppressions'])}")
-    for m in res["suppressions"]:
-        print(f"  {m['where']}")
+    print_debt(res, s, cap)
     if res["skipped_vendored"]:
         print(f"\n## Skipped as vendored: {res['skipped_vendored']} files (rerun with --include-vendored "
               "if vendored code is the project)")
@@ -397,6 +508,7 @@ def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     ap.add_argument("paths", nargs="+")
     ap.add_argument("--top", type=int, default=10)
+    ap.add_argument("--all", action="store_true", help="print every marker, suppression and block row")
     ap.add_argument("--json", action="store_true")
     ap.add_argument("--include-vendored", action="store_true",
                     help="also scan vendor/, third_party/ etc. (use when vendored code is the project)")
@@ -413,7 +525,7 @@ def main(argv=None):
         json.dump({"summary": s, "thresholds": FINDING, **res}, sys.stdout, indent=1)
         print()
     else:
-        print_text(res, s, a.top)
+        print_text(res, s, a.top, None if a.all else a.top)
     return 0
 
 

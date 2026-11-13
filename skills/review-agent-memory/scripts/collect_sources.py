@@ -11,7 +11,12 @@ It prints paths, sizes, and memory names/descriptions — not file bodies — so
 the agent reads only the files the findings point at.
 
 Usage:
-  collect_sources.py <path> [<path> ...] [--home ~] [--json]
+  collect_sources.py <path> [<path> ...] [--json]
+  collect_sources.py <path> [<path> ...] --size <file-or-dir> [...]
+
+--size replaces the inventory with one row per named path: lines, bytes, token
+estimate (bytes / 4), and the last commit that touched it, or MISSING. Relative
+paths resolve against each target's repo root, then its auto-memory directory.
 """
 from __future__ import annotations
 
@@ -165,6 +170,53 @@ def memory_dir_report(mem: Path, repo: Path) -> dict:
     return rep
 
 
+def memory_dir(root: Path) -> Path:
+    return HOME / ".claude/projects" / re.sub(r"[^A-Za-z0-9]", "-", str(root)) / "memory"
+
+
+def last_commit(root: Path, f: Path) -> str:
+    try:
+        out = subprocess.run(["git", "-C", str(root), "log", "-1", "--format=%cs %h %s", "--", str(f)],
+                             capture_output=True, text=True, timeout=10)
+    except (OSError, subprocess.TimeoutExpired):
+        return ""
+    return out.stdout.strip()[:80] if out.returncode == 0 else ""
+
+
+def size_row(raw: str, roots: list[Path]) -> tuple[str, bool]:
+    """One line for one cited path: its size, or MISSING."""
+    if raw.startswith(("/", "~")):
+        cands = [(None, Path(os.path.expanduser(raw)))]
+    else:
+        cands = [(r, d / raw) for r in roots for d in (r, memory_dir(r))]
+    for root, f in cands:
+        if not f.exists():
+            continue
+        n = size(f)
+        if f.is_dir():
+            desc = f"dir, {sum(1 for x in f.rglob('*') if x.is_file()):,} files, {n:,} bytes, ~{tok(n):,} tok"
+        else:
+            try:
+                with f.open("rb") as fh:
+                    lines = sum(chunk.count(b"\n") for chunk in iter(lambda: fh.read(1 << 20), b""))
+            except OSError:
+                lines = 0
+            desc = f"{lines:,} lines, {n:,} bytes, ~{tok(n):,} tok"
+        where = "" if root is None or f.parent == root or root in f.parents else " (auto-memory)"
+        commit = last_commit(root, f) if root is not None and not where else ""
+        return f"- {raw}{where}: {desc}" + (f"; last commit {commit}" if commit else ""), True
+    return f"- {raw}: MISSING", False
+
+
+def print_sizes(paths: list[str], roots: list[Path]) -> None:
+    rows = [size_row(raw, roots) for raw in sorted(set(paths))]
+    found = sum(ok for _, ok in rows)
+    print("# Sizes (tok = bytes / 4; relative to " + ", ".join(str(r) for r in roots) + ")")
+    for line, _ in rows:
+        print(line)
+    print(f"- {len(rows)} paths: {found} found, {len(rows) - found} missing")
+
+
 def ancestors_claude_md(root: Path) -> list[Path]:
     out = []
     for d in [root, *root.parents]:
@@ -179,7 +231,13 @@ def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("paths", nargs="+")
     ap.add_argument("--json", action="store_true")
+    ap.add_argument("--size", nargs="+", metavar="PATH",
+                    help="print only the size of these files or directories (the ones a finding cites)")
     a = ap.parse_args()
+
+    if a.size:
+        print_sizes(a.size, [git_root(Path(os.path.expanduser(raw)).resolve()) for raw in a.paths])
+        return
 
     result = {"global": [], "targets": []}
     for p, harness, load in GLOBAL_FILES:
@@ -226,12 +284,11 @@ def main():
                     t["stores"].append({"path": str(f.relative_to(root)), "kind": kind, "tokens": tok(size(f)),
                                         "bytes": size(f), "is_file": f.is_file(),
                                         "tracked": not subprocess.run(["git", "-C", str(root), "check-ignore", "-q", str(f)]).returncode == 0})
-        slug = re.sub(r"[^A-Za-z0-9]", "-", str(root))
-        mem = HOME / ".claude/projects" / slug / "memory"
+        mem = memory_dir(root)
         if mem.is_dir():
             t["memory"] = memory_dir_report(mem, root)
             t["always_tokens"] += t["memory"]["index_tokens"]
-        transcripts = HOME / ".claude/projects" / slug
+        transcripts = mem.parent
         t["transcript_sessions"] = len(list(transcripts.glob("*.jsonl"))) if transcripts.is_dir() else 0
         result["targets"].append(t)
     g_always = sum(e["tokens"] or 0 for e in result["global"] if e["load"] == "always" and "claude" in e["harness"])

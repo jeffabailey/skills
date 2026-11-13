@@ -10,11 +10,18 @@ Usage:
   mine_transcripts.py <project-path> [<project-path> ...] [--sessions 30]
                       [--days N] [--projects-dir DIR] [--top 12] [--json]
                       [--no-snippets]
+  mine_transcripts.py --window SESSIONS:DAYS --estimate LABEL:COUNT:TOKENS[:cached] ...
+
+--estimate mines nothing. It prints the savings arithmetic for each item:
+COUNT occurrences in the window / SESSIONS x sessions per month x TOKENS each
+(x 0.1 when "cached", for always-loaded text that rides in as cache reads).
+Copy SESSIONS:DAYS from the summary's "sessions per month" line.
 """
 from __future__ import annotations
 
 import argparse
 import collections
+import datetime
 import json
 import os
 import re
@@ -95,6 +102,58 @@ def norm_path(p: str, root: str) -> str:
 
 
 ROOTS: list[str] = []
+CACHE_WEIGHT = 0.1  # a cache read costs about a tenth of uncached input
+
+
+def file_tok(p: str) -> str:
+    """Token estimate (bytes / 4) of a path as norm_path printed it, or 'missing'."""
+    cands = [p] if os.path.isabs(p) else [os.path.join(ROOTS[0], p)] if len(ROOTS) == 1 else [
+        os.path.join(os.path.dirname(r), p) for r in ROOTS if p.split(os.sep, 1)[0] == os.path.basename(r)]
+    for c in cands:
+        if os.path.isfile(c):
+            return f"~{round(os.path.getsize(c) / 4):,} tok"
+    return "missing"
+
+
+def window_days(first: str | None, last: str | None) -> float:
+    try:
+        a, b = (datetime.datetime.fromisoformat(t.replace("Z", "+00:00")) for t in (first, last))
+    except (AttributeError, ValueError):
+        return 0.0
+    return (b - a).total_seconds() / 86400
+
+
+def per_month(sessions: int, days: float) -> float:
+    """Sessions per 30 days; a window under one day counts as one day."""
+    return sessions / max(days, 1.0) * 30
+
+
+def estimate(window: str | None, specs: list[str]) -> None:
+    try:
+        sessions, days = (float(x) for x in (window or "").split(":"))
+        if sessions <= 0 or days < 0:
+            raise ValueError
+    except ValueError:
+        sys.exit("error: --estimate needs --window SESSIONS:DAYS with sessions > 0, e.g. --window 30:21.5")
+    rate = per_month(sessions, days)
+    rows = []
+    for spec in specs:
+        parts = spec.rsplit(":", 3) if spec.endswith(":cached") else spec.rsplit(":", 2) + [""]
+        try:
+            label, count, toks = parts[0], float(parts[1]), float(parts[2])
+            if len(parts) != 4 or not label or count < 0 or toks < 0:
+                raise ValueError
+        except (IndexError, ValueError):
+            sys.exit(f"error: bad --estimate '{spec}'; want LABEL:COUNT:TOKENS or LABEL:COUNT:TOKENS:cached")
+        weight = CACHE_WEIGHT if parts[3] else 1.0
+        total = count / sessions * rate * toks * weight
+        rows.append((total, f"- {label}: {count:g} ÷ {sessions:g} sessions × {rate:.1f} sessions/month × {toks:,.0f} tok"
+                     + (f" × {CACHE_WEIGHT} cache weight" if parts[3] else "") + f" ≈ {total:,.0f} tok/month (estimate)"))
+    print(f"# Savings estimates ({sessions:g} sessions over {days:g} days = {rate:.1f} sessions/month)")
+    for _, line in sorted(rows, key=lambda r: (-r[0], r[1])):
+        print(line)
+    if sessions < 5 or days < 1:
+        print("- thin window: give these low confidence")
 
 
 class Stats:
@@ -129,6 +188,7 @@ class Stats:
         self.hook_chars = collections.Counter()  # hook name -> chars injected
         self.corrections = []
         self.user_turns = 0
+        self.requests = 0  # main-thread API requests: always-loaded text rides in each one
         self.first_ts = None
         self.last_ts = None
 
@@ -190,6 +250,8 @@ def mine_file(path: Path, st: Stats, session_id: str, is_sub: bool, snippets: bo
                         tot += v
                         if not is_sub:
                             st.tokens[name] += v
+                    if not is_sub:
+                        st.requests += 1
                     if is_sub:
                         st.subagent_tokens += tot
                 for b in msg.get("content") or []:
@@ -269,14 +331,21 @@ def mine_file(path: Path, st: Stats, session_id: str, is_sub: bool, snippets: bo
 
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("projects", nargs="+", help="project or repo paths (a workspace = several paths)")
+    ap.add_argument("projects", nargs="*", help="project or repo paths (a workspace = several paths)")
     ap.add_argument("--sessions", type=int, default=30, help="most recent N sessions per project (default 30)")
     ap.add_argument("--days", type=int, default=0, help="only sessions modified in the last N days")
     ap.add_argument("--projects-dir", default="~/.claude/projects")
     ap.add_argument("--top", type=int, default=12)
     ap.add_argument("--json", action="store_true")
     ap.add_argument("--no-snippets", action="store_true", help="omit user correction text")
+    ap.add_argument("--estimate", nargs="+", metavar="LABEL:COUNT:TOKENS[:cached]",
+                    help="print savings arithmetic only; needs --window")
+    ap.add_argument("--window", metavar="SESSIONS:DAYS", help="window for --estimate, from the summary")
     a = ap.parse_args()
+    if a.estimate:
+        return estimate(a.window, a.estimate)
+    if not a.projects:
+        sys.exit("error: give at least one project path, or --estimate with --window")
 
     pdir = Path(os.path.expanduser(a.projects_dir))
     st = Stats()
@@ -308,10 +377,14 @@ def main():
     if not st.sessions:
         print("\nNo transcripts found. Check the path; the slug is", ", ".join(slug_for(p) for p in a.projects))
         return
+    days = window_days(st.first_ts, st.last_ts)
     print(f"- Window: {st.first_ts} .. {st.last_ts}; user turns: {st.user_turns}")
+    print(f"- sessions per month: ~{per_month(st.sessions, days):.1f} (--window {st.sessions}:{days:.1f})")
     print(f"\n## Tokens (main threads)\n- input total {tot_in:,} (cache read {st.tokens['cache_read']:,}, "
           f"cache write {st.tokens['cache_create']:,}, uncached {st.tokens['input']:,}); output {st.tokens['output']:,}")
-    print(f"- per session: ~{tot_in // st.sessions:,} input, ~{st.tokens['output'] // st.sessions:,} output")
+    print(f"- per session: ~{tot_in // st.sessions:,} input, ~{st.tokens['output'] // st.sessions:,} output, "
+          f"~{st.user_turns / st.sessions:.1f} user turns, ~{st.requests / st.sessions:.1f} requests "
+          f"({st.requests:,} requests in the window)")
     print(f"- subagents: {st.agent_calls} Agent calls, {st.subagent_files} subagent transcripts, "
           f"{st.subagent_tokens:,} tokens; types: {dict(st.agent_types.most_common(6))}")
     print(f"- compactions: {st.compactions}")
@@ -325,16 +398,20 @@ def main():
 
     print("\n## Tool result volume (chars ≈ 4 per token)")
     for k, v in st.result_chars.most_common(T):
-        print(f"- {k}: {v:,} chars in {st.tools[k]} calls (avg {v // max(st.tools[k], 1):,})")
+        avg = v // max(st.tools[k], 1)
+        print(f"- {k}: {v:,} chars in {st.tools[k]} calls (avg {avg:,} ≈ {avg // 4:,} tok)")
     section("Tool calls", st.tools)
     section("Files read in the most sessions",
             collections.Counter({k: len(v) * 10_000 + st.reads[k] for k, v in st.read_sessions.items()}),
-            lambda k, v: f"- {v // 10_000} sessions / {st.reads[k]} reads: {k}")
+            lambda k, v: f"- {v // 10_000} sessions / {st.reads[k]} reads: {k} ({file_tok(k)})")
     print(f"- outside-repo temp/scratch reads: {st.temp_reads} ({st.overflow_reads} of them re-read harness "
           f"tool-results overflow files, i.e. a command printed more than the harness would inline)")
-    section("Same-session re-reads", st.same_session_rereads, lambda k, v: f"- +{v} extra reads: {k}")
-    section(f"Reads returning > {BIG_RESULT_CHARS:,} chars", st.big_reads)
-    section("Most-edited files", st.edits)
+    section("Same-session re-reads", st.same_session_rereads, lambda k, v: f"- +{v} extra reads: {k} ({file_tok(k)})")
+    def with_size(k, v):
+        return f"- {v} × {k} ({file_tok(k)})"
+
+    section(f"Reads returning > {BIG_RESULT_CHARS:,} chars", st.big_reads, with_size)
+    section("Most-edited files", st.edits, with_size)
     print(f"\n## Search churn\n- {st.searches} searches; {st.search_then_read} reads directly after a search")
     section("Bash command heads used in the most sessions",
             collections.Counter({k: len(v) for k, v in st.bash_head_sessions.items()}),
@@ -349,7 +426,7 @@ def main():
     section("Permission denials", st.denials)
     section("Skills invoked", st.skills)
     section("MCP servers used", st.mcp)
-    section("Hook-injected context (chars, all sessions)", st.hook_chars, lambda k, v: f"- {v:,} chars: {k}")
+    section("Hook-injected context (chars, all sessions)", st.hook_chars, lambda k, v: f"- {v:,} chars ≈ {v // 4:,} tok: {k}")
     if st.corrections:
         print(f"\n## User corrections ({len(st.corrections)} of {st.user_turns} user turns)")
         for c in st.corrections[: T * 2]:

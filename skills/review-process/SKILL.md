@@ -2,7 +2,7 @@
 name: review-process
 description: Evaluates a repository's development process maturity across documentation, workflow, code review, dependency management, project organization, portability, and leadership signals, using repo files and git history. Use when the user says /review:process or /review:review-process, requests a process review, asks for development process fitness scores, wants to assess repo health or contributor readiness, or asks how well a project follows software development best practices. Only reports findings with confidence >= 7/10.
 metadata:
-  version: "1.0.0"
+  version: "1.1.0"
 ---
 
 # Development Process Fitness Review
@@ -20,7 +20,7 @@ Reference: [Fundamentals of Software Development](https://jeffbailey.us/blog/202
 
 ## Configuration
 
-Invoke the resolver CLI to obtain effective weights and thresholds for the review target. Never load `fitness-config.json` directly.
+Use the prompt's `## Resolved Config` block; with none, invoke the resolver CLI. Never load `fitness-config.json` directly.
 
 ```bash
 python3 "${CLAUDE_SKILL_DIR}/../../scripts/fitness-config.py" show --path <target>
@@ -28,28 +28,28 @@ python3 "${CLAUDE_SKILL_DIR}/../../scripts/fitness-config.py" show --path <targe
 
 `${CLAUDE_SKILL_DIR}` is this skill's directory; the resolver ships two levels up in the plugin's `scripts/`. If your agent does not expand the variable, substitute the directory containing this `SKILL.md`.
 
-Where `<target>` is the file or directory under review. The CLI walks up to discover any module override and merges it with the root config. Copy the `Config:` and `Effective weights:` lines from the resolver output into the report header (the template has the slots) as the provenance trail (AC-03.1, AC-08.2). The `effective` object inside the JSON block delimited by `<!-- BEGIN_EFFECTIVE_CONFIG_JSON -->` / `<!-- END_EFFECTIVE_CONFIG_JSON -->` carries `statusThresholds`, which override the default status bands in rubric.md. If the resolver is not at that path (for example a standalone install), use `scripts/fitness-config.py` from a checkout of the plugin; if none is available, write `Config: resolver unavailable (defaults)` and use the rubric.md bands.
+`<target>` is the file or directory under review; module overrides above it merge with the root config. Copy the `Config:` and `Effective weights:` lines into the report header as provenance (AC-03.1, AC-08.2). The JSON block between `<!-- BEGIN_EFFECTIVE_CONFIG_JSON -->` and `<!-- END_EFFECTIVE_CONFIG_JSON -->` carries `statusThresholds`, which override the default status bands in rubric.md. If the resolver is not at that path (a standalone install), use `scripts/fitness-config.py` from a checkout of the plugin; with none, write `Config: resolver unavailable (defaults)` and use the rubric.md bands.
 
 ## Workflow
 
-1. **Load the rubric** — Read `references/rubric.md` and `references/checklist.md`. Run the resolver above.
+1. **Load the rubric** — Read `references/rubric.md` and `references/checklist.md`. Resolve the config.
 
-2. **Scope** — Identify the repository root containing the target and whether the user asked a specific question (for example "is this ready for contributors?"). That question shapes the Direct Answer and which findings lead.
+2. **Scope** — CI and test files are in the prompt's `## Scope Inventory`; with none, run `python3 "${CLAUDE_SKILL_DIR}/../../scripts/review-context.py" <target> --inventory`. Identify the repository root containing the target and whether the user asked a specific question (for example "is this ready for contributors?"). That question shapes the Direct Answer and which findings lead.
 
 3. **Decide applicability** — For each of the seven dimensions, decide whether anything in scope can be judged. Mark the rest `N/A — <reason>` per rubric.md; a missing artifact that should exist is a low score, not N/A.
 
-4. **Gather git evidence** — Run `bash "${CLAUDE_SKILL_DIR}/scripts/git-evidence.sh" <repo-root>`. It is read-only and prints: commit counts and authors; conventional-commit rate and vague subjects over the last 100 non-merge commits; how changes reach the default branch (PR merge commits, `(#N)` squash subjects, direct commits on `--first-parent`); stale branches; root vs nested workflows; LICENSE/CONTRIBUTING/CODEOWNERS presence; lockfiles; README/CONTRIBUTING references sorted into `readme_paths_missing` (path-like refs, bare doc/config names like `RUN.md`, `uv run X.py` scripts, and `cd` targets that resolve nowhere; the strongest stale-doc evidence, with the deleting commit when one exists; script arguments are resolved from the last `cd` in the same code block), `readme_paths_elsewhere` (a tracked file ends with that path, or a script is not in the directory its `cd` implies: decide whether the doc means a subdirectory before citing), `readme_paths_ignored` (gitignored outputs, never a defect), and `readme_tokens_skipped` (model IDs, packages, domains, versions; not paths); and developer-specific absolute paths. If the script cannot run, use the equivalent commands directly:
-   - `git log --no-merges -n 100 --format=%s main | grep -cE '^(feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert)(\(.+\))?!?: '` for the convention rate
-   - `git log --first-parent --merges --oneline main | wc -l` and `git log --first-parent --no-merges --format=%s main | grep -cE '\(#[0-9]+\)$'` for PR-merged changes; the remaining first-parent commits are direct pushes
-   - `git ls-files | grep '/\.github/workflows/'` for nested workflows that never run
+4. **Gather git evidence** — Run `bash "${CLAUDE_SKILL_DIR}/scripts/git-evidence.sh" <repo-root>` once. It is read-only and prints the history, release, and layout facts the rubric scores from: commit counts and authors; conventional-commit rate and vague subjects over the last 100 non-merge commits; how changes reach the default branch on `--first-parent` (`via_pr_pct`, bot PRs, direct commits); stale branches; tags, tag style, and the newest CHANGELOG heading; top-level entries with type; each manifest with its lockfile (`NO LOCKFILE` first); root vs nested workflows; LICENSE/CONTRIBUTING/CODEOWNERS presence; developer-specific absolute paths; and README/CONTRIBUTING references in four lists:
+   - `readme_paths_missing`: paths, bare names like `RUN.md`, `uv run X.py` scripts, and `cd` targets that resolve nowhere. The strongest stale-doc evidence, with the deleting commit when one exists.
+   - `readme_paths_elsewhere`: a tracked file ends with that path, or a script is not where its `cd` implies. Decide whether the doc means a subdirectory before citing.
+   - `readme_paths_ignored` and `readme_tokens_skipped`: gitignored outputs and non-paths, never defects.
 
-   A shallow clone or a non-git directory makes history items N/A; say so instead of guessing.
+   Use these facts as printed; do not rerun `git log`, `git tag`, `ls`, or `git ls-files` for them. `git-evidence.sh <repo-root> --verify <sha>...` resolves every commit the report cites in one call. A shallow clone or a non-git directory makes history items N/A (the script says which); say so instead of guessing. If the script cannot run, gather the same facts with plain git commands and say so in the report.
 
 5. **Scan the repository** — Walk `references/checklist.md` section by section with Glob, Grep, and Read: README and contributor docs, CI files, manifests and lockfiles per module, layout and config, setup scripts, ADRs and changelogs. Verify each pitfall the script flagged by opening the file before citing it.
 
 6. **Score and find** — Score each applicable dimension against its rubric.md anchors. Record findings with severity from rubric.md and a location in one of the accepted forms.
 
-7. **Self-check, then write** — Before writing the report, confirm: every `path:line` exists and says what the finding claims; every `commit <sha>` resolves; every finding has confidence >= 7; measured rates match the script output; the overall equals the stated computation; no secret values are reproduced (refer to them by file:line only). Then write the report.
+7. **Write, then check** — Write the report, run `python3 "${CLAUDE_SKILL_DIR}/../../scripts/check-report.py" <report>` and step 4's `--verify` call on every cited sha. Fix each `FAIL` and `UNRESOLVED` line. Then confirm: each citation row says what the finding claims; measured rates match the script output; no secret values are reproduced (cite them by file:line only).
 
 ## Confidence and Severity
 

@@ -186,3 +186,15 @@ def test_compare_measures_runs_that_started_after_the_baseline(tmp_path):
     diff = json.loads(run(tmp_path, "compare", str(base), "--json").stdout)["skills"]["digest"]
     assert diff["runs"] == [1, 1] and diff["use_measured"] is True
     assert diff["per_run"]["api_calls"] == [2, 2]
+
+
+def test_a_subagent_that_edits_the_skill_it_read_is_not_a_run(tmp_path):
+    make_skills(tmp_path)
+    sub = tmp_path / "projects" / "-tmp-proj" / "s2" / "subagents"
+    read = tool_use("r1", "Read", file_path="/repo/skills/digest/SKILL.md")
+    write_jsonl(tmp_path / "projects" / "-tmp-proj" / "s2.jsonl", [prompt("go", OLD)])
+    write_jsonl(sub / "agent-use.jsonl", [assistant("a1", OLD, read), assistant("a2", OLD)])
+    edit = tool_use("e1", "Edit", file_path="/repo/skills/digest/SKILL.md")
+    write_jsonl(sub / "agent-dev.jsonl", [assistant("b1", OLD, read), assistant("b2", OLD, edit)])
+    usage = snapshot(tmp_path, "--days", "36500")["skills"]["digest"]["usage"]
+    assert usage["runs"] == 1 and usage["kinds"] == {"read-in-subagent": 1}

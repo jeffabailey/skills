@@ -74,15 +74,16 @@ Each row pairs something the evidence shows with the structural change that remo
 
 ## 7. Estimating savings
 
-Rank by **estimated tokens saved per month**. Show the arithmetic so the user can check it:
+Rank by **estimated tokens saved per month**. The miner does the arithmetic (occurrences per session × sessions per month × tokens per occurrence) and prints it so the user can check it:
 
-```text
-savings ≈ occurrences per session × sessions per month × tokens per occurrence
+```bash
+mine_transcripts.py --window <S:D> --estimate '<label>:<count>:<tokens>[:cached]' ...
 ```
 
-- Sessions per month: from the miner's window and session count.
-- Tokens per occurrence: chars ÷ 4 for tool results; the file's token estimate for re-reads; the item's size for always-loaded context (× turns per session, since it rides in every request, though mostly as cache reads).
-- **Cache reads cost about a tenth of uncached input.** Always-loaded text is mostly cache reads, so weight it lower per token than fresh tool output. It still fills the context window and brings compaction closer.
+- `--window`: copy it from the miner summary's "sessions per month" line.
+- `count`: occurrences the fix removes in the whole window, as the miner printed them (failed runs, extra reads, calls).
+- `tokens`: per occurrence. Tool results: the "avg ≈ tok" figure. Re-reads and big reads: the file's token size beside its path, or from `collect_sources.py --size`.
+- Always-loaded context: `count` is the miner's "requests in the window", `tokens` is the size of the text to remove, and `:cached` weights it at a tenth, because it rides in every request as cache reads. It still fills the context window and brings compaction closer.
 - Churn that isn't tokens (a user correction, a failed attempt, a permission prompt) costs human attention. Count it separately as "interruptions per month" rather than inventing a token figure.
 
 Label every estimate as an estimate. When the evidence is thin (one session, one occurrence), give the item low confidence instead of a big number.

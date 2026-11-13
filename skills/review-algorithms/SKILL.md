@@ -2,7 +2,7 @@
 name: review-algorithms
 description: Analyzes code for algorithm/data structure correctness, concurrency safety, and edge case handling, producing fitness scores (1-10) across algorithm choice, data structure selection, complexity awareness, concurrency safety, edge case handling, and correctness patterns. Use when the user says /review:review-algorithms, requests an algorithm review, asks about correctness of data structure choices, wants a concurrency safety check, asks about edge case coverage, or wants to verify algorithmic complexity. This is NOT a performance review -- it asks "is this correct and appropriate?" not "is this fast enough?" Only reports findings with confidence >= 7/10.
 metadata:
-  version: "1.0.0"
+  version: "1.1.0"
 ---
 
 # Algorithm & Data Structure Fitness Review
@@ -19,7 +19,7 @@ Reference: [Fundamentals of Algorithms](https://jeffbailey.us/blog/2025/12/04/fu
 
 ## Configuration
 
-Invoke the resolver CLI to obtain effective weights and thresholds for the review target. Never load `fitness-config.json` directly.
+Use the prompt's `## Resolved Config` block; with none, invoke the resolver CLI. Never load `fitness-config.json` directly.
 
 ```bash
 python3 "${CLAUDE_SKILL_DIR}/../../scripts/fitness-config.py" show --path <target>
@@ -27,13 +27,13 @@ python3 "${CLAUDE_SKILL_DIR}/../../scripts/fitness-config.py" show --path <targe
 
 `${CLAUDE_SKILL_DIR}` is this skill's directory; the resolver ships two levels up in the plugin's `scripts/`. If your agent does not expand the variable, substitute the directory containing this `SKILL.md`.
 
-Where `<target>` is the file or directory under review. The CLI walks up to discover any module override and merges it with the root config. Include the `Config:` and `Effective weights:` lines from the resolver output within the first 10 lines of the final report as the provenance trail (AC-03.1, AC-08.2). The `effective` object inside the JSON block delimited by `<!-- BEGIN_EFFECTIVE_CONFIG_JSON -->` / `<!-- END_EFFECTIVE_CONFIG_JSON -->` carries weights, status thresholds, security, and scoring for any programmatic needs.
+`<target>` is the file or directory under review; module overrides above it merge with the root config. Include the `Config:` and `Effective weights:` lines within the first 10 lines of the report as provenance (AC-03.1, AC-08.2). The JSON block between `<!-- BEGIN_EFFECTIVE_CONFIG_JSON -->` and `<!-- END_EFFECTIVE_CONFIG_JSON -->` carries weights, status thresholds, security, and scoring.
 
 ## Workflow
 
 1. **Read the rubric and checklist** -- `references/rubric.md`, then skim `references/checklist.md`.
 
-2. **Scope the review** -- The target is what the user named (files, directory, or question), else the repository. If the user asked specific questions ("is it deterministic?", "any races?"), note them; the report answers them first.
+2. **Scope the review** -- The target is what the user named (files, directory, or question), else the repository. Its files are in the prompt's `## Scope Inventory`; with none, run `python3 "${CLAUDE_SKILL_DIR}/../../scripts/review-context.py" <target> --inventory`. If the user asked specific questions ("is it deterministic?", "any races?"), note them; the report answers them first.
 
 3. **Decide which dimensions apply** -- For each of the six dimensions, decide whether anything in scope can be evaluated. Mark the rest `N/A -- <reason>` with evidence for the absence (rubric.md, "N/A"). Concurrency Safety is N/A for single-threaded code; do not fill it with hypothetical races between overlapping runs.
 
@@ -55,12 +55,11 @@ Where `<target>` is the file or directory under review. The CLI walks up to disc
 
 8. **Score** each applicable dimension with file:line evidence, using the anchors in `references/rubric.md`. Compute the overall per rubric.md.
 
-9. **Self-check, then write the report** (see Output Format). Before writing, check that:
-   - every cited file:line exists and says what the finding claims;
-   - every finding has confidence >= 7, and every HIGH/CRITICAL has a Reproduction;
+9. **Write the report, then check it** (see Output Format). Run `python3 "${CLAUDE_SKILL_DIR}/../../scripts/check-report.py" <report>` and fix each `FAIL` (path, line, confidence, overall) until it exits 0. Then check:
+   - each citation row says what the finding claims;
+   - every HIGH/CRITICAL has a Reproduction;
    - no finding depends on an unsupported setup (rubric.md, "Not a finding"), and no reproduced or code-evident defect was left out just because it is LOW;
-   - the overall equals the stated computation over the named dimensions;
-   - no secret values are reproduced (refer to secrets by file:line only).
+   - no secret values are reproduced (cite them by file:line only).
 
 ## Confidence and Severity
 

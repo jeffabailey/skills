@@ -2,7 +2,7 @@
 name: review-maintainability
 description: Analyzes code for maintainability, understandability, and simplicity fitness, producing scores (1-10) across structural complexity, comprehensibility, technical debt indicators, coupling/dependency depth, and code smell density. Use when the user says /review:review-maintainability, requests a maintainability review, asks about code complexity or understandability, wants cyclomatic/cognitive complexity analysis, or needs simplicity/maintainability fitness scores. Triggers on "maintainability review", "understandability", "code complexity", "cognitive complexity", "cyclomatic complexity", "simplicity", "code smells". Only reports findings with confidence >= 7/10.
 metadata:
-  version: "1.0.1"
+  version: "1.1.0"
 ---
 
 # Maintainability & Understandability Fitness Review
@@ -20,7 +20,7 @@ Reference: [Fundamentals of Maintainability](https://jeffbailey.us/blog/2026/02/
 
 ## Configuration
 
-Invoke the resolver CLI to obtain effective weights and thresholds for the review target. Never load `fitness-config.json` directly.
+Use the prompt's `## Resolved Config` block; with none, invoke the resolver CLI. Never load `fitness-config.json` directly.
 
 ```bash
 python3 "${CLAUDE_SKILL_DIR}/../../scripts/fitness-config.py" show --path <target>
@@ -28,13 +28,13 @@ python3 "${CLAUDE_SKILL_DIR}/../../scripts/fitness-config.py" show --path <targe
 
 `${CLAUDE_SKILL_DIR}` is this skill's directory; the resolver ships two levels up in the plugin's `scripts/`. If your agent does not expand the variable, substitute the directory containing this `SKILL.md`.
 
-Where `<target>` is the file or directory under review. The CLI walks up to discover any module override and merges it with the root config. Include the `Config:` and `Effective weights:` lines from the resolver output within the first 10 lines of the final report as the provenance trail (AC-03.1, AC-08.2). The `effective` object inside the JSON block delimited by `<!-- BEGIN_EFFECTIVE_CONFIG_JSON -->` / `<!-- END_EFFECTIVE_CONFIG_JSON -->` carries weights, status thresholds, security, and scoring for any programmatic needs.
+`<target>` is the file or directory under review; module overrides above it merge with the root config. Include the `Config:` and `Effective weights:` lines within the first 10 lines of the report as provenance (AC-03.1, AC-08.2). The JSON block between `<!-- BEGIN_EFFECTIVE_CONFIG_JSON -->` and `<!-- END_EFFECTIVE_CONFIG_JSON -->` carries weights, status thresholds, security, and scoring.
 
 ## Workflow
 
 1. **Read the rubric** — Read `references/rubric.md`, then skim `references/checklist.md`.
 
-2. **Identify scope** — List source files and the primary language(s). Exclude generated code (`*.min.js`, `*_pb2.py`, build output) and vendored dependencies (`vendor/`, `third_party/`, copied-in libraries), and name what you excluded in the report's Target line.
+2. **Identify scope** — Take the source files and primary language(s) from the prompt's `## Scope Inventory`; with none, run `python3 "${CLAUDE_SKILL_DIR}/../../scripts/review-context.py" <target> --inventory`. Exclude generated code (`*.min.js`, `*_pb2.py`, build output) and vendored dependencies (`vendor/`, `third_party/`, copied-in libraries), and name what you excluded in the report's Target line.
    - **Vendored code: decide by ownership, not size.** The question is whether the team maintains this copy. Review it as owned code when it has local edits or local commits (`git log -- <path>`), or when it is what actually runs (the project imports the copy, not an installed package). Say so in the Target line ("includes vendored fork of X"). Exclude it when it is an unmodified copy of a published version (compare against the version named in the manifest or lockfile when you can fetch it read-only) or when nothing in scope loads it; then name it under excluded, and report the dead copy itself under Technical Debt. If you cannot tell, treat it as owned and say why.
    - To measure without an excluded copy that is not under `vendor/` or `third_party/`, pass `--exclude <glob>` to the metrics helper (step 4).
 
@@ -50,18 +50,17 @@ Where `<target>` is the file or directory under review. The CLI walks up to disc
 
 6. **Evaluate understandability** — Naming, control-flow readability, "why" comments on non-obvious logic, consistency between modules.
 
-7. **Count technical debt indicators** — Use the markers and suppressions from step 4; check whether each TODO has an issue reference. Look for duplicated blocks (`diff` near-identical files; grep for a distinctive line from a suspected copy), magic values, and hardcoded configuration.
+7. **Count technical debt indicators** — Use step 4's untracked markers (no issue reference) and suppressions as printed. Read for duplicated blocks, magic values, and hardcoded configuration.
 
-8. **Assess coupling and dependency depth** — Trace imports: fan-in per module, cycles, skip-layer imports, inheritance depth.
+8. **Assess coupling and dependency depth** — Run `python3 "${CLAUDE_SKILL_DIR}/../review-architecture/scripts/import_graph.py" <target>` for fan-in and cycles; if that sibling skill is not installed, trace imports by reading. Judge skip-layer imports and inheritance depth.
 
-9. **Tally code smells** — God classes (or closure factories / stateful modules in class-less code), long methods, feature envy, shotgun surgery, dead or commented-out code. Normalize per 1,000 non-blank LOC as the rubric asks.
+9. **Tally code smells** — Start from step 4's `Measured smells` and per-1,000 lines. Add what only reading shows: god closures, feature envy, shotgun surgery, dead code.
 
 10. **Score** each applicable dimension against the rubric anchors, with file:line evidence.
 
-11. **Self-check, then write the report** (see Output Format). Before writing, confirm:
-    - every cited file:line exists and shows what the finding claims;
-    - every finding has confidence >= 7 and all eight template fields (Severity through Remediation);
-    - the overall score equals the stated computation (mean of scored dimensions, CRITICAL cap applied);
+11. **Write the report, then check it** (see Output Format). Run `python3 "${CLAUDE_SKILL_DIR}/../../scripts/check-report.py" <report>` and fix each `FAIL` (path, line, confidence, overall) until it exits 0. Then confirm:
+    - each citation row it prints shows what the finding claims;
+    - every finding has all eight template fields (Severity through Remediation);
     - Metrics Summary values match the metrics output;
     - no secret value appears anywhere in the report (see Secrets below).
 

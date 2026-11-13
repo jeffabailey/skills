@@ -294,10 +294,6 @@ class Workspace:
     def key(self, path: Path) -> str:
         return path.resolve().relative_to(self.root.resolve()).as_posix()
 
-    def run_in(self, target: str, *args: str, stdin_text: str | None = None) -> ResolverRun:
-        anchor, _ = self.split_target(target)
-        return run_resolver(anchor, *args, stdin_text=stdin_text)
-
 
 def to_stdin(config: dict | str | bytes) -> str | bytes:
     return config if isinstance(config, (str, bytes)) else json.dumps(config)

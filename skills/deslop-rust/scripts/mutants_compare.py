@@ -61,7 +61,7 @@ def main() -> int:
         if key not in after:
             only_base.extend(f"{lbl} [{s}]" for s, lbl in outs)
             continue
-        for (b_sum, b_lbl), (a_sum, a_lbl) in zip(outs, after[key]):
+        for (b_sum, _), (a_sum, a_lbl) in zip(outs, after[key]):
             if b_sum in CAUGHT and a_sum not in CAUGHT and a_sum != "Unviable":
                 lost.append({"mutant": a_lbl, "before": b_sum, "after": a_sum})
             elif b_sum not in CAUGHT and a_sum in CAUGHT:

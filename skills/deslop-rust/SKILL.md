@@ -4,7 +4,7 @@ description: "Audits a Rust crate or workspace for junk tests and dead code usin
 user-invocable: true
 argument-hint: "[path] [--package NAME] [--files GLOB] - crate or workspace to audit; defaults to the current Cargo project"
 metadata:
-  version: "1.1.0"
+  version: "1.1.1"
 ---
 
 # deslop-rust

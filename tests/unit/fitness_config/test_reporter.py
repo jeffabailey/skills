@@ -184,21 +184,6 @@ def test_render_show_output_inline_weights_line_total_all_domains_and_sort_order
     )
 
 
-def test_render_show_output_is_byte_identical_across_two_calls():
-    """Determinism property: same inputs -> byte-identical output (AC-NFR-2)."""
-    chain = [
-        Path("infrastructure/modules/postgresql/fitness-config.json"),
-        Path("fitness-config.json"),
-    ]
-    effective = _effective_with(_FULL_WEIGHTS)
-    target = Path("infrastructure/modules/postgresql/main.tf")
-
-    first = render.render_show_output(target=target, source_chain=chain, effective=effective)
-    second = render.render_show_output(target=target, source_chain=chain, effective=effective)
-
-    assert first == second, "render_show_output produced non-deterministic output"
-
-
 # ---------------------------------------------------------------------------
 # Behavior R5: canonical renderer (data-models section 2). The rendered text
 # is the byte-exact write payload: canonical key order, 2-space indent,

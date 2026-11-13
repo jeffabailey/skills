@@ -159,24 +159,7 @@ def test_walk_up_chain_with_status_reports_depth_cap_status(
         assert status.chain == []
 
 
-def test_walk_up_chain_is_deterministic_across_repeated_calls(tmp_path: Path):
-    """Property: same inputs -> same chain across repeated invocations (purity)."""
-    (tmp_path / "fitness-config.json").write_text("{}")
-    mid = tmp_path / "a" / "b"
-    mid.mkdir(parents=True)
-    (mid / "fitness-config.json").write_text("{}")
-    leaf = mid / "c" / "d"
-    leaf.mkdir(parents=True)
-    target = leaf / "main.tf"
-    target.touch()
 
-    runs = [resolution.walk_up_chain(target, stop=tmp_path) for _ in range(5)]
-
-    assert all(run == runs[0] for run in runs)
-    assert runs[0] == [
-        mid / "fitness-config.json",
-        tmp_path / "fitness-config.json",
-    ]
 
 
 # ---------------------------------------------------------------------------

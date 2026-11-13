@@ -33,10 +33,6 @@ def unchanged() -> Predicate:
     return Predicate("unchanged", lambda before, after: before == after)
 
 
-def absent() -> Predicate:
-    return Predicate("absent after", lambda before, after: after is None)
-
-
 def anything() -> Predicate:
     return Predicate("anything (asserted elsewhere)", lambda before, after: True)
 

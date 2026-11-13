@@ -25,6 +25,7 @@ This repository and the article [Fundamental Skills](https://jeffbailey.us/blog/
 | `deslop-python` | Audits a pytest suite for duplicate, weak, shadowed, slow, and implementation-detail tests, and for dead code and unused dependencies, with evidence from pytest timings, per-test pytest-cov contexts, a per-test mutmut kill matrix, and ruff, ty, vulture, radon, deptry, jscpd, and import-linter. Installs missing tools, reports first, applies only approved items, and verifies no mutation kills were lost. | "deslop my Python tests", "which pytest tests are redundant", "find dead Python code", `/deslop-python` |
 | `deslop-rust` | Audits a Rust test suite for duplicate, weak, slow, and implementation-detail tests and for dead code, with evidence from cargo-nextest timings, per-test cargo-llvm-cov overlap, and a per-test cargo-mutants kill matrix. Installs missing tools, reports first, applies only approved items, and verifies no mutation kills were lost. | "deslop my Rust tests", "which Rust tests are redundant", "speed up cargo test", `/deslop-rust` |
 | `version-skills` | Raises `metadata.version` in changed skills and the plugin version in both manifests together, with a bundled script, then proves nothing changed without a rise. | "bump skill versions", "version this skill", "check skill versions", `/version-skills` |
+| `the-deterministic-maker` | Makes skills cheaper and more repeatable. Measures what each skill costs to load and to run from transcripts with a bundled script, finds the steps the model does by hand that a script could do, applies the ones you pick, and reports before and after. | "make this skill more deterministic", "which skills cost the most to run", "replace LLM steps with scripts", `/the-deterministic-maker` |
 | `fitness-config-init` | Creates a `fitness-config.json` with review weights that fit what the project is for. Scans the folder (or runs a full review first, if asked), proposes weights from a matching purpose profile, explains every change, and saves only the proposal you approve. | "create a fitness config", "tune review weights for this project", "initialize fitness config" |
 
 ### Project fitness review
@@ -345,6 +346,12 @@ skills/
     SKILL.md
     scripts/
       skill_version.py      # bump and check
+  the-deterministic-maker/  # general-development skill (move model work into scripts)
+    SKILL.md
+    references/
+      patterns.md           # what to script, what to leave, how to estimate savings
+    scripts/
+      measure_skills.py     # snapshot and compare load and use cost per skill
   fitness-config-init/      # general-development skill (purpose-fit fitness-config.json)
     SKILL.md
     references/

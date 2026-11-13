@@ -1,0 +1,6 @@
+schema_version: "1.1"
+name: fixture-apply-preapproved
+expected_outcome: |
+  A baseline measurement of the three skills, then changelog-digest's counting steps moved into a tested script that its SKILL.md calls, with tone-review (judgment only) and dep-audit (already scripted) left as they were, the changed skill's version raised as AGENTS.md asks, and a before-and-after report that keeps measured numbers apart from estimates.
+context:
+  scaffold_script: place-files.sh

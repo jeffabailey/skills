@@ -1,0 +1,6 @@
+{
+  "name": "release-helpers",
+  "private": true,
+  "dependencies": { "marked": "15.0.6", "yaml": "^2.7.0" },
+  "devDependencies": { "prettier": "3.4.2", "eslint": "~9.18.0" }
+}

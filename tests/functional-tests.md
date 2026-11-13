@@ -450,6 +450,37 @@ Dimension: Screen Reader Support and is not scored again under Semantic HTML
 - It uses `bump minor --all`, so every skill starts at `1.0.0` and the plugin version rises once
 - Skills outside `skills/`, such as `.agents/`, are untouched
 
+## the-deterministic-maker
+
+`tests/test_measure_skills.py` covers the bundled script. These scenarios cover the agent's choices around it, and match the cases in `skills/the-deterministic-maker/evals/`.
+
+### Test: Moves a counting step into a script and reports before and after
+
+**Given:** A project with three skills: one that counts entries by reading files, one that is all judgment, and one that already calls a script
+**When:** Ask it to make the skills more deterministic and to apply what is worth doing
+**Then:**
+- It reports a baseline from `measure_skills.py snapshot` before any edit
+- The counting skill gets a tested script, a shorter step that calls it, and a raised version
+- The other two skills are unchanged
+- The final report keeps measured numbers apart from estimates
+
+### Test: Leaves an already-scripted skill alone
+
+**Given:** The same project
+**When:** Run `/the-deterministic-maker dep-audit`
+**Then:**
+- It says the skill has no step worth scripting, and why
+- No file in any skill changes, and no saving is claimed
+
+### Test: Reports and stops when asked for a report only
+
+**Given:** A skills repo whose skills have runs in the transcripts
+**When:** Ask which skills cost the most to run and which steps should be scripts, report only
+**Then:**
+- The report ranks candidates with run counts, per-run costs, and savings arithmetic
+- It names the steps it left alone
+- It asks which candidates to apply and edits no skill
+
 ## fitness-config-init
 
 These are the `@manual` agent-eval scenarios in `tests/acceptance/fitness-config-init/`. Pytest never runs them. The resolver side of the skill (validation, fingerprint, save, rollback) is covered by `uv run pytest tests`.

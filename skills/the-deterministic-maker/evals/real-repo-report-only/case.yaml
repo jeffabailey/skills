@@ -1,0 +1,4 @@
+schema_version: "1.1"
+name: real-repo-report-only
+expected_outcome: |
+  A report for ~/Projects/skills with per-skill run counts and per-run costs taken from transcripts, a ranked list of steps to move into scripts with evidence and savings arithmetic, the steps and skills left alone with reasons, and a question about which candidates to apply. No skill file is edited.

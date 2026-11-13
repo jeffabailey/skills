@@ -246,6 +246,21 @@ Should NOT trigger:
 - "Cut a release of this app" (use a release skill)
 - "Write a commit message" (that's generate-commit)
 
+## the-deterministic-maker
+
+Should trigger:
+- "Make the skills in this repo more deterministic"
+- "Which of my skills cost the most tokens to run?"
+- "This skill does by hand what a script could do, fix that"
+- "Replace the LLM steps in review-process with scripts"
+- `/the-deterministic-maker review-process`
+
+Should NOT trigger:
+- "Why do agents burn so many tokens in this repo?" (that's review-agent-memory)
+- "Trim my CLAUDE.md" (that's agent-hygiene)
+- "Bump the skill versions" (that's version-skills)
+- "Make this flaky test deterministic" (a test fix, not a skill change)
+
 ## fitness-config-init
 
 Should trigger:

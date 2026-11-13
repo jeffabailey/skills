@@ -247,6 +247,7 @@ All skills live under `skills/`. The install commands above symlink every direct
 - `skills/ai-sanitize`
 - `skills/fitness-config-init`
 - `skills/version-skills`
+- `skills/the-deterministic-maker`
 
 ---
 

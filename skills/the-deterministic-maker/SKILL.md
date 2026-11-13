@@ -4,7 +4,7 @@ description: "Makes agent skills cheaper and more repeatable by moving work from
 user-invocable: true
 argument-hint: '[skill ...] [--days N] [--project PATH] - skills to work on. Defaults to every skill in the skills folder.'
 metadata:
-  version: "1.0.1"
+  version: "1.0.2"
 ---
 
 # The Deterministic Maker

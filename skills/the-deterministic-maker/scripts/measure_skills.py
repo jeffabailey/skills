@@ -508,11 +508,16 @@ def now_iso() -> str:
 
 
 def days_since(iso: str) -> float:
-    then = datetime.datetime.strptime(iso[:19], "%Y-%m-%dT%H:%M:%S").replace(tzinfo=datetime.timezone.utc)
+    try:
+        then = datetime.datetime.fromisoformat(iso.replace("Z", "+00:00"))
+    except ValueError:
+        sys.exit(f"measure_skills: --since needs an ISO date or time (2026-01-31 or 2026-01-31T12:00:00Z), not '{iso}'")
+    if then.tzinfo is None:
+        then = then.replace(tzinfo=datetime.timezone.utc)
     return (datetime.datetime.now(datetime.timezone.utc) - then).total_seconds() / 86400
 
 
-def find_skills(skills_dir: str, names: list[str]) -> tuple[Path, dict[str, Path]]:
+def find_skills(skills_dir: str, names: list[str], missing_ok: bool = False) -> tuple[Path, dict[str, Path]]:
     base = Path(skills_dir) if skills_dir else next((Path(c) for c in ("skills", ".claude/skills") if Path(c).is_dir()), None)
     if base is None or not base.is_dir():
         sys.exit("measure_skills: no skills directory found; pass --skills-dir")
@@ -523,6 +528,8 @@ def find_skills(skills_dir: str, names: list[str]) -> tuple[Path, dict[str, Path
         for n in names:
             d = Path(n) if (Path(n) / "SKILL.md").is_file() else base / n
             if not (d / "SKILL.md").is_file():
+                if missing_ok:
+                    continue
                 sys.exit(f"measure_skills: no SKILL.md for '{n}' under {base}")
             found[d.name] = d
     if not found:
@@ -530,8 +537,9 @@ def find_skills(skills_dir: str, names: list[str]) -> tuple[Path, dict[str, Path
     return base, found
 
 
-def take_snapshot(skills_dir: str, names: list[str], projects: list[str], projects_dir: str, days: int, since: str) -> dict:
-    base, found = find_skills(skills_dir, names)
+def take_snapshot(skills_dir: str, names: list[str], projects: list[str], projects_dir: str, days: int, since: str,
+                  missing_ok: bool = False) -> dict:
+    base, found = find_skills(skills_dir, names, missing_ok)
     static = {name: static_metrics(path) for name, path in found.items()}
     catalog = Catalog(static)
     window_days = min(days, days_since(since)) if since else days
@@ -715,7 +723,7 @@ def cmd_compare(args):
     else:
         a = before["args"]
         after = take_snapshot(args.skills_dir or before["skills_dir"], sorted(before["skills"]), a["projects"], a["projects_dir"],
-                              a["days"], before["taken_at"])
+                              a["days"], before["taken_at"], missing_ok=True)
         save(args.out, after)
     diff = compare(before, after)
     print(json.dumps(diff, indent=1) if args.json else render_compare(diff), end="")

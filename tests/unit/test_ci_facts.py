@@ -272,3 +272,27 @@ def test_installed_scanners_report_rule_and_location_only(tmp_path):
     assert "zizmor: output not parsed (exit 3); run it by hand" in out.stdout
     assert "not installed: osv-scanner/pip-audit" in out.stdout
     assert "--redact" in (tmp_path / "args.txt").read_text()
+
+
+def test_persist_credentials_of_the_previous_step_does_not_cover_a_checkout(tmp_path):
+    (tmp_path / ".git").mkdir()
+    workflows = tmp_path / ".github/workflows"
+    workflows.mkdir(parents=True)
+    (workflows / "ci.yml").write_text(
+        "on: push\n"
+        "jobs:\n"
+        "  build:\n"
+        "    runs-on: ubuntu-latest\n"
+        "    steps:\n"
+        f"      - uses: actions/checkout@{SHA}\n"
+        "        with:\n"
+        "          persist-credentials: false\n"
+        f"      - uses: actions/checkout@{SHA}\n"
+        "      - name: Third\n"
+        f"        uses: actions/checkout@{SHA}\n"
+    )
+    out = run(tmp_path, "--no-scanners")
+    assert out.returncode == 0, out.stderr
+    assert section(
+        out.stdout, "actions/checkout without persist-credentials: false (of 3): 2"
+    ) == [".github/workflows/ci.yml:9", ".github/workflows/ci.yml:11"]

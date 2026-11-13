@@ -148,7 +148,7 @@ def collect_pytest(root):
     counts, base = {}, None
     for line in p.stdout.splitlines():
         path, sep, _ = line.partition("::")
-        if not sep or " " in path:
+        if not sep or not path.endswith(".py"):
             continue
         if base is None:  # node ids are relative to pytest's rootdir, which can be above the target
             base = next((b for b in _ancestors(cwd) if os.path.exists(os.path.join(b, path))), cwd)

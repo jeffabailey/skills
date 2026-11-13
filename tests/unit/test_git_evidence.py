@@ -397,3 +397,31 @@ def test_non_git_directory_and_empty_repo_report_na(tmp_path):
     assert proc.stdout.splitlines()[-1] == (
         "git: repository has no commits (history-based items are N/A)"
     )
+
+
+def test_via_pr_pct_counts_merges_inside_the_sampled_window_only(tmp_path):
+    repo = tmp_path / "repo"
+    repo.mkdir()
+    git(repo, "init", "-q", "-b", "main")
+    git(repo, "config", "user.email", "t@example.com")
+    git(repo, "config", "user.name", "t")
+    (repo / "a.txt").write_text("1\n")
+    git(repo, "add", "-A")
+    commit(repo, "feat: init", "2026-01-01T00:00:00Z")
+    git(repo, "checkout", "-q", "-b", "topic")
+    (repo / "b.txt").write_text("1\n")
+    git(repo, "add", "-A")
+    commit(repo, "feat: topic", "2026-01-02T00:00:00Z")
+    git(repo, "checkout", "-q", "main")
+    git(repo, "merge", "-q", "--no-ff", "-m", "Merge pull request #1 from t/topic", "topic")
+    for day in (4, 5):
+        (repo / "a.txt").write_text(f"{day}\n")
+        git(repo, "add", "-A")
+        commit(repo, f"fix: direct {day}", f"2026-01-0{day}T00:00:00Z")
+
+    # The merge is the third commit back, outside a window of two.
+    two = block(run(repo, 2).stdout, "integration path")
+    assert "first_parent_sampled: 2" in two and "pr_merge_commits: 0" in two
+    assert "direct_commits (no PR marker): 2" in two and "via_pr_pct: 0" in two
+    three = block(run(repo, 3).stdout, "integration path")
+    assert "pr_merge_commits: 1" in three and "via_pr_pct: 33" in three

@@ -204,3 +204,35 @@ To replace the estimates with measurements after the skills have been used:
 ```bash
 python3 skills/the-deterministic-maker/scripts/measure_skills.py compare docs/determinism-baseline.json
 ```
+
+## Measured after one run (2026-11-13)
+
+One whole-repository run of review-full (eight domain subagents; data and accessibility skipped), one review-agent-memory report run, and one ai-sanitize report run on `README.md`. One run per skill, on this repo only, so treat each number as a single sample. The "before" means come from 3 to 6 runs on several repos.
+
+| Skill | API calls per run | Ad hoc Bash per run | Cost-eq per run | Note |
+|---|---|---|---|---|
+| review-testing | 31.5 → 11 | 29 → 9 | 495,992 → 251,846 | |
+| review-architecture | 29 → 11 | 23.7 → 10 | 492,607 → 291,014 | |
+| review-reliability | 25.8 → 11 | 23.5 → 10 | 426,299 → 242,431 | |
+| review-security | 23.5 → 11 | 22.2 → 12 | 395,184 → 240,431 | |
+| review-process | 18.3 → 7 | 16.3 → 5 | 297,052 → 209,673 | |
+| review-performance | 22.7 → 16 | 21 → 15 | 409,938 → 514,582 | cost rose: 68,643 tool-result tokens against 26,365 |
+| review-algorithms | 28.3 → 30 | 27.7 → 19 | 683,946 → 1,586,323 | cost rose: it started a helper agent and reported 35 findings |
+| review-agent-memory | 13.5 → 15 | 8.2 → 5 | 341,909 → 276,085 | |
+
+Not usable as measurements: review-maintainability, review-full, and ai-sanitize each show two or three "runs since", and at least one of them is an editing agent that read the SKILL.md, so their means are mixed.
+
+Sum over the eight domain runs: about 3.5M cost-eq before (sum of the means) and about 3.5M after. Six skills fell by 30% to 50%; review-algorithms and review-performance rose and cancelled that.
+
+What the runs still did by hand (from each run's own list):
+
+- Script-to-test mapping (testing, architecture, maintainability each built it with grep loops).
+- Per-file line counts for source files; the inventory prints language totals only (testing, performance, algorithms).
+- Eval fixtures are not marked in the inventory (maintainability, performance).
+- Step-level timeouts, images pulled in `run:` steps, and unpinned installs in `run:` steps are not in `ci-facts.py` (reliability, security). review-testing and review-performance need CI facts and do not call it.
+- `check-report.py` confirms a cited line exists but does not find line numbers; every run looked them up with grep.
+- `metrics.py` prints no counts over the Severe thresholds and has no duplicate-block detection (maintainability).
+- review-agent-memory: quotients and sums over the miner's totals, lists cut at the top 12, no since-date view, context stores the collector did not list.
+- ai-sanitize `scan-tells.py`: skipped hints are not itemised, hits print without line context, the header counts all media, and it missed a contrast-framing line.
+
+Defects the review found in the scripts added by this change (see `docs/algorithms-review.md`): `ci-facts.py:259-269` (checkout marked safe from the previous step), `review-context.py:62-67` (rules matched on the absolute path), `count-tests.py:149-152` (paths with a space dropped), `git-evidence.sh:106-117` (`via_pr_pct` from two windows), `measure_skills.py:510-511` (`--since` with a date only crashes), `measure_skills.py:717` (`compare` stops on a removed skill).

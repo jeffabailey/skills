@@ -2,7 +2,7 @@
 name: review-process
 description: Evaluates a repository's development process maturity across documentation, workflow, code review, dependency management, project organization, portability, and leadership signals, using repo files and git history. Use when the user says /review:process or /review:review-process, requests a process review, asks for development process fitness scores, wants to assess repo health or contributor readiness, or asks how well a project follows software development best practices. Only reports findings with confidence >= 7/10.
 metadata:
-  version: "1.1.0"
+  version: "1.1.1"
 ---
 
 # Development Process Fitness Review

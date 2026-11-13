@@ -103,12 +103,14 @@ echo "short_subjects_lt_12_chars: $(printf '%s\n' "$subjects" | awk 'length($0)<
 
 echo
 echo "== integration path on $default (first-parent, last $n) =="
-fp_merges="$(git log --first-parent --merges -n "$n" --format=%s "$default")"
-fp_direct="$(git log --first-parent --no-merges -n "$n" --format=%s "$default")"
+# One window of $n first-parent commits; a merge has more than one parent.
+fp_window="$(git log --first-parent -n "$n" --format='%P%x09%s' "$default")"
+fp_merges="$(printf '%s\n' "$fp_window" | awk -F'\t' '$1 ~ / / {sub(/^[^\t]*\t/, ""); print}')"
+fp_direct="$(printf '%s\n' "$fp_window" | awk -F'\t' 'NF && $1 !~ / / {sub(/^[^\t]*\t/, ""); print}')"
 pr_merges="$(printf '%s\n' "$fp_merges" | grep -cE '^Merge (pull request|branch .* into)|^Merge .*#[0-9]+')"
 squash_prs="$(printf '%s\n' "$fp_direct" | grep -cE '\(#[0-9]+\)$')"
 direct_total="$(printf '%s\n' "$fp_direct" | grep -c .)"
-fp_total="$(git log --first-parent -n "$n" --format=%h "$default" | grep -c .)"
+fp_total="$(printf '%s\n' "$fp_window" | grep -c .)"
 echo "first_parent_sampled: $fp_total"
 echo "merge_commits: $(printf '%s\n' "$fp_merges" | grep -c .)"
 echo "pr_merge_commits: $pr_merges"

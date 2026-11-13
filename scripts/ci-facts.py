@@ -257,9 +257,16 @@ def parse_workflow(lines: list[str]) -> dict:
 
 
 def step_has_persist_false(rows: list, index: int, column: int) -> bool:
-    """Look through the step around rows[index] for persist-credentials: false."""
+    """Look through the step around rows[index] for persist-credentials: false.
+
+    A step starts at its `- ` line. When `uses:` is on that line, the rows above
+    belong to the previous step and are not read.
+    """
     pattern = re.compile(r"persist-credentials:\s*['\"]?false")
-    for step in (range(index + 1, len(rows)), range(index - 1, -1, -1)):
+    spans = [range(index + 1, len(rows))]
+    if not rows[index][2].lstrip().startswith("-"):
+        spans.append(range(index - 1, -1, -1))
+    for step in spans:
         for position in step:
             _, indent, text, _ = rows[position]
             if indent < column:

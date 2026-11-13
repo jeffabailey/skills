@@ -156,3 +156,9 @@ def test_directory_rows_are_capped(tmp_path, capsys):
     root = write(tmp_path / "proj", {f"pkg{n}/x_test.go": GO for n in range(4)})
     assert count_tests.main([str(root), "--no-collect", "--top", "2"]) == 0
     assert "... and 2 more directories with 6 tests (--all lists them)" in capsys.readouterr().out
+
+
+def test_pytest_collector_counts_tests_under_a_path_with_a_space(tmp_path):
+    root = write(tmp_path / "proj", {"tests/unit tests/test_calc.py": PY_UNIT})
+    res = count_tests.count(str(root))
+    assert runner(res, "pytest")["source"] == "collector" and res["tests"] == 4

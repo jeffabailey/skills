@@ -164,3 +164,13 @@ def test_default_output_keeps_the_ci_contract(tmp_path):
     assert result.returncode == 0
     assert result.stdout.startswith("## Deterministic Review Context\n")
     assert "## Scope Inventory" not in result.stdout
+
+
+def test_directory_rules_ignore_folders_above_the_repository(tmp_path):
+    repo = tmp_path / "tests" / "repo"
+    (repo / "src").mkdir(parents=True)
+    (repo / "src/database.py").write_text("import sqlalchemy\n")
+
+    context = review_context.build_context_from_files(repo, ["src/database.py"])
+
+    assert context["signals"]["data"] == ["src/database.py"]

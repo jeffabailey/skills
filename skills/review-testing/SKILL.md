@@ -2,7 +2,7 @@
 name: review-testing
 description: Analyzes a codebase for software testing fitness, producing scores (1-10) across test pyramid balance, test quality, coverage strategy, performance testing, debugging support, and CI integration. Use when the user says /review:review-testing, requests a test quality review, asks about testing strategy, wants test pyramid analysis, asks about QA practices, or needs testing fitness scores before shipping. Only reports findings with confidence >= 7/10.
 metadata:
-  version: "1.1.0"
+  version: "1.1.1"
 ---
 
 # Software Testing Fitness Review

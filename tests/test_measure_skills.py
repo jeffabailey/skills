@@ -198,3 +198,23 @@ def test_a_subagent_that_edits_the_skill_it_read_is_not_a_run(tmp_path):
     write_jsonl(sub / "agent-dev.jsonl", [assistant("b1", OLD, read), assistant("b2", OLD, edit)])
     usage = snapshot(tmp_path, "--days", "36500")["skills"]["digest"]["usage"]
     assert usage["runs"] == 1 and usage["kinds"] == {"read-in-subagent": 1}
+
+
+def test_since_takes_a_date_and_rejects_other_text_in_one_line(tmp_path):
+    make_skills(tmp_path)
+    make_transcripts(tmp_path)
+    assert snapshot(tmp_path, "--since", "2019-12-31")["skills"]["digest"]["usage"]["runs"] == 1
+    r = run(tmp_path, "snapshot", "--projects-dir", str(tmp_path / "projects"), "--since", "yesterday")
+    assert r.returncode != 0 and "Traceback" not in r.stderr and "--since needs an ISO date" in r.stderr
+
+
+def test_compare_reports_a_skill_that_was_removed(tmp_path):
+    make_skills(tmp_path)
+    base = tmp_path / "base.json"
+    snapshot(tmp_path, "--out", str(base))
+    (tmp_path / "skills" / "digest" / "SKILL.md").unlink()
+
+    r = run(tmp_path, "compare", str(base), "--json")
+    assert r.returncode == 0, r.stderr
+    diff = json.loads(r.stdout)["skills"]
+    assert diff["digest"]["status"] == "removed" and diff["deps"]["status"] == "unchanged"

@@ -58,8 +58,10 @@ def tracked_files(repo: Path) -> list[str]:
     return [line for line in git(repo, "ls-files", "-z").split("\0") if line]
 
 
-def file_has_data_signal(path: Path) -> bool:
-    parts = {part.lower() for part in path.parts}
+def file_has_data_signal(repo: Path, name: str) -> bool:
+    """Directory rules read the path inside the repository, never its parents."""
+    path = repo / name
+    parts = {part.lower() for part in Path(name).parts}
     if parts & IGNORED_DATA_DIRECTORIES or path.name == SELF_NAME or (
         ".github" in parts and "scripts" in parts
     ):
@@ -77,7 +79,7 @@ def file_has_data_signal(path: Path) -> bool:
 
 def build_context_from_files(repo: Path, files: list[str], prompt: Path | None = None) -> dict:
     frontend = [name for name in files if Path(name).suffix.lower() in FRONTEND_SUFFIXES]
-    data = [name for name in files if file_has_data_signal(repo / name)]
+    data = [name for name in files if file_has_data_signal(repo, name)]
     config = repo / "fitness-config.json"
     context = {
         "commit": git(repo, "rev-parse", "HEAD") if (repo / ".git").exists() else "not-a-git-checkout",
@@ -285,7 +287,7 @@ def build_inventory(target: Path) -> dict:
         "categories": categories,
         "manifests": manifests,
         "frontend": [name for name in kept if Path(name).suffix.lower() in FRONTEND_SUFFIXES],
-        "data": [name for name in kept if file_has_data_signal(root / name)],
+        "data": [name for name in kept if file_has_data_signal(root, name)],
     }
 
 

@@ -6,6 +6,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import re
 import subprocess
 from pathlib import Path
 
@@ -13,7 +14,17 @@ DATA_NAME = "data"
 ACCESSIBILITY_NAME = "accessibility"
 FRONTEND_SUFFIXES = {".html", ".css", ".jsx", ".tsx", ".vue", ".svelte"}
 DATA_SUFFIXES = {".sql"}
-DATA_TERMS = ("create table", "alter table", "sqlalchemy", "django", "prisma", "alembic", "flyway", "sequelize", "gorm", "diesel")
+DATA_SOURCE_SUFFIXES = {".c", ".cpp", ".cs", ".go", ".java", ".js", ".jsx", ".php", ".py", ".rb", ".rs", ".ts", ".tsx"}
+DATA_MANIFEST_NAMES = {"docker-compose.yml", "docker-compose.yaml", "package.json", "pyproject.toml", "pom.xml", "requirements.txt"}
+DATA_DIRECTORIES = {"migration", "migrations", "schema", "schemas"}
+IGNORED_DATA_DIRECTORIES = {".git", ".venv", "docs", "skills", "tests"}
+DATABASE_IMPORT = re.compile(
+    r"(?:import\s+(?:sqlite3|sqlalchemy|psycopg|pymongo|redis)|"
+    r"from\s+(?:django\.db|sqlalchemy|psycopg|pymongo|redis)|"
+    r"require\(['\"](?:pg|mysql|sequelize|prisma|redis)['\"]\))",
+    re.IGNORECASE,
+)
+DATABASE_SQL = re.compile(r"\b(?:create\s+table|alter\s+table|select\s+.+\s+from|insert\s+into)\b", re.IGNORECASE)
 
 
 def sha256_bytes(value: bytes) -> str:
@@ -34,15 +45,20 @@ def tracked_files(repo: Path) -> list[str]:
 
 
 def file_has_data_signal(path: Path) -> bool:
-    if path.suffix.lower() in DATA_SUFFIXES:
+    parts = {part.lower() for part in path.parts}
+    if parts & IGNORED_DATA_DIRECTORIES or (
+        ".github" in parts and "scripts" in parts
+    ):
+        return False
+    if parts & DATA_DIRECTORIES or path.suffix.lower() in DATA_SUFFIXES:
         return True
+    if path.name.lower() not in DATA_MANIFEST_NAMES and path.suffix.lower() not in DATA_SOURCE_SUFFIXES:
+        return False
     try:
-        text = path.read_text(encoding="utf-8", errors="ignore").lower()
+        text = path.read_text(encoding="utf-8", errors="ignore")
     except OSError:
         return False
-    return any(term in text for term in DATA_TERMS) or any(
-        part.lower() in {"migrations", "migration", "schema"} for part in path.parts
-    )
+    return bool(DATABASE_IMPORT.search(text) or DATABASE_SQL.search(text))
 
 
 def build_context_from_files(repo: Path, files: list[str], prompt: Path | None = None) -> dict:

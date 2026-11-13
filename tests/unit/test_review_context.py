@@ -34,3 +34,37 @@ def test_context_detects_data_and_frontend_signals(tmp_path):
     assert context["applicability"] == {"data": True, "accessibility": True}
     assert context["signals"]["data"] == ["schema.sql"]
     assert context["signals"]["accessibility"] == ["templates/index.html"]
+
+
+def test_prose_and_test_mentions_do_not_activate_data(tmp_path):
+    files = ["README.md", "docs/design.md", "tests/test_db.py", "skills/review-data/SKILL.md"]
+    for name in files:
+        path = tmp_path / name
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text("SQLAlchemy migrations and CREATE TABLE are discussed here.")
+
+    context = review_context.build_context_from_files(tmp_path, files)
+
+    assert context["applicability"]["data"] is False
+    assert context["signals"]["data"] == []
+
+
+def test_detector_does_not_activate_itself(tmp_path):
+    path = tmp_path / ".github/scripts/review-context.py"
+    path.parent.mkdir(parents=True)
+    path.write_text("DATA_TERMS = ('sqlalchemy', 'create table')")
+
+    context = review_context.build_context_from_files(tmp_path, [str(path.relative_to(tmp_path))])
+
+    assert context["applicability"]["data"] is False
+
+
+def test_source_database_import_activates_data(tmp_path):
+    path = tmp_path / "src/database.py"
+    path.parent.mkdir(parents=True)
+    path.write_text("import sqlalchemy\n")
+
+    context = review_context.build_context_from_files(tmp_path, ["src/database.py"])
+
+    assert context["applicability"]["data"] is True
+    assert context["signals"]["data"] == ["src/database.py"]
